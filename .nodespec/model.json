@@ -1,7 +1,7 @@
 {
   "modelVersion": 1,
   "generatedBy": "nodespec",
-  "modelHash": "5e2369787c3a0c1a0f422e2be47c7ef7d59cb213a9186a8010a5ed5f8125960e",
+  "modelHash": "23ccc415b078a4d0f305424ed7cccb173d38cdab033c6c6e34b2fe24fb871219",
   "nodes": [
     {
       "id": "1c81cf63-c51e-4b0e-b6ad-7d318332d2fe",
@@ -554,11 +554,23 @@
       "contentHash": "000000004ade8f87"
     },
     {
+      "id": "0a21be75-1468-4f74-b708-2341f7ab7692",
+      "nodeId": "db8e5409-dc6f-4052-887a-7ba1dd5fb717",
+      "path": "services/worker/package.json",
+      "kind": "config"
+    },
+    {
       "id": "1c91b278-14fc-4343-aa3c-49c182dc3a6f",
       "nodeId": "268a782a-d132-4d5e-8f24-c4a969ad7f17",
       "path": ".nodespec/tasks/firestore-lifecycle-state-and-audit-268a782a.task.md",
       "kind": "task",
       "contentHash": "000000002ed79ccf"
+    },
+    {
+      "id": "23e52777-960d-46b8-bd79-93d151596279",
+      "nodeId": "c424e85a-6584-4bb7-a48e-2175ebc6a41b",
+      "path": "services/api/src/index.ts",
+      "kind": "source"
     },
     {
       "id": "373bb3c3-5923-4647-9305-878740703da0",
@@ -573,6 +585,24 @@
       "path": ".nodespec/tasks/cloud-run-lifecycle-worker-e730eb23.task.md",
       "kind": "task",
       "contentHash": "000000000d687d5e"
+    },
+    {
+      "id": "67085527-dde4-4397-8591-9ca00e928eb1",
+      "nodeId": "c424e85a-6584-4bb7-a48e-2175ebc6a41b",
+      "path": "services/api/package.json",
+      "kind": "config"
+    },
+    {
+      "id": "68f6c792-db80-4e36-a4a9-3c6bdaa6004d",
+      "nodeId": "c424e85a-6584-4bb7-a48e-2175ebc6a41b",
+      "path": "services/api/src/middleware/iapAuth.ts",
+      "kind": "source"
+    },
+    {
+      "id": "79639b0c-1cff-4a7f-8e1c-728d07ce9cbc",
+      "nodeId": "c424e85a-6584-4bb7-a48e-2175ebc6a41b",
+      "path": "services/api/tsconfig.json",
+      "kind": "config"
     },
     {
       "id": "7c0bb8ce-04db-4651-b75a-5bad75c9ffc1",
@@ -601,6 +631,12 @@
       "path": ".nodespec/tasks/google-workspace-admin-sdk-directory-1c81cf63.task.md",
       "kind": "task",
       "contentHash": "00000000267c573d"
+    },
+    {
+      "id": "ccb09e58-761c-4da2-ad6a-597034dc3bc5",
+      "nodeId": "db8e5409-dc6f-4052-887a-7ba1dd5fb717",
+      "path": "services/worker/src/workspace/directoryClient.ts",
+      "kind": "source"
     },
     {
       "id": "ceeaf1e6-c9fc-478a-8720-e9169693274c",
@@ -643,6 +679,18 @@
       "path": ".nodespec/tasks/operator-console-ui-9af301aa.task.md",
       "kind": "task",
       "contentHash": "0000000056331e95"
+    },
+    {
+      "id": "f2186192-700c-4d99-8590-cb2aac591885",
+      "nodeId": "565b92bd-2c2c-4a82-be62-b691decdbadf",
+      "path": "README.md",
+      "kind": "doc"
+    },
+    {
+      "id": "f83cdb84-1369-451c-91fe-13e5eb3f9016",
+      "nodeId": "c424e85a-6584-4bb7-a48e-2175ebc6a41b",
+      "path": "services/api/src/config.ts",
+      "kind": "source"
     }
   ]
 }

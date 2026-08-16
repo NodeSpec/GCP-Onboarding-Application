@@ -1,0 +1,36 @@
+{
+  "name": "@lifecycle/worker",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Step executor. The only service holding Workspace administrator rights, and the only one that mutates the directory.",
+  "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "dev": "NODE_ENV=development tsx watch src/index.ts",
+    "start": "node dist/index.js",
+    "test": "vitest run",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "@google-cloud/firestore": "^7.10.0",
+    "@google-cloud/secret-manager": "^5.6.0",
+    "@google-cloud/tasks": "^5.5.0",
+    "express": "^4.21.2",
+    "google-auth-library": "^9.15.0",
+    "googleapis": "^144.0.0",
+    "nodemailer": "^6.9.16",
+    "pino": "^9.5.0",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "@types/express": "^4.17.21",
+    "@types/node": "^22.9.0",
+    "@types/nodemailer": "^6.4.16",
+    "tsx": "^4.19.2",
+    "typescript": "^5.6.3",
+    "vitest": "^2.1.5"
+  }
+}
