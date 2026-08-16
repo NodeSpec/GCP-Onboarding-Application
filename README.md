@@ -1,8 +1,8 @@
 # GCP Onboarding Application
 
-A console for least-privilege, creating, updating and removing Google Workspace accounts, with an approval step and a full record of who did what.
+A console for creating, updating and removing Google Workspace accounts, with an approval step and a full record of who did what.
 
-## Who This Is For
+## What this is, in plain terms
 
 When someone joins a company, somebody has to create their email account, put them in the right team groups, fill in their job title and department, and tell them how to log in for the first time. When they change roles, those groups and details need updating. When they leave, the account has to be shut down without losing their files.
 

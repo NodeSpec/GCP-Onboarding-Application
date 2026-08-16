@@ -14,9 +14,12 @@ import { registerHandler, type StepContext, type StepResult } from '../steps/han
  * Group assignment is one step per group so that a single failing group does
  * not discard the ones already applied (REQ-003).
  *
- * Serves REQ-003. Password generation and encryption is REQ-019 and lives in
- * the credential module; this phase asks for a password and never persists it.
+ * Serves REQ-003. Password protection is REQ-019 and belongs to the credential
+ * store; this phase generates a password, hands it over, and drops it.
  */
+
+/** How long an unretrieved one-time password remains recoverable. */
+const CREDENTIAL_TTL_HOURS = 72;
 
 interface CreatePayload {
   primaryEmail: string;
@@ -69,23 +72,34 @@ registerHandler({
       return { status: 'skipped', output: { reason: 'user already exists', id: existing.id } };
     }
 
-    // The generated password is handed straight to the credential module, which
-    // encrypts it and stores ciphertext. It is never returned from this handler
-    // and never written to a step output, because step outputs are readable in
-    // the console and mirrored to logs.
-    const password = await ctx.directory.generateInitialPassword();
+    // The generated password lives in this scope and nowhere else. It goes to
+    // the credential store, which encrypts it, and is never returned from this
+    // handler: step outputs are readable in the console and mirrored to logs.
+    let password: string | undefined = ctx.directory.generateInitialPassword();
 
-    const created = await ctx.directory.insertUser({
-      primaryEmail: payload.primaryEmail,
-      name: { givenName: payload.givenName, familyName: payload.familyName },
-      password,
-      changePasswordAtNextLogin: true,
-      orgUnitPath: payload.orgUnitPath ?? '/',
-    });
+    try {
+      const created = await ctx.directory.insertUser({
+        primaryEmail: payload.primaryEmail,
+        name: { givenName: payload.givenName, familyName: payload.familyName },
+        password,
+        changePasswordAtNextLogin: true,
+        orgUnitPath: payload.orgUnitPath ?? '/',
+      });
 
-    await ctx.directory.stashCredential(ctx.request.requestId, payload.primaryEmail, password);
+      await ctx.credentials.stash({
+        requestId: ctx.request.requestId,
+        primaryEmail: payload.primaryEmail,
+        password,
+        ttlHours: CREDENTIAL_TTL_HOURS,
+      });
 
-    return { status: 'succeeded', output: { userId: created.id ?? null } };
+      return { status: 'succeeded', output: { userId: created.id ?? null } };
+    } finally {
+      // Drop the reference as soon as the ciphertext is committed, so the
+      // plaintext is not still reachable if this frame is captured later
+      // (REQ-019).
+      password = undefined;
+    }
   },
 });
 

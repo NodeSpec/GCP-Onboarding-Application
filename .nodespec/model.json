@@ -1,7 +1,7 @@
 {
   "modelVersion": 1,
   "generatedBy": "nodespec",
-  "modelHash": "09eac9857f3e8f39551f678d5615aadad8ee8498308fb8c28125c49def25e429",
+  "modelHash": "f1c38e1f478fc91eb886c43ba2b8cd469db5e7e8025eaaf3d8f35fcba1e52d78",
   "nodes": [
     {
       "id": "1c81cf63-c51e-4b0e-b6ad-7d318332d2fe",
@@ -610,6 +610,12 @@
       "contentHash": "0000000023265dc4"
     },
     {
+      "id": "4038fb45-11ae-474b-8fd2-d6bf72d410e8",
+      "nodeId": "db8e5409-dc6f-4052-887a-7ba1dd5fb717",
+      "path": "services/worker/src/tasks/dispatcher.ts",
+      "kind": "source"
+    },
+    {
       "id": "5fd17eaa-fbe2-43fa-83a2-ae296012fb27",
       "nodeId": "e730eb23-4b12-43a4-b260-8758b3025114",
       "path": ".nodespec/tasks/cloud-run-lifecycle-worker-e730eb23.task.md",
@@ -678,7 +684,8 @@
       "id": "9ff4b387-6d62-4f4e-a080-c8b24497b3d2",
       "nodeId": "db8e5409-dc6f-4052-887a-7ba1dd5fb717",
       "path": "services/worker/src/steps/handler.ts",
-      "kind": "source"
+      "kind": "source",
+      "contentHash": "0000000023b9e1d2"
     },
     {
       "id": "a2e864ce-457a-42a8-b945-b5895739e1f8",
@@ -699,10 +706,23 @@
       "kind": "source"
     },
     {
+      "id": "ac2c40e9-50ed-48a4-98b2-03a80c66aa34",
+      "nodeId": "db8e5409-dc6f-4052-887a-7ba1dd5fb717",
+      "path": "services/worker/src/index.ts",
+      "kind": "source"
+    },
+    {
+      "id": "c13bea30-e1ef-4de2-bdb3-8946a34bd9d2",
+      "nodeId": "db8e5409-dc6f-4052-887a-7ba1dd5fb717",
+      "path": "services/worker/src/routes/tasks.ts",
+      "kind": "source"
+    },
+    {
       "id": "c58244ee-bd8f-4e31-a567-bbd2c278f651",
       "nodeId": "db8e5409-dc6f-4052-887a-7ba1dd5fb717",
       "path": "services/worker/src/phases/create.ts",
-      "kind": "source"
+      "kind": "source",
+      "contentHash": "00000000168ea131"
     },
     {
       "id": "ca41c646-797e-4357-8e5a-164978cd4219",
@@ -781,7 +801,8 @@
       "id": "f2a2048d-473a-454f-b09f-7e2053fbfd5e",
       "nodeId": "db8e5409-dc6f-4052-887a-7ba1dd5fb717",
       "path": "services/worker/src/steps/executor.ts",
-      "kind": "source"
+      "kind": "source",
+      "contentHash": "0000000076d2fe7e"
     },
     {
       "id": "f83cdb84-1369-451c-91fe-13e5eb3f9016",

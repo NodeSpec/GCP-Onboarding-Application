@@ -1,4 +1,5 @@
 import type { LifecycleRequest, LifecycleStep, LifecycleStore } from '@lifecycle/shared';
+import type { CredentialStore } from '../credentials/credentialStore.js';
 import type { DirectoryClient } from '../workspace/directoryClient.js';
 
 /**
@@ -19,6 +20,13 @@ export interface StepContext {
   step: LifecycleStep;
   store: LifecycleStore;
   directory: DirectoryClient;
+  /**
+   * Credential handling is deliberately separate from the directory client.
+   * Encrypting a password and writing it to Firestore has nothing to do with
+   * talking to the Directory API, and folding it in would have given the
+   * Workspace client a reason to know about encryption keys.
+   */
+  credentials: CredentialStore;
 }
 
 export interface StepResult {

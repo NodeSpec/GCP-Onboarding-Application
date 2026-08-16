@@ -1,4 +1,5 @@
 import type { LifecycleStep, LifecycleStore } from '@lifecycle/shared';
+import type { CredentialStore } from '../credentials/credentialStore.js';
 import { logger } from '../logging.js';
 import { WorkspaceError } from '../workspace/directoryClient.js';
 import type { DirectoryClient } from '../workspace/directoryClient.js';
@@ -32,6 +33,7 @@ export type ExecutionOutcome =
 export interface ExecutorDeps {
   store: LifecycleStore;
   directory: DirectoryClient;
+  credentials: CredentialStore;
   /** Enqueues the next step, or schedules the approval notice when it halts. */
   advance: (requestId: string, completedStepId: string) => Promise<void>;
 }
@@ -42,7 +44,7 @@ export async function executeStep(
   deps: ExecutorDeps,
   params: { requestId: string; stepId: string; attempt: number },
 ): Promise<ExecutionOutcome> {
-  const { store, directory } = deps;
+  const { store, directory, credentials } = deps;
   const { requestId, stepId } = params;
 
   const request = await store.getRequest(requestId);
@@ -74,7 +76,7 @@ export async function executeStep(
   const step = steps.find((s) => s.stepId === stepId);
   if (!step) return { kind: 'settled', status: 'failed' };
 
-  const ctx: StepContext = { request, step, store, directory };
+  const ctx: StepContext = { request, step, store, directory, credentials };
 
   try {
     const handler = resolveHandler(step.name);
