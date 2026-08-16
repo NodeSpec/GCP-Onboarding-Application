@@ -1,0 +1,648 @@
+{
+  "modelVersion": 1,
+  "generatedBy": "nodespec",
+  "modelHash": "5e2369787c3a0c1a0f422e2be47c7ef7d59cb213a9186a8010a5ed5f8125960e",
+  "nodes": [
+    {
+      "id": "1c81cf63-c51e-4b0e-b6ad-7d318332d2fe",
+      "type": "external-service",
+      "label": "Google Workspace (Admin SDK Directory)",
+      "ports": [
+        {
+          "id": "1fb152ab-e6ef-495c-a570-efd7554e2f78",
+          "name": "API Call",
+          "direction": "out"
+        }
+      ],
+      "contentHash": "443bcc79cdd794f01eda882d9982553376cbd843ee9fff00451c71f38e43db03"
+    },
+    {
+      "id": "268a782a-d132-4d5e-8f24-c4a969ad7f17",
+      "type": "database",
+      "label": "Firestore: lifecycle state and audit",
+      "technology": "gcp-firestore",
+      "parentId": "565b92bd-2c2c-4a82-be62-b691decdbadf",
+      "placementKind": "contains",
+      "ports": [
+        {
+          "id": "b25f2266-4fbd-41e7-9b4a-5c602663a00f",
+          "name": "Query",
+          "direction": "in"
+        },
+        {
+          "id": "cc3e646a-9900-4f33-a8a6-084a92172d41",
+          "name": "Replication",
+          "direction": "out"
+        }
+      ],
+      "contentHash": "2abfa3251ee7cc190f5321539b1bce313db763f0d78369525f1e1581284d66bc"
+    },
+    {
+      "id": "4f626e62-3cc8-445a-9fbd-cb36407ad91e",
+      "type": "auth-provider",
+      "label": "Identity-Aware Proxy",
+      "technology": "gcp-identity-aware-proxy",
+      "parentId": "565b92bd-2c2c-4a82-be62-b691decdbadf",
+      "placementKind": "contains",
+      "ports": [
+        {
+          "id": "a0336b8e-f37a-4211-a5ff-2dbe277415b0",
+          "name": "Token",
+          "direction": "out"
+        },
+        {
+          "id": "fe6951c3-6a6c-43b4-b5bf-579dd70d30e6",
+          "name": "Auth Request",
+          "direction": "in"
+        }
+      ],
+      "contentHash": "22e26f7534ecaf3fb9becb2a0fb5c990a66d5e0536b57f0f9bd32545cbe14725"
+    },
+    {
+      "id": "565b92bd-2c2c-4a82-be62-b691decdbadf",
+      "type": "gcp",
+      "label": "Company GCP Project",
+      "technology": "gcp",
+      "ports": [],
+      "contentHash": "c4c2237b0bc13284cc59ff2daef34ae999800704831bf32cae8883adbaf2ee27"
+    },
+    {
+      "id": "6da6f1e9-97b5-4c0b-8ba5-0b81f3bc5e4b",
+      "type": "logging",
+      "label": "Cloud Logging: audit sink",
+      "technology": "gcp-cloud-logging",
+      "parentId": "565b92bd-2c2c-4a82-be62-b691decdbadf",
+      "placementKind": "contains",
+      "ports": [
+        {
+          "id": "6f489718-eb0b-4ff1-bb42-3a76be717f9d",
+          "name": "Log In",
+          "direction": "in"
+        },
+        {
+          "id": "aa0cc6ce-9153-48c0-90dc-7a49e9881aee",
+          "name": "Query",
+          "direction": "out"
+        }
+      ],
+      "contentHash": "a35374157700c4c4f1e130021cbd79f1f4510979e7ed298545f68cd0eae531ff"
+    },
+    {
+      "id": "893dd4cf-9fd3-4c98-9de2-33b57dacad7e",
+      "type": "queue",
+      "label": "Cloud Tasks: lifecycle-steps",
+      "technology": "gcp-cloud-tasks",
+      "parentId": "565b92bd-2c2c-4a82-be62-b691decdbadf",
+      "placementKind": "contains",
+      "ports": [
+        {
+          "id": "08551387-6098-47c5-8347-690fc7d719ee",
+          "name": "dequeue",
+          "direction": "out"
+        },
+        {
+          "id": "282981cb-73e2-4276-b293-9dee1b6f5d79",
+          "name": "enqueue",
+          "direction": "in"
+        }
+      ],
+      "contentHash": "13ef608a8b9ba46b7c09247c5c901e33dadf80ce59c813518e1096f77311a931"
+    },
+    {
+      "id": "9af301aa-2191-4532-9871-82179a5500c1",
+      "type": "frontend-app",
+      "label": "Operator Console UI",
+      "technology": "react",
+      "parentId": "a7ee091d-3d58-4624-96ed-8292a596f6d1",
+      "placementKind": "deployed_to",
+      "ports": [
+        {
+          "id": "394847d7-18af-473f-bf2d-d7646a1ca6da",
+          "name": "Service Import",
+          "direction": "in"
+        },
+        {
+          "id": "4d1e03ea-ee1b-4ee5-9c5a-415951fed57a",
+          "name": "Module Dependency",
+          "direction": "out"
+        },
+        {
+          "id": "53f4ce72-23cc-4e34-8f5a-c6d211644403",
+          "name": "API Call",
+          "direction": "out"
+        },
+        {
+          "id": "5b64a41a-a5e2-476c-8f6c-d78b9276b1d2",
+          "name": "HTTP In",
+          "direction": "in"
+        }
+      ],
+      "contentHash": "5ab126aadeb8975bb264ce2a10990673c8f9914f697839967927a8e0a060b9d8"
+    },
+    {
+      "id": "a7ee091d-3d58-4624-96ed-8292a596f6d1",
+      "type": "docker-container",
+      "label": "Cloud Run: lifecycle-api",
+      "technology": "gcp-cloud-run",
+      "parentId": "565b92bd-2c2c-4a82-be62-b691decdbadf",
+      "placementKind": "contains",
+      "ports": [],
+      "contentHash": "fb5b88cb25e704bf92d3760f8251de95ce4e34b4456fdbe4479d28e37028da6f"
+    },
+    {
+      "id": "c424e85a-6584-4bb7-a48e-2175ebc6a41b",
+      "type": "backend-service",
+      "label": "Lifecycle API Service",
+      "technology": "nodejs",
+      "parentId": "a7ee091d-3d58-4624-96ed-8292a596f6d1",
+      "placementKind": "deployed_to",
+      "ports": [
+        {
+          "id": "3d738165-1178-439a-8566-5272c842fd95",
+          "name": "HTTP In",
+          "direction": "in"
+        },
+        {
+          "id": "5bf5690e-1029-40c4-b23e-fbb1961585ed",
+          "name": "Service Import",
+          "direction": "in"
+        },
+        {
+          "id": "75420ea6-9e69-42bf-af3c-7b643268cfc6",
+          "name": "Cache",
+          "direction": "out"
+        },
+        {
+          "id": "838e868b-bd05-41a5-824e-9fc88ee18e67",
+          "name": "Module Dependency",
+          "direction": "out"
+        },
+        {
+          "id": "c4de400c-9acd-45e4-89bb-f3f2e87f8725",
+          "name": "Database",
+          "direction": "out"
+        }
+      ],
+      "contentHash": "9842b85706ce4fa8ac0598a45e05b2b90757d1c3838c7e8429639c04bf1baa61"
+    },
+    {
+      "id": "d9e456a0-b079-4914-b8fc-f48f42fa7a7f",
+      "type": "load-balancer",
+      "label": "External HTTPS Load Balancer",
+      "technology": "gcp-cloud-load-balancing",
+      "parentId": "565b92bd-2c2c-4a82-be62-b691decdbadf",
+      "placementKind": "contains",
+      "ports": [
+        {
+          "id": "343f5335-55c2-4215-9225-2d7a4623674f",
+          "name": "Traffic In",
+          "direction": "in"
+        },
+        {
+          "id": "8aba61b4-d7a1-4f46-b3d6-90400d052aff",
+          "name": "Backend",
+          "direction": "out"
+        }
+      ],
+      "contentHash": "ca5b120704753ae7d9970302028e6dc84edc30ca3f20d03cf39d14f63cde6de0"
+    },
+    {
+      "id": "db8e5409-dc6f-4052-887a-7ba1dd5fb717",
+      "type": "worker",
+      "label": "Lifecycle Step Executor",
+      "technology": "nodejs",
+      "parentId": "e730eb23-4b12-43a4-b260-8758b3025114",
+      "placementKind": "deployed_to",
+      "ports": [
+        {
+          "id": "0bf10a09-1f88-4000-8d86-e878a840e94a",
+          "name": "Queue In",
+          "direction": "in"
+        },
+        {
+          "id": "52830b91-a2f0-4990-ba93-dcc1d00458b6",
+          "name": "Service Import",
+          "direction": "in"
+        },
+        {
+          "id": "76b77afc-150a-4649-89e3-be4553cb9f4c",
+          "name": "Internal Dependency",
+          "direction": "out"
+        },
+        {
+          "id": "b7c83101-cc6a-49db-8f1d-14f971f0774e",
+          "name": "Database",
+          "direction": "out"
+        }
+      ],
+      "contentHash": "719fd35ddfe805b1eaee9223377b9f65b87d0bbe2da59b9ba0e0743abd904bfa"
+    },
+    {
+      "id": "e601237a-48ea-4941-95f4-6fb53c7c6736",
+      "type": "external-service",
+      "label": "Email Delivery Service",
+      "ports": [
+        {
+          "id": "59d5c145-730a-45fa-8647-201cc8cd221b",
+          "name": "API Call",
+          "direction": "out"
+        }
+      ],
+      "contentHash": "f4f6cfebf22f3700098bbff8f7e308bc15558520a71542ccf50e79af37cb1791"
+    },
+    {
+      "id": "e730eb23-4b12-43a4-b260-8758b3025114",
+      "type": "docker-container",
+      "label": "Cloud Run: lifecycle-worker",
+      "technology": "gcp-cloud-run",
+      "parentId": "565b92bd-2c2c-4a82-be62-b691decdbadf",
+      "placementKind": "contains",
+      "ports": [],
+      "contentHash": "4f79a6af178e93cc556fe8443377d5060213a901c4e5bb50af48619c49ab0d7b"
+    },
+    {
+      "id": "ed7660ce-7057-4706-90f0-ff653f6ff7e8",
+      "type": "secret-manager",
+      "label": "Secret Manager",
+      "technology": "gcp-secret-manager",
+      "parentId": "565b92bd-2c2c-4a82-be62-b691decdbadf",
+      "placementKind": "contains",
+      "ports": [
+        {
+          "id": "43de375e-fca6-41e8-a274-e70c2e0bc06d",
+          "name": "secret-out",
+          "direction": "out"
+        },
+        {
+          "id": "8553e0df-155f-422e-938c-e1b55bd6d9f1",
+          "name": "secret-in",
+          "direction": "in"
+        }
+      ],
+      "contentHash": "6c25cb04eca3a9a34c4f16a7b9a5569a755ea22b714ae368c6fac7218cc48e77"
+    }
+  ],
+  "edges": [
+    {
+      "id": "001fc8ae-5462-4a64-b61f-ea52f22abe92",
+      "source": "db8e5409-dc6f-4052-887a-7ba1dd5fb717",
+      "target": "893dd4cf-9fd3-4c98-9de2-33b57dacad7e",
+      "contractId": "bd261973-438e-4074-953c-dc47040d00c6",
+      "label": "enqueue next step / hold",
+      "direction": "unidirectional",
+      "criticality": "required",
+      "contentHash": "deed078aa0caa1ce2d6d8987f58d5cbd34daa6a9a29cc0a3d3ef2f58644aede4"
+    },
+    {
+      "id": "02d8621e-eac3-4c08-9aa1-ae616e830168",
+      "source": "db8e5409-dc6f-4052-887a-7ba1dd5fb717",
+      "target": "268a782a-d132-4d5e-8f24-c4a969ad7f17",
+      "contractId": "2d1ac511-c493-4853-a06d-791039d9d125",
+      "label": "transactional step transitions",
+      "direction": "bidirectional",
+      "criticality": "required",
+      "contentHash": "998450ac69a07f35146f913b90395ae64cf17097c72f68efcd28278f04350951"
+    },
+    {
+      "id": "1e176863-b601-409d-8023-69257a2fa644",
+      "source": "db8e5409-dc6f-4052-887a-7ba1dd5fb717",
+      "target": "ed7660ce-7057-4706-90f0-ff653f6ff7e8",
+      "contractId": "5f755698-2229-4e06-b396-4951dcde0310",
+      "label": "resolve provider key, signing key",
+      "direction": "unidirectional",
+      "criticality": "required",
+      "contentHash": "815a926d73455389284a23c4d61b657e2492fa8b5ee8d707fdb9c572c42c50ac"
+    },
+    {
+      "id": "43a339f3-8318-49bf-ac34-da6ac9d20f2d",
+      "source": "893dd4cf-9fd3-4c98-9de2-33b57dacad7e",
+      "target": "db8e5409-dc6f-4052-887a-7ba1dd5fb717",
+      "contractId": "64630b22-a7d6-481a-b1e0-943b2818a1b5",
+      "label": "dispatch step (OIDC)",
+      "direction": "unidirectional",
+      "criticality": "required",
+      "contentHash": "02250ea119c0809456454c4985786c5d29bf95ee5ecbaec71eb644a725bf0dee"
+    },
+    {
+      "id": "46118367-4492-4457-b977-8200e95dbc37",
+      "source": "db8e5409-dc6f-4052-887a-7ba1dd5fb717",
+      "target": "6da6f1e9-97b5-4c0b-8ba5-0b81f3bc5e4b",
+      "contractId": "549c47dd-706d-415b-9ecb-540e7abcba87",
+      "label": "mirror audit events",
+      "direction": "unidirectional",
+      "criticality": "required",
+      "contentHash": "61b079934f3f0f0b52baa6f98bdd7d3173e308eb8a411303d622a8745ce53ecd"
+    },
+    {
+      "id": "5537f603-3376-43cb-af1c-84060ca3e05d",
+      "source": "c424e85a-6584-4bb7-a48e-2175ebc6a41b",
+      "target": "4f626e62-3cc8-445a-9fbd-cb36407ad91e",
+      "contractId": "d75b233d-3dac-41cf-9f66-353f731be545",
+      "label": "verify assertion (JWK set)",
+      "direction": "unidirectional",
+      "criticality": "required",
+      "contentHash": "5be65e04e67038642665d59227ff9c4dbbb0ece906436eb5af1b836da6d51ea7"
+    },
+    {
+      "id": "709e843b-2d3d-41d5-a009-a2f061ab3b23",
+      "source": "c424e85a-6584-4bb7-a48e-2175ebc6a41b",
+      "target": "6da6f1e9-97b5-4c0b-8ba5-0b81f3bc5e4b",
+      "contractId": "549c47dd-706d-415b-9ecb-540e7abcba87",
+      "label": "mirror audit events",
+      "direction": "unidirectional",
+      "criticality": "required",
+      "contentHash": "7ad1daa265e44f247b72a015a898abc6d0639f13369c51c46c42d1b4ff31a225"
+    },
+    {
+      "id": "7fcc1cc2-75b2-42be-ad0e-020e3cf7d3a4",
+      "source": "c424e85a-6584-4bb7-a48e-2175ebc6a41b",
+      "target": "ed7660ce-7057-4706-90f0-ff653f6ff7e8",
+      "contractId": "5f755698-2229-4e06-b396-4951dcde0310",
+      "label": "resolve credential encryption key",
+      "direction": "unidirectional",
+      "criticality": "required",
+      "contentHash": "fdb49b11c2a27e9e352db1484629ef5922fce71e6938a3be4171494523c71273"
+    },
+    {
+      "id": "8437dd2c-33a5-44f8-b3e8-cb6e7e0eeb74",
+      "source": "db8e5409-dc6f-4052-887a-7ba1dd5fb717",
+      "target": "e601237a-48ea-4941-95f4-6fb53c7c6736",
+      "contractId": "d9f6025d-0d89-4f0d-9c91-f78aa993603c",
+      "label": "send welcome letter",
+      "direction": "unidirectional",
+      "criticality": "required",
+      "contentHash": "e32d3b1ccd78de382885a7b100845baab6b1f2d309072fc29f048ab06e994453"
+    },
+    {
+      "id": "90e5da38-a83d-4739-9f23-4bebfcf14ce3",
+      "source": "d9e456a0-b079-4914-b8fc-f48f42fa7a7f",
+      "target": "4f626e62-3cc8-445a-9fbd-cb36407ad91e",
+      "contractId": "bf89f832-e413-46b0-b8ec-0fde4e6885cd",
+      "label": "authorize request",
+      "direction": "bidirectional",
+      "criticality": "required",
+      "contentHash": "75369707aeb42abc44592a3f19f8461a91e172293e9896d9105d73220c2c99ff"
+    },
+    {
+      "id": "98d0b8f1-c070-491a-bf2d-d64c5379010b",
+      "source": "c424e85a-6584-4bb7-a48e-2175ebc6a41b",
+      "target": "893dd4cf-9fd3-4c98-9de2-33b57dacad7e",
+      "contractId": "bd261973-438e-4074-953c-dc47040d00c6",
+      "label": "enqueue ready step",
+      "direction": "unidirectional",
+      "criticality": "required",
+      "contentHash": "f4f4f1036e862b339f7bdac3ba1b46d37d2952f7532edb9b5489b6438dce3d86"
+    },
+    {
+      "id": "aee0d33c-b81c-4cb9-85ea-2b8bbb0d8094",
+      "source": "d9e456a0-b079-4914-b8fc-f48f42fa7a7f",
+      "target": "c424e85a-6584-4bb7-a48e-2175ebc6a41b",
+      "contractId": "10748578-3069-4860-acd7-db3448e9985a",
+      "label": "forward with IAP assertion",
+      "direction": "unidirectional",
+      "criticality": "required",
+      "contentHash": "a70870bc30e4c68298b4ba8ff2a591c90efc7c811207359076c2c339eac7d515"
+    },
+    {
+      "id": "b9bfbdd4-8c49-4132-abef-4ba1e0606d5d",
+      "source": "db8e5409-dc6f-4052-887a-7ba1dd5fb717",
+      "target": "1c81cf63-c51e-4b0e-b6ad-7d318332d2fe",
+      "contractId": "6d424a68-fc73-41d0-b753-e5129b42f98e",
+      "label": "create / update / delete users and memberships",
+      "direction": "bidirectional",
+      "criticality": "required",
+      "contentHash": "81e13b39664bbccd7c10299e877b20ca3a16af4b735893c1ef35017048420397"
+    },
+    {
+      "id": "d05f7072-8e08-4d99-8fe1-0aa31c291545",
+      "source": "9af301aa-2191-4532-9871-82179a5500c1",
+      "target": "c424e85a-6584-4bb7-a48e-2175ebc6a41b",
+      "contractId": "bc06a1f8-4548-4d5b-9cd2-22dd2cc1451e",
+      "label": "operator API",
+      "direction": "bidirectional",
+      "criticality": "required",
+      "contentHash": "13c7f15595b3ac3082a7a610a79b6f093381342d490455a736d417864bb7ccbd"
+    },
+    {
+      "id": "f28a64ac-a95d-4cd5-9189-c577f310002f",
+      "source": "c424e85a-6584-4bb7-a48e-2175ebc6a41b",
+      "target": "268a782a-d132-4d5e-8f24-c4a969ad7f17",
+      "contractId": "2d1ac511-c493-4853-a06d-791039d9d125",
+      "label": "read/write requests, approvals, audit",
+      "direction": "bidirectional",
+      "criticality": "required",
+      "contentHash": "fc62bb15cdb2ddf135064e20fd5b709b0d86757713e59fb8f3eeecea7c9ad934"
+    },
+    {
+      "id": "fd727505-31d1-4b2f-9671-db28f4bcacb0",
+      "source": "c424e85a-6584-4bb7-a48e-2175ebc6a41b",
+      "target": "db8e5409-dc6f-4052-887a-7ba1dd5fb717",
+      "contractId": "c0c560b0-7381-44d7-ad17-16b9c9880213",
+      "label": "directory lookup (read-only, OIDC)",
+      "direction": "bidirectional",
+      "criticality": "required",
+      "contentHash": "e350009298fa2c90903f4285df610dec54e0ecfd60d6a521b58b94c8e1a3abb5"
+    }
+  ],
+  "contracts": [
+    {
+      "id": "10748578-3069-4860-acd7-db3448e9985a",
+      "kind": "rest",
+      "name": "IAP-Protected HTTPS Ingress",
+      "transport": "http",
+      "schemaHash": "68ddabb25a7c32168877b989d95dfaa901e53af4f5effda80a5ab84a49e5f6b7",
+      "contentHash": "241c8dc518be3a8863189d16c528aa126ee9aa9bca28315e2a116480b8d92b13"
+    },
+    {
+      "id": "2d1ac511-c493-4853-a06d-791039d9d125",
+      "kind": "nosql",
+      "name": "Lifecycle State Store",
+      "transport": "grpc",
+      "schemaHash": "e90dba2d06d1e77f512dda11b135488905137e3b7a8a0b902f6ce30e589a09fb",
+      "contentHash": "3e83db20a93b99b0c8d13ead2f99254b50943126b915c2b14a24ae60a96d0dd4"
+    },
+    {
+      "id": "549c47dd-706d-415b-9ecb-540e7abcba87",
+      "kind": "dependency",
+      "name": "Audit Log Sink",
+      "schemaHash": "4fec97139264670b63df1633d2ebe99c2712ad598020a8caff07795cd9c24ebb",
+      "contentHash": "0890a350bd2bb632595529eeaaa646f4f859bbbb88b65f8bb5d001f07bd5916f"
+    },
+    {
+      "id": "5f755698-2229-4e06-b396-4951dcde0310",
+      "kind": "dependency",
+      "name": "Secret Manager Access",
+      "schemaHash": "fbb095294b917f944af7bded6981a54539732e81616f1115c0b73779745cdf50",
+      "contentHash": "122ec443bc86def465361bcba36d8148a514d17e8abdca40d7f67ff7dafcb088"
+    },
+    {
+      "id": "64630b22-a7d6-481a-b1e0-943b2818a1b5",
+      "kind": "rest",
+      "name": "Step Execution Dispatch",
+      "transport": "http",
+      "specFormat": "openapi",
+      "schemaHash": "785a475c9dd887f93be011e0f3160f1e4305a6812c22b11a835425b2c6b65f87",
+      "contentHash": "069c73e36ed4d7ed44e4136165493f1fbe1deef092dfcc6ed456eb143b3da578"
+    },
+    {
+      "id": "6d424a68-fc73-41d0-b753-e5129b42f98e",
+      "kind": "rest",
+      "name": "Google Admin SDK Directory API",
+      "transport": "http",
+      "specFormat": "openapi",
+      "schemaHash": "87db262c75d5259703f811aaba2a9905a5c8612df82f550e4b93f4dd1c78d9b3",
+      "contentHash": "ffcf25740ee2e402b2096fecf9a9353ed672f60d8a6ae86d7ea35fd8f7a1832e"
+    },
+    {
+      "id": "bc06a1f8-4548-4d5b-9cd2-22dd2cc1451e",
+      "kind": "rest",
+      "name": "Lifecycle Operator API",
+      "transport": "http",
+      "specFormat": "openapi",
+      "schemaHash": "bcd3ea9c8044da9a7ed636b6bbaf04a8c84d494e132125a92709cef77106865b",
+      "contentHash": "435134f330d369096f27d11f21c8e9d1633716d5a59862b13ff38b6165ce0faf"
+    },
+    {
+      "id": "bd261973-438e-4074-953c-dc47040d00c6",
+      "kind": "rest",
+      "name": "Step Task Enqueue",
+      "transport": "http",
+      "schemaHash": "ac95629867fe0ecc2773b0bba3110b2ba48c6dadaeb46d5b57bd14184de6e1a3",
+      "contentHash": "302a24fad310793ae2dad39288ee89c8c52261368de623a8e5d792e12c3ae53b"
+    },
+    {
+      "id": "bf89f832-e413-46b0-b8ec-0fde4e6885cd",
+      "kind": "rest",
+      "name": "IAP Authorization Check",
+      "transport": "http",
+      "schemaHash": "3d471230aaffb96d8722aa6e3cc7be82e794c5f8bf710f0b255b8d033874fe8f",
+      "contentHash": "c8caad09f66eec3a5a120258c8ff511e15c19b50a78fb8b96c31652e377c6c38"
+    },
+    {
+      "id": "c0c560b0-7381-44d7-ad17-16b9c9880213",
+      "kind": "rest",
+      "name": "Directory Lookup (read-only)",
+      "transport": "http",
+      "specFormat": "openapi",
+      "schemaHash": "52284c90565833172c630042a24f86889cdad1d738634e1453ea57cd01a5bd14",
+      "contentHash": "e62827fe3fed0ce6df148b160a434c898df194ea2fe5506e07b58f6a20f71f0f"
+    },
+    {
+      "id": "d75b233d-3dac-41cf-9f66-353f731be545",
+      "kind": "rest",
+      "name": "IAP Assertion Verification (JWK Set)",
+      "transport": "http",
+      "specFormat": "oauth_oidc",
+      "schemaHash": "867f748ce3b02cb2cb1a26764783ce968d32dfbb164464b74f3deffc067d54f8",
+      "contentHash": "f96a1427f4837edcb5ce8905e3761a73be8d01393f8e904655eba4aa50c7865b"
+    },
+    {
+      "id": "d9f6025d-0d89-4f0d-9c91-f78aa993603c",
+      "kind": "rest",
+      "name": "Welcome Letter Delivery",
+      "transport": "http",
+      "schemaHash": "355d2ab982ed5a84d3563b978f71747791efe839bb3ccc08946ea1c613a93ba2",
+      "contentHash": "1e94c1186ad6a3d60f75996f45ce88cbf0b06cced021d8482e4c13a9893cc835"
+    }
+  ],
+  "artifacts": [
+    {
+      "id": "0617a178-7a8d-4783-bfa2-e9becddec7f8",
+      "nodeId": "d9e456a0-b079-4914-b8fc-f48f42fa7a7f",
+      "path": ".nodespec/tasks/external-https-load-balancer-d9e456a0.task.md",
+      "kind": "task",
+      "contentHash": "000000004ade8f87"
+    },
+    {
+      "id": "1c91b278-14fc-4343-aa3c-49c182dc3a6f",
+      "nodeId": "268a782a-d132-4d5e-8f24-c4a969ad7f17",
+      "path": ".nodespec/tasks/firestore-lifecycle-state-and-audit-268a782a.task.md",
+      "kind": "task",
+      "contentHash": "000000002ed79ccf"
+    },
+    {
+      "id": "373bb3c3-5923-4647-9305-878740703da0",
+      "nodeId": "ed7660ce-7057-4706-90f0-ff653f6ff7e8",
+      "path": ".nodespec/tasks/secret-manager-ed7660ce.task.md",
+      "kind": "task",
+      "contentHash": "0000000023265dc4"
+    },
+    {
+      "id": "5fd17eaa-fbe2-43fa-83a2-ae296012fb27",
+      "nodeId": "e730eb23-4b12-43a4-b260-8758b3025114",
+      "path": ".nodespec/tasks/cloud-run-lifecycle-worker-e730eb23.task.md",
+      "kind": "task",
+      "contentHash": "000000000d687d5e"
+    },
+    {
+      "id": "7c0bb8ce-04db-4651-b75a-5bad75c9ffc1",
+      "nodeId": "e601237a-48ea-4941-95f4-6fb53c7c6736",
+      "path": ".nodespec/tasks/email-delivery-service-e601237a.task.md",
+      "kind": "task",
+      "contentHash": "000000007c555ea4"
+    },
+    {
+      "id": "7c7eeedf-75e9-4ca5-8428-e9d724a1b94a",
+      "nodeId": "4f626e62-3cc8-445a-9fbd-cb36407ad91e",
+      "path": ".nodespec/tasks/identity-aware-proxy-4f626e62.task.md",
+      "kind": "task",
+      "contentHash": "0000000023af8c46"
+    },
+    {
+      "id": "84fe5a85-b4d5-42a6-95f6-3860624baece",
+      "nodeId": "893dd4cf-9fd3-4c98-9de2-33b57dacad7e",
+      "path": ".nodespec/tasks/cloud-tasks-lifecycle-steps-893dd4cf.task.md",
+      "kind": "task",
+      "contentHash": "0000000077d4329d"
+    },
+    {
+      "id": "968b0da4-033c-442e-8156-3bd27cff349c",
+      "nodeId": "1c81cf63-c51e-4b0e-b6ad-7d318332d2fe",
+      "path": ".nodespec/tasks/google-workspace-admin-sdk-directory-1c81cf63.task.md",
+      "kind": "task",
+      "contentHash": "00000000267c573d"
+    },
+    {
+      "id": "ceeaf1e6-c9fc-478a-8720-e9169693274c",
+      "nodeId": "c424e85a-6584-4bb7-a48e-2175ebc6a41b",
+      "path": ".nodespec/tasks/lifecycle-api-service-c424e85a.task.md",
+      "kind": "task",
+      "contentHash": "000000002eb134eb"
+    },
+    {
+      "id": "dc658fc7-51f2-4753-9b4e-df6fbd47599f",
+      "nodeId": "6da6f1e9-97b5-4c0b-8ba5-0b81f3bc5e4b",
+      "path": ".nodespec/tasks/cloud-logging-audit-sink-6da6f1e9.task.md",
+      "kind": "task",
+      "contentHash": "0000000002d3546e"
+    },
+    {
+      "id": "e450c6c4-8770-4557-8151-154e18ea979d",
+      "nodeId": "db8e5409-dc6f-4052-887a-7ba1dd5fb717",
+      "path": ".nodespec/tasks/lifecycle-step-executor-db8e5409.task.md",
+      "kind": "task",
+      "contentHash": "0000000047459154"
+    },
+    {
+      "id": "e9153a25-3a71-4ecd-a3fe-77950e450ea4",
+      "nodeId": "565b92bd-2c2c-4a82-be62-b691decdbadf",
+      "path": ".nodespec/tasks/dark-wolf-gcp-project-565b92bd.task.md",
+      "kind": "task",
+      "contentHash": "000000002f05157e"
+    },
+    {
+      "id": "edbc5de9-85f2-456f-a35c-fbfd3d3cf1db",
+      "nodeId": "a7ee091d-3d58-4624-96ed-8292a596f6d1",
+      "path": ".nodespec/tasks/cloud-run-lifecycle-api-a7ee091d.task.md",
+      "kind": "task",
+      "contentHash": "000000007da11ab7"
+    },
+    {
+      "id": "edcbb588-8e46-425b-8a45-c50c30e59fbb",
+      "nodeId": "9af301aa-2191-4532-9871-82179a5500c1",
+      "path": ".nodespec/tasks/operator-console-ui-9af301aa.task.md",
+      "kind": "task",
+      "contentHash": "0000000056331e95"
+    }
+  ]
+}

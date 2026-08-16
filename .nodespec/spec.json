@@ -1,0 +1,702 @@
+{
+  "specVersion": 1,
+  "generatedBy": "nodespec",
+  "specHash": "f77413e37a7e91cd6ed6612736e682ed5b319dc7363f98025e25a306ae034b1d",
+  "vision": "Company wants an application that supports the full user lifecycle in four phases:\n\n1. User creation, including assignment of attributes and groups\n2. Notifying the user of their new account with a welcome letter and initial password setting instructions\n3. Updating a user's roles/attributes over time\n4. Account deletion\n\nScope and constraints as stated by the customer:\n\n- The application should only worry about one IDP for now — Google Workspace.\n- All of the steps in account creation must be stateful and have optional two-party approval features.\n- The application should run serverless — Cloud Run on GCP.\n- Because it uses Google Workspace, the app must include instructions on how to configure a GCP service account to have admin permissions in Workspace WITHOUT using Domain-Wide Delegation.\n- The serverless application must be protected by IAP, and must include code to verify the IAP JWT header so the security controls cannot be bypassed by reaching the service directly.\n\nThe product is an internal, operator-facing lifecycle console: an IAP-protected web UI plus an API where a requester drafts a lifecycle action, an optional second approver signs off, and a durable state machine executes the Workspace changes step by step — every step resumable, auditable, and idempotent, so a partially-completed onboarding is never left in an unknown state.",
+  "constraints": [],
+  "preferences": {},
+  "requirements": [
+    {
+      "requirementId": "REQ-001",
+      "name": "Lifecycle request creation and step-plan persistence",
+      "description": "Owned by the Lifecycle API Service. Every lifecycle action (create, notify, update, delete) is admitted as a persisted LifecycleRequest plus one durable step document per step in the phase's step plan, written before any Workspace call is made. Each step record carries its own status (pending, awaiting_approval, ready, running, succeeded, failed, skipped), attempt counter, input snapshot, output, error, and a stable idempotency key. The API also owns the concurrency guard: a target user may have only one non-terminal request at a time, so two operators cannot drive conflicting changes against the same account. Durable execution of these steps is REQ-016, owned by the step executor.",
+      "category": "functional",
+      "acceptanceCriteria": [
+        "Creating a lifecycle request persists a LifecycleRequest document plus one step document per step in the phase's step plan, all with status 'pending' and attempt=0, before any Workspace call is made",
+        "Submitting a request for a target user that already has a non-terminal request returns 409 and creates no second request, so two operators cannot drive conflicting changes against the same account concurrently",
+        "Each persisted step carries a stable idempotency key derived from requestId, stepId and an attempt-invariant payload hash, distinct across requests and steps",
+        "The submitted payload is validated against the phase schema and rejected with 400 before any document is persisted",
+        "The full step history of a request (status, attempts, timestamps, actor, error) is retrievable through a single API call for operator inspection",
+        "The first step of a newly created request is either dispatched or halted in 'awaiting_approval' according to the policy snapshotted onto the request",
+        "When the first step is halted in 'awaiting_approval', an approver-notification task is enqueued in the same transaction as the halt, so a halt can never be committed without the notification being scheduled (REQ-032 performs the send)"
+      ],
+      "contentHash": "629ac3df59a42b56f2ed9069b61197d0c43162c53b4e8558e0fdb0599c7238b7"
+    },
+    {
+      "requirementId": "REQ-002",
+      "name": "Optional two-party approval on any step",
+      "description": "Any step in any lifecycle phase can be marked as requiring two-party approval by policy. When a step requires approval, execution halts at that step in status 'awaiting_approval' until a second, distinct human identity approves it. The requester may never approve their own request (enforced server-side against the IAP-verified identity, not a client-supplied field). Approval policy is configuration, not code: a policy document declares, per phase and per step, whether approval is required, which operator role may approve, and an optional expiry after which the pending approval auto-rejects. Approvals and rejections are recorded with the approver identity, timestamp, and free-text justification. Rejecting a step terminates the request in status 'rejected' and dispatches no further steps.",
+      "category": "functional",
+      "acceptanceCriteria": [
+        "A step whose policy sets requiresApproval=true halts in status 'awaiting_approval' and dispatches no Workspace call until approved",
+        "An approval attempt by the same identity that created the request is rejected with 403 and the step remains in 'awaiting_approval'",
+        "An approval by a distinct identity holding the required approver role transitions the step to 'ready' and dispatches its execution task",
+        "A rejection transitions the request to 'rejected', records approver identity, timestamp and justification, and dispatches no further steps",
+        "An approval or rejection submitted with an empty or whitespace-only justification is refused by the server with 400, independently of any client-side check",
+        "Approval policy is read from configuration at request-creation time and snapshotted onto the request, so a later policy edit cannot retroactively change an in-flight request's approval requirements",
+        "When a step enters 'awaiting_approval' with an expiry configured, a Cloud Task is scheduled for the expiry instant; if the approval is still pending when that task fires the request terminates in 'rejected' with reason 'approval_expired', and if the step was already decided the task is a no-op",
+        "With requiresApproval=false for every step, a request runs end to end with no human interaction beyond submission"
+      ],
+      "contentHash": "bb3888cc579e5144b21ee10130fb1acd4c141c53bd147e06102a2af20c9cc0c9"
+    },
+    {
+      "requirementId": "REQ-003",
+      "name": "Phase 1 — User creation with attributes and group assignment",
+      "description": "The onboarding phase creates a Google Workspace user and brings it to a fully-attributed, fully-grouped state. Its step plan is: validate request payload against the schema and against Workspace (primary email not already taken); create the user via Admin SDK Directory users.insert with a generated one-time password and changePasswordAtNextLogin=true; apply attributes (name, org unit path, employee title/department/manager via organizations and relations, custom schema fields); assign each requested group via members.insert; verify by reading the user and its group memberships back and comparing to the intended state. Group assignment is per-group so one failing group does not lose the others already assigned.\n\nGeneration and protection of the one-time password belong to REQ-019: it is persisted as ciphertext under the credential data-encryption key with a Firestore TTL, so that the requesting operator can retrieve it exactly once (REQ-017). This phase's obligation is narrower — the plaintext must never appear in a Firestore document, an API response, or a log entry, and must be discarded from memory once REQ-019's ciphertext is committed.",
+      "category": "functional",
+      "acceptanceCriteria": [
+        "Submitting a valid creation request produces a Workspace user whose primary email, given/family name, and org unit path match the request payload",
+        "Every group listed in the request appears in the created user's membership list after the phase completes",
+        "A creation request for a primary email that already exists in the domain fails validation before any mutation is attempted and the request terminates in 'failed' with a typed AlreadyExists error",
+        "The user is created with changePasswordAtNextLogin=true and a password meeting the configured generation policy",
+        "If one group assignment fails, the successfully assigned groups are retained, the failing group is reported in the step error, and the request does not report success",
+        "The verification step reads the user and memberships back from Workspace and fails the request if the observed state does not match the intended state",
+        "The PLAINTEXT initial password never appears in any Firestore document, API response body, or log entry — only the ciphertext written by REQ-019 is persisted, and a test provisions a user then greps the emitted records for the issued value"
+      ],
+      "contentHash": "986ab54bb370e4cc7ea3419d4df280966b43d6896de800cc622a10b2e357ce6b"
+    },
+    {
+      "requirementId": "REQ-004",
+      "name": "Phase 2 — Welcome letter delivery",
+      "description": "Owned by the Lifecycle Step Executor. After a user is created, the worker notifies them at an out-of-band address (personal or manager-relayed) — the new mailbox is unreachable until the account's first sign-in, so delivery must not depend on it. The letter is rendered from a versioned template and carries instructions for setting the initial password through Google's own first-sign-in flow: the account is created with changePasswordAtNextLogin=true, so Google itself forces the reset. The application hosts no password-setting page and no claim link, which is what keeps every route in the system behind IAP (REQ-007) — a person being onboarded is not an IAP principal and never interacts with this application at all. The letter carries no credential of any kind.\n\nDelivery is idempotent: retrying the notification step never sends a second letter for the same request. The step records whatever the chosen provider reports — submission acceptance always, and asynchronous bounce or delivery events only if the provider emits them, which is one of the consequences REQ-028's provider decision turns on. Where bounces are not observable, that limitation is recorded rather than papered over, because the letter is the only channel reaching the new hire.\n\nGenerating and protecting the one-time password is REQ-019; the operator's retrieval of it is REQ-017.",
+      "category": "functional",
+      "acceptanceCriteria": [
+        "The notification step renders the welcome letter from the configured template with the user's name, primary email, and password-setup instructions substituted",
+        "The letter is delivered to the alternate/notification address supplied on the request, never to the newly created primary mailbox",
+        "Retrying the notification step after a successful send does not send a second letter — the step observes its recorded delivery id and returns success",
+        "The letter body contains no password, token, or link that would grant access, verified by rendering the template with a populated credential context and asserting none of it appears in the output",
+        "A submission rejected by the provider records the provider error on the step and leaves the request resumable rather than silently succeeding",
+        "The provider's submission response and delivery id are persisted on the step, and where the provider emits asynchronous bounce events those outcomes are recorded against the same step",
+        "The delivery provider is reached through a single NotificationSender interface, so the provider choice is a configuration decision rather than a code change"
+      ],
+      "contentHash": "2fd7de1f97879ea595fcba3cd572119613ad35733ff74e790b4fdfc8c08baf7b"
+    },
+    {
+      "requirementId": "REQ-005",
+      "name": "Phase 3 — Role and attribute updates over time",
+      "description": "An existing user's attributes, org unit, and group memberships can be changed after onboarding. The update request is expressed as a desired-state diff: the operator submits the fields to change and the groups to add/remove, and the app computes the concrete change set against the user's live Workspace state at execution time. The computed diff is shown for approval before execution when the step requires approval, so the approver sees exactly what will change rather than a raw payload. Updates use Admin SDK users.update / users.patch and members.insert / members.delete, each group change as its own idempotent step so partial failure is recoverable. A change that would be a no-op against live state is recorded as 'skipped' rather than executed.\n\nRECORDED INTERPRETATION — what \"roles\" means. The customer's phase 3 asks to update \"a user's roles/attributes over time\". In Google Workspace \"role\" can mean two very different things: an access grouping (group membership), or a Workspace ADMIN role assigned through roleAssignments. This requirement reads it as the former, for three reasons.\n\nFirst, coherence: phase 1 grants groups at creation and phase 3 is the only phase that changes anything afterwards, so if \"roles\" excluded groups, group membership would be write-once — which no user-lifecycle tool can be, and which would leave the customer's own four phases unable to close.\n\nSecond, the scenario the phrase describes: \"over time\" is the mover case, someone changing team or job. In Workspace that is expressed as group membership plus org unit and job attributes. Administrative privilege is not what changes when a person moves teams.\n\nThird, and decisively, admin-role management is a privilege-escalation surface. A service account able to assign admin roles can grant itself — or anyone else — Super Admin. The customer explicitly refused Domain-Wide Delegation to keep this integration's blast radius small; handing the same integration the ability to mint administrators would undo that, and as a side effect of routine attribute updates rather than a deliberate decision.\n\nSo \"roles\" here means group memberships, together with the attributes that describe a role: job title, department, manager, and org unit path. Assigning or revoking WORKSPACE ADMIN roles is out of scope, and the custom admin role deliberately lacks the privilege (REQ-027). If Company does want admin-role management, it is an additive change — one additional scope, one additional privilege on the custom admin role, and an explicit acceptance of the escalation surface — and it should be a conversation, not an assumption inherited from an ambiguous word.",
+      "category": "functional",
+      "acceptanceCriteria": [
+        "Submitting an update request computes a diff against the user's live Workspace state and persists it on the request before execution",
+        "The rendered approval payload shows the before/after value of every changed attribute and every group being added or removed",
+        "Applying the update changes exactly the attributes and memberships in the diff and leaves all other user state untouched",
+        "Changing a user's role is expressed as group membership changes plus role-describing attributes — job title, department, manager and org unit path — and all of these are updatable through this phase",
+        "A requested change that already matches live state is recorded as step status 'skipped' and issues no Workspace call",
+        "Removing a group membership the user does not have is treated as already-satisfied ('skipped'), not as an error",
+        "If one group change fails, the other group changes that succeeded are retained and the failing change is reported on its own step",
+        "An update request targeting a non-existent or suspended-and-deleted user fails validation before any mutation",
+        "Workspace ADMIN role assignment is unreachable through any phase — a repository check finds no roleAssignments API call and no admin.directory.rolemanagement scope anywhere in the codebase or IaC"
+      ],
+      "contentHash": "06f6be8dcf8f99324424248e960b302cac52bf5c4041530b818be6d6697511f3"
+    },
+    {
+      "requirementId": "REQ-006",
+      "name": "Phase 4 — Account offboarding and deletion",
+      "description": "Offboarding is a deliberately staged, reversible-until-the-end phase: suspend the account (immediate access cut), revoke active sessions and application-specific passwords / OAuth tokens, remove group memberships, optionally transfer Drive ownership to a named successor, and only then delete the user via Admin SDK users.delete. Deletion is the irreversible step and therefore defaults to requiring two-party approval regardless of the surrounding policy. An optional hold period between suspension and deletion is supported, during which the request can be cancelled.\n\nCancellation is not merely a status change. The account is already suspended in Workspace by that point, so restoring it requires a Workspace mutation, and Workspace mutations only ever happen in the executor. Cancelling therefore appends a compensating 'unsuspend' step to the request and dispatches it; the request reaches 'cancelled' only once that step succeeds. A cancellation whose unsuspend step fails leaves the request in 'failed' with the account still suspended and the error recorded — visibly wrong rather than silently wrong, because an operator believing an account was restored when it was not is the dangerous outcome.\n\nThe deletion step is idempotent — a user already absent from the domain resolves the step as satisfied rather than failing.",
+      "category": "functional",
+      "acceptanceCriteria": [
+        "The offboarding step plan executes in order: suspend, revoke sessions/tokens, remove group memberships, optional data transfer, delete",
+        "Suspension takes effect before any destructive step runs, and a request halted after suspension leaves the account suspended but intact",
+        "The delete step defaults to requiresApproval=true and cannot be configured below two-party approval",
+        "Cancelling during the hold period appends a compensating 'unsuspend' step and dispatches it, rather than terminating the request directly",
+        "The request reaches 'cancelled' only after the unsuspend step succeeds and the account is observably active again in Workspace",
+        "A cancellation whose unsuspend step fails leaves the request in 'failed' with the account still suspended and the error recorded — never in 'cancelled'",
+        "A delete step targeting a user already absent from the domain resolves as satisfied (idempotent) rather than failing",
+        "When a Drive data-transfer successor is specified, the transfer is initiated and confirmed complete before the delete step is dispatched",
+        "Every offboarding step, including the compensating unsuspend, records the affected user, actor, and outcome to the audit log"
+      ],
+      "contentHash": "e415fa01d79c85e6edbf48c087a6fd9b5cad4d0b7db5b92a9c06c303f885d3b8"
+    },
+    {
+      "requirementId": "REQ-007",
+      "name": "IAP protection with server-side JWT assertion verification",
+      "description": "The customer's constraint is that the serverless application is protected by IAP and verifies the JWT header so the security controls cannot be bypassed. This requirement states exactly how far that protection reaches across the deployed services, so the coverage is auditable rather than assumed. There are no exceptions: the system exposes no unauthenticated route of any kind.\n\nOPERATOR SURFACE (lifecycle-api, serving the console and the operator API): the only load-balancer backend service in the system. IAP is enabled on it, and the application independently verifies IAP's signed assertion on every request rather than trusting the perimeter. Middleware reads the x-goog-iap-jwt-assertion header, verifies the ES256 signature against Google's IAP public JWK set (cached with refresh on unknown kid), and checks issuer == https://cloud.google.com/iap, the exact expected audience string /projects/PROJECT_NUMBER/global/backendServices/BACKEND_SERVICE_ID, and exp/iat within tolerance. The verified email and sub claims become the request identity; no client-supplied header or body field may ever set identity. A request without a valid assertion is rejected with 401 before any route handler runs — fail closed.\n\nWORKER (lifecycle-worker): not IAP-protected, and deliberately so — IAP is a control on human access, and the worker has no human ingress path. It is not attached to the load balancer at all. It is protected by Cloud Run ingress restricted to internal-and-cloud-load-balancing, run.invoker granted only to the Cloud Tasks queue's invoker service account, and a required OIDC token on every request. This is stated explicitly so that \"not behind IAP\" is a documented, tested property rather than something the customer discovers.\n\nAcross both services, Cloud Run ingress is restricted to internal-and-cloud-load-balancing and run.invoker is granted only to the appropriate caller identity, so a direct *.run.app request cannot reach either of them.\n\nThere is no end-user-facing surface anywhere in this system. Users being onboarded never interact with the application; they receive a letter and use Google's own sign-in and password-change flow. That is what allows total IAP coverage, and any future feature that would require an unauthenticated route is a change to this requirement and needs the customer's agreement first.",
+      "category": "technical",
+      "acceptanceCriteria": [
+        "Every operator-facing route rejects a request carrying no x-goog-iap-jwt-assertion header with 401, and no route handler is invoked",
+        "A request with a syntactically valid but wrongly-signed assertion is rejected with 401",
+        "A request whose assertion carries a different audience string than the configured backend-service audience is rejected with 401",
+        "A request whose assertion carries an issuer other than https://cloud.google.com/iap is rejected with 401",
+        "An expired assertion (exp in the past beyond the configured skew) is rejected with 401",
+        "A valid assertion populates the request identity from the token's email and sub claims, and a client-supplied identity header or body field is ignored and never overrides it",
+        "An unknown key id triggers a JWK set refresh and the request succeeds if the refreshed set contains the key; a still-unknown kid is rejected with 401",
+        "Verification failures are logged with the reason and source IP but never log the raw assertion",
+        "Each deployed Cloud Run service rejects a direct request to its *.run.app URL, proving the load balancer is the only ingress path into the system",
+        "The lifecycle-worker service admits exactly two caller identities, each confined to its own route class: the Cloud Tasks queue invoker on /tasks/*, and the lifecycle-api service account on /lookup/*. A token issued to either identity is rejected with 401 on the other's routes, and an unauthenticated request is rejected on both",
+        "Every load-balancer backend service in the deployment has IAP enabled — asserted against the committed Terraform, so a backend added without IAP fails the check",
+        "The deployed system exposes no unauthenticated route: an unauthenticated request to every path in the application's route table is rejected, enumerated as a test rather than spot-checked",
+        "IAP is enabled on the operator backend service and access is granted only to the intended operator group in the OAuth/IAM configuration"
+      ],
+      "contentHash": "7617ca9d82746cc1136726c75876c22b7f36e73bf1ebc194bea732b47ddf86ed"
+    },
+    {
+      "requirementId": "REQ-008",
+      "name": "Workspace admin access without Domain-Wide Delegation",
+      "description": "The app authenticates to the Google Workspace Admin SDK as the service account itself, holding a directly-assigned Workspace admin role — it never impersonates a human administrator and Domain-Wide Delegation is not configured anywhere in the setup. At runtime the app mints its own access token from the Cloud Run metadata server for the admin.directory scopes and calls the Directory API directly, with no 'subject' impersonation parameter and no downloaded service-account key. This requirement owns the APPLICATION-SIDE proof that no impersonation and no delegation exist in the code path; the tenant-side configuration that grants the role, and the setup guide documenting it, are REQ-027.",
+      "category": "technical",
+      "acceptanceCriteria": [
+        "The Directory API client is constructed from Application Default Credentials with no 'subject'/impersonation parameter anywhere in the code path",
+        "No service-account JSON key file is referenced, mounted, or read by the application at any point",
+        "A repository-wide check finds no Domain-Wide Delegation configuration, no OAuth client-id delegation instructions, and no impersonation scopes in code or IaC",
+        "The Directory client requests only the least-privilege scopes the phases and the lookup surface actually use, enumerated in one place, and every requested scope has a named consumer — a scope with no consumer fails the check",
+        "A Workspace call that fails with 403 surfaces a typed AdminRoleNotGranted error naming the missing privilege, rather than a generic API failure",
+        "The Directory client is the single construction site for Workspace credentials — no phase handler and no lookup handler builds its own client, verified by a repository check",
+        "The Directory API is reachable only from the worker: a repository check finds no Directory client construction or Workspace scope reference in the API service"
+      ],
+      "contentHash": "90ecdc8ae474135126759421cecf1871d5c0b851bd2f7154a9770f23a77b5c6d"
+    },
+    {
+      "requirementId": "REQ-009",
+      "name": "Serverless deployment on Cloud Run with infrastructure as code",
+      "description": "The whole system runs serverless — no VMs, no clusters, no always-on instances. The API/console service and the step-executor worker are containerized and deployed as Cloud Run services that scale to zero; durable state is Firestore; step dispatch is Cloud Tasks; secrets are Secret Manager. The entire deployment — Cloud Run services and their runtime service accounts, the external HTTPS load balancer and serverless NEG, IAP enablement and its OAuth brand/client, Firestore database and indexes, Cloud Tasks queue with its retry configuration, Secret Manager secrets, and every IAM binding — is expressed as Terraform in the repository and applies cleanly to an empty project. The two Cloud Run services use separate runtime service accounts so the operator-facing surface and the Workspace-mutating surface do not share an identity.",
+      "category": "technical",
+      "acceptanceCriteria": [
+        "terraform validate and terraform plan succeed against the committed configuration with no manual resource references",
+        "The Terraform configuration provisions both Cloud Run services, the load balancer with serverless NEG, IAP, Firestore, the Cloud Tasks queue, and Secret Manager secrets",
+        "Both Cloud Run services are configured with min-instances 0 and scale to zero when idle",
+        "The API service and the worker service are bound to distinct runtime service accounts, and only the worker's identity holds the Workspace admin role",
+        "The Cloud Tasks queue targets the worker service with OIDC authentication, and the worker rejects task requests not carrying a valid OIDC token from the queue's service account",
+        "No resource in the deployment is a VM, managed instance group, or Kubernetes cluster",
+        "A from-scratch apply into an empty GCP project produces a reachable, IAP-protected endpoint following only the documented steps"
+      ],
+      "contentHash": "0131f2a37ce6189d67b841296d63b13684399be33237d1b6bde5e13b875f73cf"
+    },
+    {
+      "requirementId": "REQ-010",
+      "name": "Audit event model, operator-action auditing and log redaction",
+      "description": "Owned by the Lifecycle API Service, which also owns the shared audit and logging library both services use. Every operator action — approval, rejection, cancellation, resume, credential retrieval, role-binding change — and every authorization failure writes an append-only audit event carrying event id, request id, step id, actor identity (from the verified IAP assertion, or the system principal for automated steps), action, before/after state, target user, outcome, and timestamp. Audit events are written in the same Firestore transaction as the state change they describe.\n\nAppend-only in Firestore is enforced by the data access layer, which exposes no update or delete path for the audit collection. Note explicitly that Firestore security rules do NOT apply here, because all access is server-side through Admin SDK credentials which bypass rules entirely, and Firestore IAM is database-scoped rather than per-collection, so neither is a real control. Tamper-evident retention is REQ-018. Worker-side transition auditing is carried by REQ-016.\n\nThe redaction filter lives here too: secrets, passwords, ciphertext, and raw JWT assertions never reach any log sink.",
+      "category": "non-functional",
+      "acceptanceCriteria": [
+        "Each audit event records actor identity, action, target user, before/after state, outcome, and timestamp",
+        "Every operator action — approve, reject, cancel, resume, credential retrieval, role-binding change — writes an audit event in the same Firestore transaction as the state change it describes",
+        "Authorization failures (401 from JWT verification, 403 from self-approval or role checks) produce audit events",
+        "For an automated step the actor is recorded as the system principal together with the request's originating human requester, so machine actions remain attributable",
+        "The data access layer exposes no update or delete operation against the audit collection, verified by a test asserting the module's public surface and by a repository check for direct Firestore delete calls on that collection",
+        "A structured-logging redaction filter strips password, ciphertext, key, secret, token and assertion fields from every sink, verified by a test that logs a payload containing each and asserts on the emitted record",
+        "No audit payload contains a password, ciphertext, secret value, or raw JWT assertion",
+        "The complete audit history for a request is retrievable in chronological order through the API"
+      ],
+      "contentHash": "5edfd50bf2ee4544f40fef5d09240cddffae5ed4a624227bd0d2c14a2fca72b0"
+    },
+    {
+      "requirementId": "REQ-011",
+      "name": "Operator console for submitting, tracking, and approving requests",
+      "description": "A single-page operator console, served behind IAP by the same Cloud Run service that hosts the API, is the human surface for all four phases. It provides: guided forms for each phase (create, notify, update, delete) driven by the same schemas the API validates against; a request list filterable by phase, status, and target user; a request detail view showing the step timeline with per-step status, attempts, timestamps, and errors; an approvals inbox showing only requests the signed-in operator is eligible to approve, with the rendered diff and approve/reject controls requiring a justification; and a resume/cancel control for failed or held requests. The console derives the signed-in identity and available actions from the server's verified IAP identity — it never asserts identity itself, and hiding a control in the UI is never the only enforcement of a permission.",
+      "category": "functional",
+      "acceptanceCriteria": [
+        "Each phase has a form whose validation is generated from the same schema the API enforces, so client and server reject the same payloads",
+        "The target user is chosen through a search picker backed by directory lookup rather than typed free-hand, and the update form pre-fills from the selected user's current attributes and memberships",
+        "Groups and org unit are chosen from pickers listing what actually exists in the domain, so an invalid group or org unit cannot be submitted",
+        "The request list filters by phase, status, and target user and paginates without loading the full collection",
+        "The request detail view renders the ordered step timeline with each step's status, attempt count, timestamps, and error text",
+        "The approvals inbox shows only requests the signed-in operator is eligible to approve, and never shows their own requests",
+        "The approve and reject controls require a justification before submitting, and surface the server's 400 when one is missing rather than assuming the client check was sufficient",
+        "The console reads the signed-in identity from a server endpoint backed by the verified IAP assertion, not from any client-held token or claim",
+        "The console renders the computed diff for an update request showing before/after per changed attribute and per group change, so an approver sees what will change rather than a raw payload",
+        "A completed onboarding offers a resend action that lets the operator correct the notification address and choose whether to regenerate the credential, surfacing the CredentialUnavailable case rather than failing opaquely",
+        "A control the signed-in operator is not authorized to use is not rendered — but the console never relies on that as enforcement, which is proven server-side by REQ-012"
+      ],
+      "contentHash": "b09c88600d6255633ec989680e44213fc431b82c3163ed73376192c3c7913fd9"
+    },
+    {
+      "requirementId": "REQ-012",
+      "name": "Operator role model derived from verified identity",
+      "description": "IAP proves who the caller is; the application decides what they may do. Operator identities from the verified assertion are mapped to application roles — requester (may draft and submit requests), approver (may approve or reject requests they did not create), admin (may edit approval policy, cancel or resume any request, and read the full audit trail) — through a role binding store keyed on the verified email, supporting both individual and Google-group-based bindings. Every API route declares its required role and is checked server-side on every call. Role assignment changes are themselves audited, and an operator with no binding is authenticated but authorized for nothing.",
+      "category": "functional",
+      "acceptanceCriteria": [
+        "Every API route declares a required role, and a call from an identity lacking it is rejected with 403 before the handler executes",
+        "An authenticated identity with no role binding can read nothing and submit nothing — every route returns 403",
+        "The requester role can create and submit requests but cannot approve any request, including requests created by others",
+        "The approver role can approve requests created by others and is still refused approval of its own requests",
+        "The admin role can edit approval policy, cancel or resume any request, and read the full audit trail",
+        "Role binding changes write audit events recording the actor, the subject, and the before/after roles",
+        "Group-based bindings resolve to the same effective permissions as an equivalent individual binding",
+        "Every action the console offers is independently authorized server-side, verified by tests that call the API directly while bypassing the UI — hiding a control in the console is never the enforcement"
+      ],
+      "contentHash": "84eb1f381bd32e5ce462fadc445f3612bf7b8cdd46e9f52095c73fd1bc312426"
+    },
+    {
+      "requirementId": "REQ-013",
+      "name": "Idempotent, retry-safe Workspace mutations",
+      "description": "Because Cloud Tasks delivers at least once and Workspace calls can time out after the change has landed, every Workspace mutation must be safe to replay. Each step carries a stable idempotency key derived from (requestId, stepId, attempt-invariant payload hash). Before mutating, the executor reads the live Workspace state and short-circuits when the intended state already holds. Directory API errors are classified into retryable (429, 5xx, quota exhaustion — retried with exponential backoff and jitter, honoring Retry-After) and terminal (400, 403, 404 for a missing prerequisite — failing the step immediately without burning the retry budget). The Workspace client is the single choke point for this policy; no phase implements its own retry logic.",
+      "category": "non-functional",
+      "acceptanceCriteria": [
+        "Replaying any step of any phase against a Workspace state where the intended change already holds produces no additional mutation and resolves the step as satisfied",
+        "Each step's idempotency key is stable across attempts and distinct across requests and steps",
+        "A 429 or 5xx from the Directory API is retried with exponential backoff and jitter, honoring Retry-After when present",
+        "A 400 or 403 fails the step immediately and does not consume further retry attempts",
+        "A mutation that times out client-side but succeeded server-side is detected by the pre-mutation state read on the next attempt and not applied twice",
+        "All retry and classification behavior lives in the shared Workspace client, verified by the absence of retry logic in any phase handler",
+        "Concurrent duplicate task deliveries for the same step result in exactly one Workspace mutation"
+      ],
+      "contentHash": "5676d16127ce7b537515dcbe1da5fb55cdcad52e465c2e5034c731cffc6c9148"
+    },
+    {
+      "requirementId": "REQ-014",
+      "name": "Least-privilege runtime identities and secret provisioning",
+      "description": "Owned by the GCP Project node, as infrastructure-as-code. The system holds no long-lived credentials: Google API access uses Application Default Credentials from the Cloud Run metadata server, and no service-account key is ever downloaded, mounted, or committed. Two secrets exist in Secret Manager — the email delivery provider key (worker only) and the credential data-encryption key (worker encrypts, API service decrypts) — each granted to exactly the identities that need it, per-secret and never at project scope.\n\nEach Cloud Run service runs under its own runtime service account holding only the roles its responsibilities require. The separation that is real and enforceable is the Workspace admin role: the worker's identity holds it and the API service's identity does not, so a compromise of the operator-facing surface cannot mutate the directory. Note deliberately that Firestore access is NOT part of that separation — Firestore IAM is database-scoped rather than per-collection (the same fact recorded in REQ-010 and REQ-018), so both services necessarily share database-level access and any per-collection restriction would be fiction. The API service legitimately writes request and step documents at creation and on approval (REQ-001, REQ-002); the boundary between the two services' Firestore writes is enforced in the data access layer, not by IAM, and must not be claimed as an infrastructure control.\n\nCloud KMS envelope encryption is the hardening path for the encryption key if Company wants decrypt operations independently audited and key material never resident in a service process; it is a straight substitution and changes nothing else. In-code credential protection is REQ-019.",
+      "category": "technical",
+      "acceptanceCriteria": [
+        "No service-account key file, API key, or password literal exists anywhere in the repository, verified by a secret-scanning check in CI",
+        "Secrets are referenced by Secret Manager resource name in configuration and resolved at runtime, never inlined into an environment variable at build time",
+        "Each runtime service account is granted secretAccessor only on the specific secrets it needs, not at project scope: the worker on notification-smtp-credentials and credential-encryption-key, the API service on credential-encryption-key alone",
+        "The API service and the worker are bound to distinct runtime service accounts in the deployed configuration",
+        "The worker's runtime identity is the only one holding the Workspace admin role, and the API service's identity holds no Workspace admin role — verified by attempting a Directory API call with the API service's identity and observing it refused",
+        "Rotating a secret version is picked up without redeploying the service",
+        "The deployment claims no per-collection Firestore IAM restriction anywhere, since Firestore IAM is database-scoped — a repository check finds no IAM binding or comment asserting collection-level Firestore permissions",
+        "The two long-lived secrets are the only ones in the deployment, and each carries a recorded justification and removal path — notification-smtp-credentials is removable by the relay IP-allowlisting hardening path (REQ-028), credential-encryption-key by Cloud KMS envelope encryption"
+      ],
+      "contentHash": "6153637822e5e9940f96ce4f927632268bb9f7e5806cad0adb15139d60165c26"
+    },
+    {
+      "requirementId": "REQ-015",
+      "name": "Deployment, configuration, and operations documentation",
+      "description": "The deliverable includes documentation sufficient for an engineer at Company who has never seen the repository to stand the system up and run it. This requirement owns the documentation SET — that each document exists, is versioned against the system it describes, and is verified against a real deployment before release. Where another requirement owns a document's content, this one does not restate it: docs/workspace-admin-setup.md is specified by REQ-027, and the approval-policy knobs by REQ-002. Required documents: the Workspace admin configuration guide; a GCP deployment guide covering project prerequisites, API enablement, Terraform apply, the IAP OAuth brand/client setup and the operator-access grant; an approval-policy reference with worked examples; an operations runbook covering stuck, resumed and cancelled requests and each step error class; and an architecture overview naming each component, the trust boundaries, and the data stored in each store.",
+      "category": "business",
+      "acceptanceCriteria": [
+        "Every required document exists at its documented path and states the system version it describes: workspace-admin-setup.md, deployment.md, approval-policy.md, runbook.md, architecture.md",
+        "docs/deployment.md covers project prerequisites, API enablement, Terraform apply, IAP OAuth brand/client setup, and granting operator access",
+        "docs/approval-policy.md documents every policy knob with a fully-automated example and a fully-two-party example",
+        "docs/runbook.md covers diagnosing a stuck request, resuming it, cancelling it (including that cancellation dispatches a compensating unsuspend step), and the meaning of each step error class",
+        "docs/architecture.md names every component, the trust boundaries, and what data each store holds — including that the credential record holds ciphertext rather than a hash, and why",
+        "The scope interpretation of the customer's word \"roles\" is documented for the customer to confirm or correct: that it is read as group membership plus role-describing attributes, that Workspace admin-role assignment is excluded, and that the exclusion exists because role-management privilege would let the service account mint Super Admins",
+        "An engineer new to the repository reaches a working, IAP-protected deployment following only these documents"
+      ],
+      "contentHash": "3c96c5d4fb7c7dbd19f4b915c1e32e64a7e01ee0d0f53cafe211cabd2a51b3ea"
+    },
+    {
+      "requirementId": "REQ-016",
+      "name": "Durable step execution, resumability and transition integrity",
+      "description": "Owned by the Lifecycle Step Executor. Steps admitted by REQ-001 are executed one per invocation, durably and exactly once in effect. State lives in Firestore, never in process memory, so a Cloud Run instance killed mid-step resumes from the last committed status on the next task delivery. Cloud Tasks delivers at least once, so every transition is performed inside a Firestore transaction that reads the current step status and refuses illegal transitions — a duplicate delivery observes a non-'ready' status and returns without side effects. Every transition writes its audit event in that same transaction, so a state change can never be recorded without its audit event or vice versa. On completion the executor evaluates the next step and either dispatches it or halts it in 'awaiting_approval' per the policy snapshotted onto the request.",
+      "category": "functional",
+      "acceptanceCriteria": [
+        "A request whose executing instance is terminated mid-step resumes from the last committed step status on the next task delivery, with no step executed twice and no step skipped",
+        "Delivering the same step task twice results in exactly one execution: the second delivery observes a non-'ready' status inside the transaction and returns without side effects",
+        "An illegal state transition (e.g. 'succeeded' -> 'running') is rejected by the transition guard and raises a typed InvalidTransition error rather than mutating state",
+        "Every step status transition writes its audit event in the same Firestore transaction as the transition, verified by a test that fails the transaction and observes neither the transition nor the audit event",
+        "A step that exhausts its retry budget lands in status 'failed' with the terminal error recorded, the parent request moves to 'failed', and no subsequent step is dispatched",
+        "On successful completion the executor dispatches the next step, or halts it in 'awaiting_approval' when the snapshotted policy requires approval",
+        "When the executor halts a step in 'awaiting_approval', an approver-notification task is enqueued in the same transaction as the halt, so a halt can never be committed without the notification being scheduled (REQ-032 performs the send)",
+        "The /tasks/execute-step route accepts a step task only when it carries a valid OIDC token issued to the Cloud Tasks queue invoker service account, and rejects unauthenticated requests, tokens issued to any other service account, and specifically tokens issued to the lifecycle-api identity that is admitted on the lookup routes"
+      ],
+      "contentHash": "512223b66bc6d8b0d8541f488c1fbecb45c35a1462af9aa496a7f74b2e4b6231"
+    },
+    {
+      "requirementId": "REQ-017",
+      "name": "One-time password retrieval by the requesting operator",
+      "description": "Owned by the Lifecycle API Service. Credential handoff is split-channel: the welcome letter carries no credential, and the generated one-time password is retrieved exactly once by the operator who created the request, through the IAP-protected console, then handed to the new hire out of band. Retrieval decrypts the stored ciphertext using the credential data-encryption key, returns the plaintext once, and destroys the ciphertext in the same transaction — so two concurrent retrievals yield exactly one success. Only the originating requester may retrieve it; any other operator, including an admin, is refused. This is the only path by which a credential leaves the system, and it terminates at an authenticated operator inside the perimeter — the person being onboarded never touches this application.",
+      "category": "functional",
+      "acceptanceCriteria": [
+        "The one-time password is returned only to the authenticated operator who created the request, verified against the IAP identity, and a retrieval attempt by any other operator returns 403",
+        "The one-time password can be retrieved exactly once; the ciphertext is destroyed on retrieval and a second attempt returns 410",
+        "Retrieval reads and clears the ciphertext inside a single Firestore transaction, so two concurrent retrievals yield exactly one success",
+        "A retrieval after the credential record's TTL has expired returns 410 with the ciphertext already removed",
+        "The decrypted plaintext appears only in the response body — never in a URL, a redirect target, or any log entry",
+        "Every retrieval attempt — success, wrong operator, second attempt, expired — produces an audit event naming the operator identity"
+      ],
+      "contentHash": "641f09c8cec6f257bdec1e0ee84456f9058c32d8d8281a97325ec0bc278cbbbc"
+    },
+    {
+      "requirementId": "REQ-018",
+      "name": "Tamper-evident audit retention",
+      "description": "Owned by the Cloud Logging node. Application-layer append-only discipline (REQ-010) is not by itself a tamper-evidence control: all Firestore access is server-side through Admin SDK credentials, which bypass security rules entirely, and Firestore IAM is database-scoped rather than per-collection. Genuine tamper-evidence therefore comes from the infrastructure. Every audit event is mirrored to a dedicated Cloud Logging bucket carrying a locked retention policy that no application runtime identity can shorten or delete within the retention window, and the log copy shares its eventId with the Firestore copy so the two can be reconciled. Any divergence between them is itself a detectable signal.",
+      "category": "non-functional",
+      "acceptanceCriteria": [
+        "Every audit event is mirrored to the dedicated Cloud Logging bucket with the same eventId, so the log copy can be reconciled against the Firestore copy",
+        "A reconciliation check over a sample window reports any audit event present in one store and absent from the other",
+        "No application runtime service account holds permission to delete log entries or shorten the bucket's retention policy, verified against the deployed IAM policy",
+        "The audit log bucket carries a locked retention policy, and the retention period is set to Company's stated compliance requirement rather than a default",
+        "An attempt to shorten or remove the retention policy using each application runtime identity is refused"
+      ],
+      "contentHash": "7090523d18ad7e2773c4b4000e1857d5b33a5e69d83eb298df53c659ab5f72d9"
+    },
+    {
+      "requirementId": "REQ-019",
+      "name": "Credential generation and encryption at rest",
+      "description": "Owned by the Lifecycle Step Executor. The worker generates the initial one-time password during Phase 1, holds it in memory for the shortest possible window, and persists it only as ciphertext encrypted under the credential data-encryption key from Secret Manager, alongside the key version used. Encryption is the correct primitive here rather than hashing: the operator must recover the actual value at retrieval (REQ-017), and a hash cannot be reversed — hashing is right for verifying a presented value, wrong for recovering a stored one. The credential record carries a Firestore TTL so an unretrieved password expires on its own. The plaintext never appears in a Firestore document, an API response from the worker, or any log entry.",
+      "category": "non-functional",
+      "acceptanceCriteria": [
+        "The generated password meets the configured generation policy and the user is created with changePasswordAtNextLogin=true",
+        "The one-time password is persisted only as ciphertext under the Secret Manager credential encryption key, never as plaintext and never as a hash, and a test asserts the stored field decrypts to the issued value",
+        "The persisted record carries the key version used, so a rotated key can still decrypt in-flight ciphertext or the drain procedure applies",
+        "The credential record carries a Firestore TTL and is removed on expiry without operator action",
+        "The generated plaintext password never appears in any Firestore document, any worker API response body, or any log entry, verified by a test that provisions a user and greps the emitted records",
+        "The plaintext is discarded from worker memory once the ciphertext is committed"
+      ],
+      "contentHash": "a2b30ffbe3fe1201b6cf6a40c7bfe67899378069b5c2d4007823961a323326fc"
+    },
+    {
+      "requirementId": "REQ-020",
+      "name": "Firestore database provisioning",
+      "description": "Owned by the Firestore node. Provisions the Native-mode database that holds all lifecycle state: location, the composite indexes the query patterns require, the TTL policy on credential handoffs, and backup/point-in-time recovery. Application behaviour against these collections belongs to REQ-001, REQ-016 and REQ-010; this requirement covers only the resources that must exist for those to work. Note that no security rules are provisioned deliberately — every client is server-side and authenticates with Admin SDK credentials, which bypass rules entirely, so rules would be a false control (see REQ-010).",
+      "category": "technical",
+      "acceptanceCriteria": [
+        "The database is provisioned in Native mode in the configured location, with the location recorded as a Terraform variable rather than hardcoded",
+        "Composite indexes exist for the documented query patterns: status+createdAt desc, targetUser+createdAt desc, phase+status, targetUser+status, and requestId+timestamp asc on audit events",
+        "A TTL policy is configured on the credentialHandoffs collection's expiresAt field, and an expired document is observably removed without application action",
+        "Point-in-time recovery or scheduled backup is enabled, with the retention window set as a variable",
+        "terraform plan reports no drift immediately after apply, confirming every index and policy is declared rather than console-created",
+        "No Firestore security rules file is deployed, and the absence is accompanied by the recorded rationale that server-side Admin SDK access bypasses rules"
+      ],
+      "contentHash": "131b87b6eb0999cc522a4f98fdcdcc3e28567b8d6014fdaf8372908642d86e7a"
+    },
+    {
+      "requirementId": "REQ-021",
+      "name": "Cloud Tasks queue provisioning",
+      "description": "Owned by the Cloud Tasks node. Provisions the lifecycle-steps queue that gives the state machine its durability: retry configuration, rate limits, and the OIDC identity used to authenticate dispatches to the worker. The queue's retry budget is what REQ-016 relies on for resumability, and its scheduled-task capability is what carries both the offboarding hold period (REQ-006) and approval expiry (REQ-002) — so those settings are load-bearing, not cosmetic defaults.",
+      "category": "technical",
+      "acceptanceCriteria": [
+        "The lifecycle-steps queue is provisioned with maxAttempts, minBackoff, maxBackoff and maxDoublings set as declared variables rather than provider defaults",
+        "The queue's rate limits (maxDispatchesPerSecond, maxConcurrentDispatches) are set below the Workspace Directory API quota so the queue cannot self-inflict 429s",
+        "A dedicated queue invoker service account is provisioned and used as the queue's dispatch identity — the run.invoker binding on the worker service is asserted by REQ-026",
+        "Tasks are dispatched with an OIDC token whose audience is the worker service URL",
+        "Scheduling a task with a future scheduleTime defers dispatch to that time, verified end to end, since the offboarding hold period and approval expiry both depend on it",
+        "The queue name and worker target URL are wired from Terraform outputs rather than hardcoded in application configuration"
+      ],
+      "contentHash": "9f14e1be84ec1c765b8e555726c50ed7d3d5e7ffbb92cf1b96de896065c822bb"
+    },
+    {
+      "requirementId": "REQ-022",
+      "name": "Secret Manager resource provisioning",
+      "description": "Owned by the Secret Manager node. Provisions the two secret resources the system needs — notification-smtp-credentials (the app password for the dedicated no-reply Workspace account used against the SMTP relay, REQ-028) and credential-encryption-key (protecting the one-time password between generation and operator retrieval) — with their replication policy and version lifecycle. The IAM bindings that scope who may read them, and the runtime identity separation they enforce, belong to REQ-014; this requirement covers the resources themselves and the hygiene around them, in particular that no secret value is ever written into Terraform state.",
+      "category": "technical",
+      "acceptanceCriteria": [
+        "Both secrets — notification-smtp-credentials and credential-encryption-key — are provisioned by name with an explicit replication policy rather than the provider default",
+        "No secret VALUE appears in Terraform configuration or state — secrets are created empty and populated out of band, verified by inspecting the state file for the known values",
+        "The credential data-encryption key is generated with sufficient entropy for the chosen cipher and its generation procedure is documented rather than ad hoc",
+        "Adding a new secret version does not require redeploying either Cloud Run service",
+        "A prior secret version remains accessible for at least the credential TTL window after rotation, so ciphertext written under the old version stays decryptable — or the rotation runbook documents an explicit drain step, and whichever is chosen is recorded as a decision",
+        "Secret resources carry labels identifying their owning service and purpose"
+      ],
+      "contentHash": "a5f1ca5c49219847dcc509b86131857b5e4f8f74d45fa2a0868f16758ca2532b"
+    },
+    {
+      "requirementId": "REQ-023",
+      "name": "Identity-Aware Proxy provisioning and access grant",
+      "description": "Owned by the Identity-Aware Proxy node. Provisions IAP on the operator backend service: the OAuth brand and client, the IAM grant that decides which humans may reach the application, and the backend-service audience string the application verifies against. REQ-007 owns the application-side verification code; this requirement owns the perimeter configuration that produces the assertion in the first place. The two must agree on the audience string, and a mismatch is the single most likely cause of a working deployment rejecting every request — so that agreement is asserted here rather than discovered at runtime.",
+      "category": "technical",
+      "acceptanceCriteria": [
+        "The OAuth brand and IAP client are provisioned, and the client id is surfaced as a Terraform output rather than copied by hand",
+        "roles/iap.httpsResourceAccessor is granted to the operator Google group only — not to individual users, and not to allAuthenticatedUsers",
+        "The backend-service audience string is emitted as a Terraform output and consumed by the API service as configuration, so the verifier and the perimeter cannot disagree",
+        "IAP is enabled on the operator backend service, and terraform plan reports no drift after apply",
+        "Removing a member from the operator group revokes their access without a redeploy",
+        "An account outside the operator group is refused at the perimeter and never reaches the application, confirmed against the deployed environment"
+      ],
+      "contentHash": "92e93f69142f648529f82fa5fa83c04ecfd5bead20887143f29a06ea6580d92d"
+    },
+    {
+      "requirementId": "REQ-024",
+      "name": "External HTTPS load balancer provisioning",
+      "description": "Owned by the External HTTPS Load Balancer node. Provisions the single ingress path into the system: the serverless NEG pointing at the lifecycle-api Cloud Run service, exactly one backend service, a Google-managed TLS certificate, and an HTTP-to-HTTPS redirect. The invariant this node must hold is that there is one backend and it has IAP enabled — the architecture briefly carried a second, unauthenticated backend and that was reverted to honour the customer's IAP constraint, so the count is asserted rather than assumed.",
+      "category": "technical",
+      "acceptanceCriteria": [
+        "A serverless NEG targets the lifecycle-api Cloud Run service and is attached to the backend service",
+        "Exactly one backend service exists in the deployment, and it has IAP enabled — asserted in Terraform so an added backend fails the check",
+        "A Google-managed TLS certificate is provisioned and attached, with the domain supplied as a variable",
+        "HTTP requests are redirected to HTTPS rather than served",
+        "The worker Cloud Run service is not attached to this load balancer, verified by asserting the backend set contains only the api service",
+        "The load balancer's service identity is the only principal granted run.invoker on the lifecycle-api service"
+      ],
+      "contentHash": "99f8c93073a721ab641a19e3cc4b03b79ecfc08cecb154dc239852ed1f960a77"
+    },
+    {
+      "requirementId": "REQ-025",
+      "name": "Cloud Run lifecycle-api service provisioning",
+      "description": "Owned by the Cloud Run: lifecycle-api node. Provisions the operator-facing service that hosts the API and serves the console SPA: container image reference, its own runtime service account, ingress restricted so the load balancer is the only reachable path, scale-to-zero, request concurrency and timeout, and the configuration it needs injected. This service's identity is deliberately the weaker of the two — no Workspace admin role, no step-document write access — and that separation is enforced here at provisioning time as well as asserted in REQ-014.",
+      "category": "technical",
+      "acceptanceCriteria": [
+        "The service is provisioned with ingress set to internal-and-cloud-load-balancing, so a direct *.run.app request fails at the platform",
+        "The service runs under its own runtime service account, distinct from the worker's",
+        "min-instances is 0 and the service scales to zero when idle",
+        "The IAP audience string, Firestore project, Cloud Tasks queue name and worker URL are injected as configuration from Terraform outputs, not hardcoded",
+        "Request timeout and concurrency are set explicitly rather than left at provider defaults",
+        "The container image is referenced by immutable digest rather than a mutable tag"
+      ],
+      "contentHash": "6251741d0c1866d69cfa3fb8773c8cf923a8b2ff93ebea93da613dfa1f497cb1"
+    },
+    {
+      "requirementId": "REQ-026",
+      "name": "Cloud Run lifecycle-worker service provisioning",
+      "description": "Owned by the Cloud Run: lifecycle-worker node. Provisions the step-executor service: container image, its own runtime service account — the only identity carrying the Workspace admin role — ingress restricted so only in-project callers can reach it, scale-to-zero, and a request timeout long enough for the slowest Workspace step. This service is not attached to the load balancer and is therefore not IAP-protected, which is deliberate and documented in REQ-007: it has no human ingress path at all.\n\nThe worker has two machine callers, and provisioning must grant exactly those two and no more: the Cloud Tasks queue invoker service account, which drives step execution, and the lifecycle-api runtime service account, which uses the read-only lookup routes (REQ-029). Granting run.invoker to both is an IAM-level grant that cannot distinguish routes, so the route-level confinement is enforced in the application (REQ-007, REQ-016, REQ-029) — this requirement's job is to keep the IAM grant list to exactly those two principals so nothing else can reach the service at all.",
+      "category": "technical",
+      "acceptanceCriteria": [
+        "The service is provisioned with ingress set to internal-and-cloud-load-balancing and is not attached to any load balancer backend",
+        "run.invoker on this service is granted to exactly two principals — the Cloud Tasks queue invoker service account and the lifecycle-api runtime service account — asserted in Terraform so a third principal fails the check",
+        "The service runs under its own runtime service account, which is the only identity holding the Workspace admin role",
+        "min-instances is 0 and the service scales to zero when idle",
+        "The request timeout exceeds the slowest expected Workspace step including its retry window, set as a declared variable rather than a default",
+        "The container image is referenced by immutable digest rather than a mutable tag"
+      ],
+      "contentHash": "393606ec532f2fae162568acc9cf18f23c2e68f8b363669b2d1b973ccc2ab33e"
+    },
+    {
+      "requirementId": "REQ-027",
+      "name": "Google Workspace tenant configuration for service-account admin access",
+      "description": "Owned by the Google Workspace node. This is the tenant-side configuration that makes the customer's no-Domain-Wide-Delegation constraint work, performed in the Workspace Admin console rather than in Terraform — Workspace admin roles are not a GCP resource. A custom admin role is created carrying only the privileges the four phases need, and it is assigned directly to the worker's runtime service account by email under Account > Admin roles > Assign service accounts. The service account then authenticates as itself and receives admin authority without impersonating any human and without any delegation configuration. REQ-008 owns the application-side proof that no impersonation happens; this requirement owns the tenant configuration and its verification, and is almost entirely manual by nature.\n\nThe privilege list is a ceiling, not a starting point. It deliberately EXCLUDES role management: a service account able to assign admin roles could grant itself or any other principal Super Admin, which would defeat the least-privilege posture the customer chose when they ruled out Domain-Wide Delegation. That exclusion is why REQ-005 reads the customer's word \"roles\" as group membership rather than admin role — see the interpretation recorded there. If admin-role management is later wanted, adding it is a deliberate decision with a named escalation consequence, not a quiet privilege addition.",
+      "category": "technical",
+      "acceptanceCriteria": [
+        "The Admin SDK API is enabled on the GCP project, declared in Terraform",
+        "A custom Workspace admin role exists carrying only: Users (create, read, update, delete), Groups (read and manage members), and Organizational Units (read) — no broader privilege is granted",
+        "The custom admin role does NOT carry any role-management privilege, verified by reviewing the role's privilege list in the Admin console — so the service account cannot assign admin roles to itself or anyone else",
+        "The custom role is assigned to the worker runtime service account by email under Account > Admin roles > Assign service accounts, and to no other principal",
+        "Domain-Wide Delegation is NOT configured for this service account — the Security > API controls > Domain-wide delegation list contains no entry for its client id",
+        "A read-only users.list call from the worker's identity succeeds against the tenant, proving the grant is live before any mutating phase is exercised",
+        "The exact console navigation path, privilege list and verification call are captured in docs/workspace-admin-setup.md so the setup is reproducible on a clean tenant"
+      ],
+      "contentHash": "f10fd1e9f0bca6ae9febbeaf729323e55da55162e035b286dd935ebbdc9dd032"
+    },
+    {
+      "requirementId": "REQ-028",
+      "name": "Email delivery via Google Workspace SMTP relay",
+      "description": "Owned by the Email Delivery Service node. RESOLVED: welcome letters are sent through the Google Workspace SMTP relay service (smtp-relay.gmail.com:587, STARTTLS), authenticated with SMTP AUTH using a dedicated no-reply Workspace account and an app password held in Secret Manager. Reached over Cloud Run's default egress — no VPC connector, no Cloud NAT, no reserved IP.\n\nWhy this and not a third-party ESP: no additional vendor, no DKIM delegation to an outside party, and mail originates from Company's own domain so SPF, DKIM and DMARC are already aligned — which is what decides inbox versus spam for letters going to personal Gmail and Outlook addresses.\n\nWhy this and not the Gmail API: sending through Gmail requires acting as a mailbox. Service accounts have none, and impersonating a user's mailbox requires Domain-Wide Delegation, which the customer explicitly ruled out. The relay is the Workspace-native path that honours that constraint.\n\nThe accepted cost is a long-lived credential. It is bounded: the app password is scoped to one no-reply account that holds no admin role, it is revocable instantly from the Admin console, and it is rotatable without redeploying. The documented hardening path removes it entirely — swap SMTP AUTH for source-IP allowlisting on the relay, reached through Cloud Run Direct VPC egress plus Cloud NAT and a reserved static IP. That path MUST use Direct VPC egress and NOT the Serverless VPC Access connector, which is backed by a managed instance group and would violate REQ-009's serverless constraint. It is deferred from MVP because it adds five infrastructure resources and always-on NAT cost for a benefit the scoped, revocable app password already bounds.\n\nThe second accepted cost is bounce visibility. SMTP returns a synchronous accept or reject at submission, which is recorded on the step, but asynchronous bounces return to the Return-Path mailbox rather than to a webhook — and without Domain-Wide Delegation the application cannot read that mailbox programmatically. Bounce detection is therefore human-monitored, which is workable because an operator is already in the loop handing over the password, and because REQ-030 provides a deliberate resend path when a letter does not land.",
+      "category": "technical",
+      "acceptanceCriteria": [
+        "App passwords are confirmed available in Company's Workspace tenant before this design is built — Google progressively restricts them and they require 2SV, so if the tenant has them disabled this option is void and the IP-allowlisting path or an ESP must be chosen instead",
+        "A dedicated no-reply Workspace account exists for sending, holding no admin role and belonging to no person, so that offboarding a human never breaks onboarding",
+        "The SMTP relay service is configured to allow the no-reply account as a sender and to permit ANY recipient address, since the welcome letter goes to a personal address outside the domain",
+        "SPF, DKIM and DMARC are configured for the sending domain and validated against a live send to an external address",
+        "A test letter to a personal-domain address arrives in the inbox rather than the spam folder",
+        "Return-Path is set to a monitored Workspace group so asynchronous bounces land somewhere a human reads, and the runbook names who monitors it",
+        "The SMTP host, port, sender address and Return-Path are supplied as configuration and the app password is resolved from Secret Manager at runtime, so switching provider requires no code change outside the NotificationSender implementation",
+        "A synchronous SMTP rejection is surfaced as a typed error the notification step records and can be resumed from, rather than being silently swallowed",
+        "The SMTP credential is never logged and never included in an audit payload, verified by the redaction test in REQ-010",
+        "Rotating the app password to a new Secret Manager version is picked up without redeploying the worker"
+      ],
+      "contentHash": "521e971cc78d13fbb78af3608617c0a91f8cfc98071a4f40dd27898ed23a3f79"
+    },
+    {
+      "requirementId": "REQ-029",
+      "name": "Read-only directory lookup for operator pickers",
+      "description": "Owned by the Lifecycle Step Executor. Phases 3 and 4 act on an existing user and Phase 1 assigns groups and an org unit, so an operator must be able to find a user, a group and an org unit before submitting anything. Without this, target emails and group names are free text validated only when the worker executes, which turns a typo into a failed request discovered minutes later.\n\nThe lookup surface lives on the worker rather than the API service because the worker holds the only Workspace admin role; routing lookups through it preserves REQ-014's identity separation exactly as written and keeps the shared Workspace client the single choke point for retry and error classification (REQ-013). The API service calls it with an OIDC token and never touches the Directory API itself.\n\nOpening the worker to a second caller is the real cost of this design, and it is bounded by per-route isolation: /lookup/* admits only the API service identity, /tasks/* only the Cloud Tasks queue invoker identity, and each rejects the other. Every lookup route is strictly read-only. Lookup results populate pickers and pre-fill forms only — the authoritative state read still happens inside the executing step, because any lookup result is already stale by the time an operator submits.",
+      "category": "functional",
+      "acceptanceCriteria": [
+        "A prefix search returns matching domain users with primaryEmail, full name, org unit path and suspended flag, paginated",
+        "Fetching one user returns their current attributes and group memberships, sufficient to pre-fill an update request",
+        "The group picker lists domain groups and the org-unit picker lists org unit paths",
+        "Every lookup route is read-only — a test enumerates the lookup router and asserts no Directory write operation is bound to any of them",
+        "A /lookup/* request bearing an OIDC token issued to the Cloud Tasks queue invoker identity is rejected with 401, and a /tasks/* request bearing the API service identity is likewise rejected with 401",
+        "A /lookup/* request with no OIDC token is rejected with 401 before any handler runs",
+        "Lookup calls pass through the same shared Workspace client as mutations, inheriting its retry and error classification — verified by the absence of any separate Directory client in the lookup path",
+        "A lookup for a user or group that does not exist returns 404 rather than an empty success",
+        "Lookup results are not treated as authoritative: the executing step still performs its own pre-mutation state read, verified by a test where live state changes between lookup and execution and the step observes the newer state"
+      ],
+      "contentHash": "d6bcc732e0a70f144284bcc88e07e9da5fa48b8a91837df403037dccd5cc9941"
+    },
+    {
+      "requirementId": "REQ-030",
+      "name": "Welcome letter resend and credential regeneration",
+      "description": "Owned by the Lifecycle Step Executor. The welcome letter goes to a personal address that can be mistyped, spam-filtered or simply never read, and with the Workspace SMTP relay a bounce may not even be observable (REQ-028). REQ-004's idempotency is correct for automatic retries but deliberately prevents a second send, so without this requirement a lost letter has no remedy: a new create request fails because the account already exists (REQ-003), and if the one-time password was already retrieved or its TTL expired (REQ-017, REQ-019) the credential is gone too. That is a dead end reachable on an ordinary day, and closing it is the point of this requirement.\n\nResend is expressed as a notify-phase request against an existing user — the phase already exists in the request model, so no new lifecycle shape is introduced. Where the credential is no longer available, the request additionally regenerates it: the worker sets a fresh one-time password via users.update with changePasswordAtNextLogin=true, writes new ciphertext with a new TTL, and invalidates the prior record. Regeneration resets a real person's password, so it is auditable as a credential rotation and is a step the approval policy can gate like any other.",
+      "category": "functional",
+      "acceptanceCriteria": [
+        "A notify-phase request against an existing user is admitted and sends a fresh letter, without being blocked by the create-phase primary-email collision check",
+        "Each notify request has its own notification step and its own delivery id, so resending is not suppressed by the previous request's idempotency record",
+        "A resend requested with regenerate=false reuses the existing credential record when it is still valid, and is refused with a typed CredentialUnavailable error when it has been retrieved or has expired",
+        "A resend requested with regenerate=true sets a fresh one-time password via users.update with changePasswordAtNextLogin=true, writes new ciphertext with a new TTL, and invalidates the prior credential record",
+        "After regeneration the superseded ciphertext is unretrievable — an attempt against the old record returns 410",
+        "Regeneration writes an audit event typed as a credential rotation, naming the operator and the target user, and never recording either password value",
+        "The regeneration step is subject to the approval policy like any other step, so a tenant can require two-party approval before an operator resets a person's password",
+        "Resending to a corrected notification address updates the address on the new request without mutating the original request's record",
+        "A resend for a user whose account has been deleted fails validation before any Workspace call"
+      ],
+      "contentHash": "6d270ae1f21b40ffdb8c2fcfe1523b0a5d1363b27b9815e6100e23be70190883"
+    },
+    {
+      "requirementId": "REQ-031",
+      "name": "Protected accounts excluded from lifecycle targeting",
+      "description": "Owned by the Lifecycle API Service. This application manages Workspace users, and several Workspace users are load-bearing for the application itself — most pointedly the dedicated no-reply account whose app password sends every welcome letter (REQ-028). Nothing currently stops an operator submitting a delete request against it, which would silently break onboarding for everyone and leave no obvious cause: the letters simply stop arriving. Break-glass administrator accounts and the Return-Path monitoring group have the same property.\n\nA configured protected-account list is therefore checked at request admission and any request targeting a protected principal is refused. Enforcement lives at admission rather than at execution because REQ-001 makes the API the sole creator of requests and steps — the worker only ever executes steps that already exist, so there is no path to a Workspace mutation that bypasses this check, and a second guard in the worker would be redundant rather than defence in depth.\n\nThe list is configuration, not code, so a tenant can protect its own break-glass accounts without a release. Refusals are audited, because an attempt to offboard a protected account is exactly the signal a security team wants to see.",
+      "category": "technical",
+      "acceptanceCriteria": [
+        "A create, update or delete request targeting an address on the protected-account list is refused at admission with 409 and a typed ProtectedAccount error, and no request or step document is persisted",
+        "The dedicated no-reply sending account and the Return-Path monitoring group are on the protected list by default, so the system cannot break its own notification path",
+        "The protected-account list is read from configuration and can be changed without a code release",
+        "Matching is case-insensitive and covers the primary email and any alias, so a protected account cannot be reached through an alternate address",
+        "A refused attempt writes an audit event naming the operator, the targeted protected account, and the action attempted",
+        "An operator with the admin role is refused just as a requester is — protection is not a permission level that can be escalated past",
+        "The protected-account list is documented in the runbook alongside how to amend it, since an over-broad list silently blocks legitimate offboarding"
+      ],
+      "contentHash": "c7b11aa0172d54c679acda856405ff6af6debd6e2b81ba3c75f078e8695c4e9e"
+    },
+    {
+      "requirementId": "REQ-032",
+      "name": "Approver notification when a step halts for approval",
+      "description": "Owned by the Lifecycle Step Executor. Two-party approval is otherwise pull-only: a step halts in 'awaiting_approval' and waits for somebody to happen to look at the approvals inbox. Combined with REQ-002's optional expiry that auto-rejects on silence, this makes an unnoticed request fail for the wrong reason — nobody declined it, nobody knew.\n\nWhen a step enters 'awaiting_approval' the halting service enqueues a notification task (the API for a request's first step, the worker for subsequent ones — see REQ-001 and REQ-016), and the worker executes it. The worker sends because it holds the only SMTP credential; routing through the queue means the API service never needs one, and the notification inherits the queue's retry budget and the existing NotificationSender rather than growing a second delivery path.\n\nThe message is deliberately thin: request id, phase, target user, who requested it, the approval deadline when one is configured, and a link to the request in the console. It carries no computed diff and no attribute values, because an approver clicking through is authenticated at the perimeter and the console shows them everything — mail is the worst place to put change detail. The link points at the IAP-protected console and that is fine here, unlike the new-hire case: approvers ARE IAP principals, so no perimeter exception is needed.\n\nRecipients are the identities eligible to approve under the request's snapshotted policy, resolved from role bindings, always excluding the requester since REQ-002 forbids self-approval. Resolving recipients requires the worker to read roleBindings, which is a data-access-layer widening rather than a security boundary change — Firestore IAM is database-scoped, so both services already share database-level access (REQ-014).\n\nA notification failure must not fail the request. The step is still legitimately awaiting approval; only the telling failed. The failure is recorded and retried, and the request's own state is untouched.",
+      "category": "functional",
+      "acceptanceCriteria": [
+        "A step entering 'awaiting_approval' results in exactly one notification per eligible approver, verified for both a first step halted by the API and a later step halted by the worker",
+        "The requester never receives an approval notification for their own request, matching REQ-002's self-approval prohibition",
+        "Recipients are resolved from role bindings against the request's SNAPSHOTTED policy, so a policy change after creation does not alter who is asked to approve an in-flight request",
+        "Retrying or redelivering the notification task does not send a second message — the send is keyed on requestId plus stepId and the recorded outcome short-circuits a repeat",
+        "The message contains request id, phase, target user, requester, the approval deadline when one is configured, and a console link — and contains no computed diff, no attribute values, no credential and no token, verified by rendering with a fully populated context and asserting none of it appears",
+        "The console link resolves to the request detail behind IAP, so an approver who is not signed in is authenticated at the perimeter before seeing anything",
+        "When a step requires approval but no eligible approver exists, the notification step fails loudly with a typed NoEligibleApprover error and the condition is surfaced to admins — it never resolves as a successful send to nobody",
+        "A notification delivery failure is recorded on the step and retried, and leaves the request in 'awaiting_approval' rather than moving it to 'failed' — the approval is still pending, only the telling failed",
+        "Approval notifications are sent through the same NotificationSender and the same relay sender address as the welcome letter, with no second delivery path introduced",
+        "Every notification send, failure and suppression writes an audit event naming the step and the recipients"
+      ],
+      "contentHash": "8eeadda71b0621aff3223071f451f9951cb350926b1b1772d8cbca45266ed5d3"
+    }
+  ],
+  "mappings": [
+    {
+      "requirementId": "REQ-001",
+      "nodeId": "c424e85a-6584-4bb7-a48e-2175ebc6a41b",
+      "mappingType": "implements"
+    },
+    {
+      "requirementId": "REQ-002",
+      "nodeId": "c424e85a-6584-4bb7-a48e-2175ebc6a41b",
+      "mappingType": "implements"
+    },
+    {
+      "requirementId": "REQ-003",
+      "nodeId": "db8e5409-dc6f-4052-887a-7ba1dd5fb717",
+      "mappingType": "implements"
+    },
+    {
+      "requirementId": "REQ-004",
+      "nodeId": "db8e5409-dc6f-4052-887a-7ba1dd5fb717",
+      "mappingType": "implements"
+    },
+    {
+      "requirementId": "REQ-005",
+      "nodeId": "db8e5409-dc6f-4052-887a-7ba1dd5fb717",
+      "mappingType": "implements"
+    },
+    {
+      "requirementId": "REQ-006",
+      "nodeId": "db8e5409-dc6f-4052-887a-7ba1dd5fb717",
+      "mappingType": "implements"
+    },
+    {
+      "requirementId": "REQ-007",
+      "nodeId": "c424e85a-6584-4bb7-a48e-2175ebc6a41b",
+      "mappingType": "implements"
+    },
+    {
+      "requirementId": "REQ-008",
+      "nodeId": "db8e5409-dc6f-4052-887a-7ba1dd5fb717",
+      "mappingType": "implements"
+    },
+    {
+      "requirementId": "REQ-009",
+      "nodeId": "565b92bd-2c2c-4a82-be62-b691decdbadf",
+      "mappingType": "implements"
+    },
+    {
+      "requirementId": "REQ-010",
+      "nodeId": "c424e85a-6584-4bb7-a48e-2175ebc6a41b",
+      "mappingType": "implements"
+    },
+    {
+      "requirementId": "REQ-011",
+      "nodeId": "9af301aa-2191-4532-9871-82179a5500c1",
+      "mappingType": "implements"
+    },
+    {
+      "requirementId": "REQ-012",
+      "nodeId": "c424e85a-6584-4bb7-a48e-2175ebc6a41b",
+      "mappingType": "implements"
+    },
+    {
+      "requirementId": "REQ-013",
+      "nodeId": "db8e5409-dc6f-4052-887a-7ba1dd5fb717",
+      "mappingType": "implements"
+    },
+    {
+      "requirementId": "REQ-014",
+      "nodeId": "565b92bd-2c2c-4a82-be62-b691decdbadf",
+      "mappingType": "implements"
+    },
+    {
+      "requirementId": "REQ-015",
+      "nodeId": "565b92bd-2c2c-4a82-be62-b691decdbadf",
+      "mappingType": "implements"
+    },
+    {
+      "requirementId": "REQ-016",
+      "nodeId": "db8e5409-dc6f-4052-887a-7ba1dd5fb717",
+      "mappingType": "implements"
+    },
+    {
+      "requirementId": "REQ-017",
+      "nodeId": "c424e85a-6584-4bb7-a48e-2175ebc6a41b",
+      "mappingType": "implements"
+    },
+    {
+      "requirementId": "REQ-018",
+      "nodeId": "6da6f1e9-97b5-4c0b-8ba5-0b81f3bc5e4b",
+      "mappingType": "implements"
+    },
+    {
+      "requirementId": "REQ-019",
+      "nodeId": "db8e5409-dc6f-4052-887a-7ba1dd5fb717",
+      "mappingType": "implements"
+    },
+    {
+      "requirementId": "REQ-020",
+      "nodeId": "268a782a-d132-4d5e-8f24-c4a969ad7f17",
+      "mappingType": "implements"
+    },
+    {
+      "requirementId": "REQ-021",
+      "nodeId": "893dd4cf-9fd3-4c98-9de2-33b57dacad7e",
+      "mappingType": "implements"
+    },
+    {
+      "requirementId": "REQ-022",
+      "nodeId": "ed7660ce-7057-4706-90f0-ff653f6ff7e8",
+      "mappingType": "implements"
+    },
+    {
+      "requirementId": "REQ-023",
+      "nodeId": "4f626e62-3cc8-445a-9fbd-cb36407ad91e",
+      "mappingType": "implements"
+    },
+    {
+      "requirementId": "REQ-024",
+      "nodeId": "d9e456a0-b079-4914-b8fc-f48f42fa7a7f",
+      "mappingType": "implements"
+    },
+    {
+      "requirementId": "REQ-025",
+      "nodeId": "a7ee091d-3d58-4624-96ed-8292a596f6d1",
+      "mappingType": "implements"
+    },
+    {
+      "requirementId": "REQ-026",
+      "nodeId": "e730eb23-4b12-43a4-b260-8758b3025114",
+      "mappingType": "implements"
+    },
+    {
+      "requirementId": "REQ-027",
+      "nodeId": "1c81cf63-c51e-4b0e-b6ad-7d318332d2fe",
+      "mappingType": "implements"
+    },
+    {
+      "requirementId": "REQ-028",
+      "nodeId": "e601237a-48ea-4941-95f4-6fb53c7c6736",
+      "mappingType": "implements"
+    },
+    {
+      "requirementId": "REQ-029",
+      "nodeId": "db8e5409-dc6f-4052-887a-7ba1dd5fb717",
+      "mappingType": "implements"
+    },
+    {
+      "requirementId": "REQ-030",
+      "nodeId": "db8e5409-dc6f-4052-887a-7ba1dd5fb717",
+      "mappingType": "implements"
+    },
+    {
+      "requirementId": "REQ-031",
+      "nodeId": "c424e85a-6584-4bb7-a48e-2175ebc6a41b",
+      "mappingType": "implements"
+    },
+    {
+      "requirementId": "REQ-032",
+      "nodeId": "db8e5409-dc6f-4052-887a-7ba1dd5fb717",
+      "mappingType": "implements"
+    }
+  ]
+}
