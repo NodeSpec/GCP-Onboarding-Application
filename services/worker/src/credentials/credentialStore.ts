@@ -17,44 +17,51 @@ import { config } from '../config.js';
  * alongside, so ciphertext written under a previous key version stays readable
  * across a rotation (REQ-019, REQ-022).
  *
+ * Secret access is behind an interface so tests can supply a fixed key without
+ * reaching Secret Manager. Without that seam the encrypt/decrypt round trip,
+ * which is the whole point of this file, could only be exercised against real
+ * infrastructure.
+ *
  * Serves REQ-019.
  */
 
 const ALGORITHM = 'aes-256-gcm';
 const IV_BYTES = 12;
+const KEY_BYTES = 32;
 
-interface ResolvedKey {
+export interface ResolvedKey {
   key: Buffer;
   version: string;
 }
 
-export class CredentialStore {
+/** Resolves the data-encryption key. Swapped for a fixture in tests. */
+export interface KeyProvider {
+  resolve(): Promise<ResolvedKey>;
+}
+
+/** Reads the key from Secret Manager, base64 encoded, latest version. */
+export class SecretManagerKeyProvider implements KeyProvider {
   private readonly secrets = new SecretManagerServiceClient();
   private cached: ResolvedKey | undefined;
 
-  constructor(private readonly db: Firestore) {}
+  constructor(private readonly secretName: string = config.CREDENTIAL_KEY_SECRET) {}
 
-  /**
-   * Resolves the data-encryption key. Cached in memory for the instance
-   * lifetime; a rotation is picked up when Cloud Run replaces the instance, or
-   * on the next cold start, without a redeploy.
-   */
-  private async resolveKey(): Promise<ResolvedKey> {
+  async resolve(): Promise<ResolvedKey> {
+    // Cached for the instance lifetime. A rotation is picked up when Cloud Run
+    // replaces the instance, or on the next cold start, without a redeploy.
     if (this.cached) return this.cached;
 
     const [version] = await this.secrets.accessSecretVersion({
-      name: `${config.CREDENTIAL_KEY_SECRET}/versions/latest`,
+      name: `${this.secretName}/versions/latest`,
     });
 
     const material = version.payload?.data;
-    if (!material) {
-      throw new Error(`Secret ${config.CREDENTIAL_KEY_SECRET} has no payload`);
-    }
+    if (!material) throw new Error(`Secret ${this.secretName} has no payload`);
 
     const key = Buffer.from(material.toString(), 'base64');
-    if (key.length !== 32) {
+    if (key.length !== KEY_BYTES) {
       throw new Error(
-        `Credential encryption key must be 32 bytes for ${ALGORITHM}, got ${key.length}. ` +
+        `Credential encryption key must be ${KEY_BYTES} bytes for ${ALGORITHM}, got ${key.length}. ` +
           'Store it base64 encoded.',
       );
     }
@@ -62,6 +69,26 @@ export class CredentialStore {
     this.cached = { key, version: version.name ?? 'unknown' };
     return this.cached;
   }
+}
+
+/** Splits an encoded record into its parts, or null if it is malformed. */
+export function unpack(packed: string): { iv: Buffer; data: Buffer; tag: Buffer } | null {
+  const parts = packed.split('.');
+  if (parts.length !== 3) return null;
+  const [ivPart, dataPart, tagPart] = parts;
+  if (!ivPart || !dataPart || !tagPart) return null;
+  return {
+    iv: Buffer.from(ivPart, 'base64url'),
+    data: Buffer.from(dataPart, 'base64url'),
+    tag: Buffer.from(tagPart, 'base64url'),
+  };
+}
+
+export class CredentialStore {
+  constructor(
+    private readonly db: Firestore,
+    private readonly keys: KeyProvider = new SecretManagerKeyProvider(),
+  ) {}
 
   private handoffRef(requestId: string) {
     return this.db.collection(COLLECTIONS.credentialHandoffs).doc(requestId);
@@ -77,28 +104,23 @@ export class CredentialStore {
     password: string;
     ttlHours: number;
   }): Promise<void> {
-    const { key, version } = await this.resolveKey();
+    const { key, version } = await this.keys.resolve();
     const iv = randomBytes(IV_BYTES);
     const cipher = createCipheriv(ALGORITHM, key, iv);
 
-    const encrypted = Buffer.concat([
-      cipher.update(params.password, 'utf8'),
-      cipher.final(),
-    ]);
+    const encrypted = Buffer.concat([cipher.update(params.password, 'utf8'), cipher.final()]);
     const authTag = cipher.getAuthTag();
 
     // iv.ciphertext.tag, each base64url. Self describing, so a rotation or an
     // algorithm change can be detected rather than guessed at.
     const packed = [iv, encrypted, authTag].map((part) => part.toString('base64url')).join('.');
 
-    const expiresAt = Timestamp.fromMillis(Date.now() + params.ttlHours * 3_600_000);
-
     const record: CredentialHandoff = {
       primaryEmail: params.primaryEmail,
       oneTimePasswordCiphertext: packed,
       keyVersion: version,
       retrievedAt: null,
-      expiresAt,
+      expiresAt: Timestamp.fromMillis(Date.now() + params.ttlHours * 3_600_000),
     };
 
     await this.handoffRef(params.requestId).set(record);
@@ -113,9 +135,9 @@ export class CredentialStore {
    * tell an unauthorised caller more than they should learn.
    */
   async retrieveOnce(requestId: string): Promise<{ primaryEmail: string; password: string } | null> {
-    const { key } = await this.resolveKey();
+    const { key } = await this.keys.resolve();
 
-    const packed = await this.db.runTransaction(async (tx) => {
+    const claimed = await this.db.runTransaction(async (tx) => {
       const ref = this.handoffRef(requestId);
       const snap = await tx.get(ref);
       if (!snap.exists) return null;
@@ -134,21 +156,16 @@ export class CredentialStore {
       return { ciphertext: record.oneTimePasswordCiphertext, primaryEmail: record.primaryEmail };
     });
 
-    if (!packed) return null;
+    if (!claimed) return null;
 
-    const [ivPart, dataPart, tagPart] = packed.ciphertext.split('.');
-    if (!ivPart || !dataPart || !tagPart) {
-      throw new Error(`Credential record for ${requestId} is malformed`);
-    }
+    const parts = unpack(claimed.ciphertext);
+    if (!parts) throw new Error(`Credential record for ${requestId} is malformed`);
 
-    const decipher = createDecipheriv(ALGORITHM, key, Buffer.from(ivPart, 'base64url'));
-    decipher.setAuthTag(Buffer.from(tagPart, 'base64url'));
+    const decipher = createDecipheriv(ALGORITHM, key, parts.iv);
+    decipher.setAuthTag(parts.tag);
 
-    const plaintext = Buffer.concat([
-      decipher.update(Buffer.from(dataPart, 'base64url')),
-      decipher.final(),
-    ]).toString('utf8');
+    const plaintext = Buffer.concat([decipher.update(parts.data), decipher.final()]).toString('utf8');
 
-    return { primaryEmail: packed.primaryEmail, password: plaintext };
+    return { primaryEmail: claimed.primaryEmail, password: plaintext };
   }
 }

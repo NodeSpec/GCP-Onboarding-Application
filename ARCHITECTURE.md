@@ -13,9 +13,9 @@ component inventory, connection topology, and links to per-component task docume
 | Cloud Logging: audit sink | logging | gcp-cloud-logging | Company GCP Project | [`.nodespec/tasks/cloud-logging-audit-sink-6da6f1e9.task.md`](./.nodespec/tasks/cloud-logging-audit-sink-6da6f1e9.task.md) | --- |
 | Cloud Tasks: lifecycle-steps | queue | gcp-cloud-tasks | Company GCP Project | [`.nodespec/tasks/cloud-tasks-lifecycle-steps-893dd4cf.task.md`](./.nodespec/tasks/cloud-tasks-lifecycle-steps-893dd4cf.task.md) | --- |
 | Operator Console UI | frontend-app | react | Cloud Run: lifecycle-api | [`.nodespec/tasks/operator-console-ui-9af301aa.task.md`](./.nodespec/tasks/operator-console-ui-9af301aa.task.md) | --- |
-| Lifecycle API Service | backend-service | nodejs | Cloud Run: lifecycle-api | [`.nodespec/tasks/lifecycle-api-service-c424e85a.task.md`](./.nodespec/tasks/lifecycle-api-service-c424e85a.task.md) | --- |
+| Lifecycle API Service | backend-service | nodejs | Cloud Run: lifecycle-api | [`.nodespec/tasks/lifecycle-api-service-c424e85a.task.md`](./.nodespec/tasks/lifecycle-api-service-c424e85a.task.md) | [`services/api/src/middleware/iapAuth.test.ts`](./services/api/src/middleware/iapAuth.test.ts) |
 | External HTTPS Load Balancer | load-balancer | gcp-cloud-load-balancing | Company GCP Project | [`.nodespec/tasks/external-https-load-balancer-d9e456a0.task.md`](./.nodespec/tasks/external-https-load-balancer-d9e456a0.task.md) | --- |
-| Lifecycle Step Executor | worker | nodejs | Cloud Run: lifecycle-worker | [`.nodespec/tasks/lifecycle-step-executor-db8e5409.task.md`](./.nodespec/tasks/lifecycle-step-executor-db8e5409.task.md) | --- |
+| Lifecycle Step Executor | worker | nodejs | Cloud Run: lifecycle-worker | [`.nodespec/tasks/lifecycle-step-executor-db8e5409.task.md`](./.nodespec/tasks/lifecycle-step-executor-db8e5409.task.md) | [`services/worker/src/workspace/directoryClient.test.ts`](./services/worker/src/workspace/directoryClient.test.ts) |
 | Email Delivery Service | external-service | --- | --- | [`.nodespec/tasks/email-delivery-service-e601237a.task.md`](./.nodespec/tasks/email-delivery-service-e601237a.task.md) | --- |
 | Secret Manager | secret-manager | gcp-secret-manager | Company GCP Project | [`.nodespec/tasks/secret-manager-ed7660ce.task.md`](./.nodespec/tasks/secret-manager-ed7660ce.task.md) | --- |
 
@@ -77,3 +77,19 @@ Use these as the primary brief when implementing or modifying a component.
 - **Company GCP Project**: [`.nodespec/tasks/dark-wolf-gcp-project-565b92bd.task.md`](./.nodespec/tasks/dark-wolf-gcp-project-565b92bd.task.md)
 - **Cloud Run: lifecycle-api**: [`.nodespec/tasks/cloud-run-lifecycle-api-a7ee091d.task.md`](./.nodespec/tasks/cloud-run-lifecycle-api-a7ee091d.task.md)
 - **Operator Console UI**: [`.nodespec/tasks/operator-console-ui-9af301aa.task.md`](./.nodespec/tasks/operator-console-ui-9af301aa.task.md)
+
+## Test Plans
+
+Each requirement has a test plan documenting acceptance criteria assessments,
+recommended test types, framework suggestions, and test scenarios.
+
+- **Lifecycle Step Executor**: [`services/worker/src/workspace/directoryClient.test.ts`](./services/worker/src/workspace/directoryClient.test.ts)
+- **Lifecycle API Service**: [`services/api/src/middleware/iapAuth.test.ts`](./services/api/src/middleware/iapAuth.test.ts)
+- **Lifecycle API Service**: [`.nodespec/tests/req-007.tests.md`](./.nodespec/tests/req-007.tests.md)
+- **Lifecycle Step Executor**: [`.nodespec/tests/req-016.tests.md`](./.nodespec/tests/req-016.tests.md)
+- **Lifecycle API Service**: [`packages/shared/src/transitions.test.ts`](./packages/shared/src/transitions.test.ts)
+- **Lifecycle Step Executor**: [`.nodespec/tests/req-003.tests.md`](./.nodespec/tests/req-003.tests.md)
+- **Lifecycle Step Executor**: [`.nodespec/tests/req-019.tests.md`](./.nodespec/tests/req-019.tests.md)
+- **Lifecycle Step Executor**: [`.nodespec/tests/req-013.tests.md`](./.nodespec/tests/req-013.tests.md)
+- **Lifecycle API Service**: [`packages/shared/src/logging.test.ts`](./packages/shared/src/logging.test.ts)
+- **Lifecycle API Service**: [`services/api/src/config.test.ts`](./services/api/src/config.test.ts)
