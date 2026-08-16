@@ -1,0 +1,54 @@
+import { z } from 'zod';
+
+/**
+ * Validated worker configuration. As in the API service, nothing reads
+ * process.env directly and the service exits at startup rather than failing on
+ * the first task.
+ *
+ * QUEUE_INVOKER_SA and API_SERVICE_SA are the two identities this service will
+ * admit, each confined to its own routes. A wrong value here should stop the
+ * service starting, not quietly open a route to the wrong caller.
+ */
+
+const schema = z.object({
+  NODE_ENV: z.enum(['development', 'test', 'production']).default('production'),
+  PORT: z.coerce.number().int().positive().default(8080),
+
+  GCP_PROJECT_ID: z.string().min(1),
+  FIRESTORE_DATABASE: z.string().min(1).default('(default)'),
+
+  TASKS_QUEUE: z.string().min(1),
+  TASKS_LOCATION: z.string().min(1),
+  WORKER_BASE_URL: z.string().url(),
+
+  QUEUE_INVOKER_SA: z.string().email(),
+  API_SERVICE_SA: z.string().email(),
+
+  WORKSPACE_CUSTOMER_ID: z.string().min(1).default('my_customer'),
+  WORKSPACE_MODE: z.enum(['live', 'dry-run']).default('live'),
+
+  SMTP_HOST: z.string().min(1).default('smtp-relay.gmail.com'),
+  SMTP_PORT: z.coerce.number().int().positive().default(587),
+  SMTP_SENDER: z.string().email(),
+  SMTP_CREDENTIAL_SECRET: z.string().min(1),
+  CREDENTIAL_KEY_SECRET: z.string().min(1),
+
+  CONSOLE_BASE_URL: z.string().url(),
+
+  LOG_LEVEL: z.enum(['fatal', 'error', 'warn', 'info', 'debug', 'trace']).default('info'),
+});
+
+export type Config = z.infer<typeof schema>;
+
+export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
+  const parsed = schema.safeParse(env);
+  if (!parsed.success) {
+    const detail = parsed.error.issues
+      .map((i) => `  ${i.path.join('.') || '(root)'}: ${i.message}`)
+      .join('\n');
+    throw new Error(`Invalid configuration:\n${detail}`);
+  }
+  return parsed.data;
+}
+
+export const config: Config = loadConfig();
