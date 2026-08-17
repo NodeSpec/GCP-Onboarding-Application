@@ -58,9 +58,19 @@ export function stepPlanFor(phase: Phase, payload: Record<string, unknown>): Ste
         { name: 'verify-account', input: {} },
       ];
     case 'notify':
+      // Phase 2, which is also the resend path (REQ-030): confirm the account
+      // and the notification address, then send.
+      //
+      // Sending is ONE step. Splitting render from deliver would create a step
+      // that can succeed while the person still hears nothing, and a partially
+      // sent letter is not a state that exists.
+      return [
+        { name: 'validate-notify-request', input: {} },
+        { name: 'send-welcome-letter', input: {} },
+      ];
     case 'update':
     case 'delete':
-      // Phases 2 to 4 are not implemented. Refusing here is deliberate: an
+      // Phases 3 and 4 are not implemented. Refusing here is deliberate: an
       // empty plan would persist a request with no steps, which would sit in
       // 'pending' forever looking like a stuck job rather than an unbuilt one.
       throw new InvalidPhasePayload(phase, 'this phase is not implemented yet');

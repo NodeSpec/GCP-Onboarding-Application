@@ -33,15 +33,6 @@ Ordered WORK ORDERS synthesized from the model — this node's deliverable kind,
   ↳ serves (unverified match): REQ-030 "The regeneration step is subject to the approval policy like any other step, so a tenant can require two-party approval before an operator resets a person's password" — requirement not mapped to that node; verify or reassign before relying on it
   ↳ serves (unverified match): REQ-005 "A requested change that already matches live state is recorded as step status 'skipped' and issues no Workspace call" — requirement not mapped to that node; verify or reassign before relying on it
   ↳ serves (unverified match): REQ-005 "If one group change fails, the other group changes that succeeded are retained and the failing change is reported on its own step" — requirement not mapped to that node; verify or reassign before relying on it
-  ↳ serves (unverified match): REQ-032 "A step entering 'awaiting_approval' results in exactly one notification per eligible approver, verified for both a first step halted by the API and a later step halted by the worker" — requirement not mapped to that node; verify or reassign before relying on it
-  ↳ serves (unverified match): REQ-032 "Retrying or redelivering the notification task does not send a second message — the send is keyed on requestId plus stepId and the recorded outcome short-circuits a repeat" — requirement not mapped to that node; verify or reassign before relying on it
-  ↳ serves (unverified match): REQ-032 "When a step requires approval but no eligible approver exists, the notification step fails loudly with a typed NoEligibleApprover error and the condition is surfaced to admins — it never resolves as a successful send to nobody" — requirement not mapped to that node; verify or reassign before relying on it
-  ↳ serves (unverified match): REQ-032 "A notification delivery failure is recorded on the step and retried, and leaves the request in 'awaiting_approval' rather than moving it to 'failed' — the approval is still pending, only the telling failed" — requirement not mapped to that node; verify or reassign before relying on it
-  ↳ serves (unverified match): REQ-032 "Every notification send, failure and suppression writes an audit event naming the step and the recipients" — requirement not mapped to that node; verify or reassign before relying on it
-  ↳ serves (unverified match): REQ-004 "The notification step renders the welcome letter from the configured template with the user's name, primary email, and password-setup instructions substituted" — requirement not mapped to that node; verify or reassign before relying on it
-  ↳ serves (unverified match): REQ-004 "Retrying the notification step after a successful send does not send a second letter — the step observes its recorded delivery id and returns success" — requirement not mapped to that node; verify or reassign before relying on it
-  ↳ serves (unverified match): REQ-004 "A submission rejected by the provider records the provider error on the step and leaves the request resumable rather than silently succeeding" — requirement not mapped to that node; verify or reassign before relying on it
-  ↳ serves (unverified match): REQ-004 "The provider's submission response and delivery id are persisted on the step, and where the provider emits asynchronous bounce events those outcomes are recorded against the same step" — requirement not mapped to that node; verify or reassign before relying on it
   ↳ serves (unverified match): REQ-006 "The offboarding step plan executes in order: suspend, revoke sessions/tokens, remove group memberships, optional data transfer, delete" — requirement not mapped to that node; verify or reassign before relying on it
   ↳ serves (unverified match): REQ-006 "Suspension takes effect before any destructive step runs, and a request halted after suspension leaves the account suspended but intact" — requirement not mapped to that node; verify or reassign before relying on it
   ↳ serves (unverified match): REQ-006 "The delete step defaults to requiresApproval=true and cannot be configured below two-party approval" — requirement not mapped to that node; verify or reassign before relying on it
@@ -62,7 +53,6 @@ Ordered WORK ORDERS synthesized from the model — this node's deliverable kind,
 - [ ] **T4 — Implement the integration with Secret Manager (gcp-secret-manager) per Contract "Secret Manager Access" (dependency).**
   Dependency contract — capture the reference/identifier wiring in this node's config artifacts; no payload schema expected.
   ↳ serves (unverified match): REQ-005 "Changing a user's role is expressed as group membership changes plus role-describing attributes — job title, department, manager and org unit path — and all of these are updatable through this phase" — requirement not mapped to that node; verify or reassign before relying on it
-  ↳ serves (unverified match): REQ-004 "The letter body contains no password, token, or link that would grant access, verified by rendering the template with a populated credential context and asserting none of it appears in the output" — requirement not mapped to that node; verify or reassign before relying on it
 - [ ] **T5 — Implement the integration with Cloud Logging: audit sink (gcp-cloud-logging) per Contract "Audit Log Sink" (dependency).**
   Dependency contract — capture the reference/identifier wiring in this node's config artifacts; no payload schema expected.
   ↳ serves (unverified match): REQ-030 "A resend requested with regenerate=true sets a fresh one-time password via users.update with changePasswordAtNextLogin=true, writes new ciphertext with a new TTL, and invalidates the prior credential record" — requirement not mapped to that node; verify or reassign before relying on it
@@ -71,9 +61,6 @@ Ordered WORK ORDERS synthesized from the model — this node's deliverable kind,
 - [ ] **T6 — Implement the integration with Email Delivery Service per Contract "Welcome Letter Delivery" (rest).**
   Build to the contract schema EXACTLY (see Interface Contracts).
   ↳ serves (unverified match): REQ-030 "A notify-phase request against an existing user is admitted and sends a fresh letter, without being blocked by the create-phase primary-email collision check" — requirement not mapped to that node; verify or reassign before relying on it
-  ↳ serves (unverified match): REQ-032 "Approval notifications are sent through the same NotificationSender and the same relay sender address as the welcome letter, with no second delivery path introduced" — requirement not mapped to that node; verify or reassign before relying on it
-  ↳ serves (unverified match): REQ-004 "The letter is delivered to the alternate/notification address supplied on the request, never to the newly created primary mailbox" — requirement not mapped to that node; verify or reassign before relying on it
-  ↳ serves (unverified match): REQ-004 "The delivery provider is reached through a single NotificationSender interface, so the provider choice is a configuration decision rather than a code change" — requirement not mapped to that node; verify or reassign before relying on it
 - [ ] **T7 — Implement the integration with Google Workspace (Admin SDK Directory) per Contract "Google Admin SDK Directory API" (rest).**
   Build to the contract schema EXACTLY (see Interface Contracts).
   ↳ serves (unverified match): REQ-029 "Every lookup route is read-only — a test enumerates the lookup router and asserts no Directory write operation is bound to any of them" — requirement not mapped to that node; verify or reassign before relying on it
@@ -120,19 +107,10 @@ Ordered WORK ORDERS synthesized from the model — this node's deliverable kind,
 - [ ] **T20 — Implement: "A creation request for a primary email that already exists in the domain fails validation before any mutation is attempted and the request terminates in 'failed' with a typed AlreadyExists error" (REQ-003).**
   No interface contract maps to this criterion — it is this node's internal responsibility.
   ↳ serves: REQ-003 "A creation request for a primary email that already exists in the domain fails validation before any mutation is attempted and the request terminates in 'failed' with a typed AlreadyExists error"
-- [ ] **T21 — Implement: "The requester never receives an approval notification for their own request, matching REQ-002's self-approval prohibition" (REQ-032).**
-  No interface contract maps to this criterion — it is this node's internal responsibility.
-  ↳ serves: REQ-032 "The requester never receives an approval notification for their own request, matching REQ-002's self-approval prohibition"
-- [ ] **T22 — Implement: "Recipients are resolved from role bindings against the request's SNAPSHOTTED policy, so a policy change after creation does not alter who is asked to approve an in-flight request" (REQ-032).**
-  No interface contract maps to this criterion — it is this node's internal responsibility.
-  ↳ serves: REQ-032 "Recipients are resolved from role bindings against the request's SNAPSHOTTED policy, so a policy change after creation does not alter who is asked to approve an in-flight request"
-- [ ] **T23 — Implement: "The message contains request id, phase, target user, requester, the approval deadline when one is configured, and a console link — and contains no computed diff, no attribute values, no credential and no token, verified by rendering with a fully populated context and asserting none of it appears" (REQ-032).**
-  No interface contract maps to this criterion — it is this node's internal responsibility.
-  ↳ serves: REQ-032 "The message contains request id, phase, target user, requester, the approval deadline when one is configured, and a console link — and contains no computed diff, no attribute values, no credential and no token, verified by rendering with a fully populated context and asserting none of it appears"
-- [ ] **T24 — Implement: "The console link resolves to the request detail behind IAP, so an approver who is not signed in is authenticated at the perimeter before seeing anything" (REQ-032).**
+- [ ] **T21 — Implement: "The console link resolves to the request detail behind IAP, so an approver who is not signed in is authenticated at the perimeter before seeing anything" (REQ-032).**
   No interface contract maps to this criterion — it is this node's internal responsibility.
   ↳ serves: REQ-032 "The console link resolves to the request detail behind IAP, so an approver who is not signed in is authenticated at the perimeter before seeing anything"
-- [ ] **T25 — Verify every acceptance criterion above and tick its box.**
+- [ ] **T22 — Verify every acceptance criterion above and tick its box.**
   Ordering doctrine — plans follow schemas (contract-first TDD): schemas → test plans → implement → verify. Resolve any open [PLACEHOLDER: schema] gap FIRST (get_build_readiness supplies draftInputs; submit the schema via propose_patches update_contract) — test-plan scenarios touching a schemaless contract stay one-line [blocked by schema: …] markers until the schema lands, then the plan refreshes itself.
   AUTOMATED criteria: call get_test_plan for EACH requirement this node serves, implement the plan's test cases, run them, and report every outcome via report_test_results — a passing result flips the criterion's met flag automatically and the response receipt shows which criteria flipped.
   MANUAL criteria (rows marked (manual) above): report_test_results REFUSES to bind them — prove each by ticking its criterion box in this task doc and having the user approve the resulting change card; that approval is the only thing that flips a manual criterion met.
@@ -284,26 +262,26 @@ Recipients are the identities eligible to approve under the request's snapshotte
 A notification failure must not fail the request. The step is still legitimately awaiting approval; only the telling failed. The failure is recorded and retried, and the request's own state is untouched.
 
 **Acceptance criteria — your task boxes:**
-- [ ] A step entering 'awaiting_approval' results in exactly one notification per eligible approver, verified for both a first step halted by the API and a later step halted by the worker
-  → covered by Task T2
-- [ ] The requester never receives an approval notification for their own request, matching REQ-002's self-approval prohibition
-  → covered by Task T21
-- [ ] Recipients are resolved from role bindings against the request's SNAPSHOTTED policy, so a policy change after creation does not alter who is asked to approve an in-flight request
-  → covered by Task T22
-- [ ] Retrying or redelivering the notification task does not send a second message — the send is keyed on requestId plus stepId and the recorded outcome short-circuits a repeat
-  → covered by Task T2
-- [ ] The message contains request id, phase, target user, requester, the approval deadline when one is configured, and a console link — and contains no computed diff, no attribute values, no credential and no token, verified by rendering with a fully populated context and asserting none of it appears
-  → covered by Task T23
+- [x] A step entering 'awaiting_approval' results in exactly one notification per eligible approver, verified for both a first step halted by the API and a later step halted by the worker
+  → possible match: Contract "Step Task Enqueue" (rest) to Cloud Tasks: lifecycle-steps (unverified — requirement not mapped to that node)
+- [x] The requester never receives an approval notification for their own request, matching REQ-002's self-approval prohibition
+  → THIS NODE: internal logic
+- [x] Recipients are resolved from role bindings against the request's SNAPSHOTTED policy, so a policy change after creation does not alter who is asked to approve an in-flight request
+  → THIS NODE: internal logic
+- [x] Retrying or redelivering the notification task does not send a second message — the send is keyed on requestId plus stepId and the recorded outcome short-circuits a repeat
+  → possible match: Contract "Step Task Enqueue" (rest) to Cloud Tasks: lifecycle-steps (unverified — requirement not mapped to that node)
+- [x] The message contains request id, phase, target user, requester, the approval deadline when one is configured, and a console link — and contains no computed diff, no attribute values, no credential and no token, verified by rendering with a fully populated context and asserting none of it appears
+  → THIS NODE: internal logic
 - [ ] The console link resolves to the request detail behind IAP, so an approver who is not signed in is authenticated at the perimeter before seeing anything
-  → covered by Task T24
-- [ ] When a step requires approval but no eligible approver exists, the notification step fails loudly with a typed NoEligibleApprover error and the condition is surfaced to admins — it never resolves as a successful send to nobody
-  → covered by Task T2
-- [ ] A notification delivery failure is recorded on the step and retried, and leaves the request in 'awaiting_approval' rather than moving it to 'failed' — the approval is still pending, only the telling failed
-  → covered by Task T2
-- [ ] Approval notifications are sent through the same NotificationSender and the same relay sender address as the welcome letter, with no second delivery path introduced
-  → covered by Task T6
-- [ ] Every notification send, failure and suppression writes an audit event naming the step and the recipients
-  → covered by Task T2
+  → covered by Task T21
+- [x] When a step requires approval but no eligible approver exists, the notification step fails loudly with a typed NoEligibleApprover error and the condition is surfaced to admins — it never resolves as a successful send to nobody
+  → possible match: Contract "Step Task Enqueue" (rest) to Cloud Tasks: lifecycle-steps (unverified — requirement not mapped to that node)
+- [x] A notification delivery failure is recorded on the step and retried, and leaves the request in 'awaiting_approval' rather than moving it to 'failed' — the approval is still pending, only the telling failed
+  → possible match: Contract "Step Task Enqueue" (rest) to Cloud Tasks: lifecycle-steps (unverified — requirement not mapped to that node)
+- [x] Approval notifications are sent through the same NotificationSender and the same relay sender address as the welcome letter, with no second delivery path introduced
+  → possible match: Contract "Welcome Letter Delivery" (rest) to Email Delivery Service (unverified — requirement not mapped to that node)
+- [x] Every notification send, failure and suppression writes an audit event naming the step and the recipients
+  → possible match: Contract "Step Task Enqueue" (rest) to Cloud Tasks: lifecycle-steps (unverified — requirement not mapped to that node)
 
 ### REQ-004: Phase 2 — Welcome letter delivery
 Category: functional | Status: in-progress
@@ -314,20 +292,20 @@ Delivery is idempotent: retrying the notification step never sends a second lett
 Generating and protecting the one-time password is REQ-019; the operator's retrieval of it is REQ-017.
 
 **Acceptance criteria — your task boxes:**
-- [ ] The notification step renders the welcome letter from the configured template with the user's name, primary email, and password-setup instructions substituted
-  → covered by Task T2
-- [ ] The letter is delivered to the alternate/notification address supplied on the request, never to the newly created primary mailbox
-  → covered by Task T6
-- [ ] Retrying the notification step after a successful send does not send a second letter — the step observes its recorded delivery id and returns success
-  → covered by Task T2
-- [ ] The letter body contains no password, token, or link that would grant access, verified by rendering the template with a populated credential context and asserting none of it appears in the output
-  → covered by Task T4
-- [ ] A submission rejected by the provider records the provider error on the step and leaves the request resumable rather than silently succeeding
-  → covered by Task T2
-- [ ] The provider's submission response and delivery id are persisted on the step, and where the provider emits asynchronous bounce events those outcomes are recorded against the same step
-  → covered by Task T2
-- [ ] The delivery provider is reached through a single NotificationSender interface, so the provider choice is a configuration decision rather than a code change
-  → covered by Task T6
+- [x] The notification step renders the welcome letter from the configured template with the user's name, primary email, and password-setup instructions substituted
+  → possible match: Contract "Step Task Enqueue" (rest) to Cloud Tasks: lifecycle-steps (unverified — requirement not mapped to that node)
+- [x] The letter is delivered to the alternate/notification address supplied on the request, never to the newly created primary mailbox
+  → possible match: Contract "Welcome Letter Delivery" (rest) to Email Delivery Service (unverified — requirement not mapped to that node)
+- [x] Retrying the notification step after a successful send does not send a second letter — the step observes its recorded delivery id and returns success
+  → possible match: Contract "Step Task Enqueue" (rest) to Cloud Tasks: lifecycle-steps (unverified — requirement not mapped to that node)
+- [x] The letter body contains no password, token, or link that would grant access, verified by rendering the template with a populated credential context and asserting none of it appears in the output
+  → possible match: Contract "Secret Manager Access" (dependency) to Secret Manager (unverified — requirement not mapped to that node)
+- [x] A submission rejected by the provider records the provider error on the step and leaves the request resumable rather than silently succeeding
+  → possible match: Contract "Step Task Enqueue" (rest) to Cloud Tasks: lifecycle-steps (unverified — requirement not mapped to that node)
+- [x] The provider's submission response and delivery id are persisted on the step, and where the provider emits asynchronous bounce events those outcomes are recorded against the same step
+  → possible match: Contract "Step Task Enqueue" (rest) to Cloud Tasks: lifecycle-steps (unverified — requirement not mapped to that node)
+- [x] The delivery provider is reached through a single NotificationSender interface, so the provider choice is a configuration decision rather than a code change
+  → possible match: Contract "Welcome Letter Delivery" (rest) to Email Delivery Service (unverified — requirement not mapped to that node)
 
 ### REQ-008: Workspace admin access without Domain-Wide Delegation
 Category: technical | Status: in-progress

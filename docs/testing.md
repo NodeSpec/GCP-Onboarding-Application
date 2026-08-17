@@ -1,6 +1,6 @@
 # Testing
 
-How to run the tests, what each tier needs, and what a human has to check by hand..
+How to run the tests, what each tier needs, and what a human has to check by hand.
 
 Tests are organised in three tiers by what they require to run. The tiers matter because a test you cannot run is worse than no test: it goes stale, and someone eventually deletes it or, worse, trusts it.
 
