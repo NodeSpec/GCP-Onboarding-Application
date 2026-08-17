@@ -1,7 +1,7 @@
 {
   "modelVersion": 1,
   "generatedBy": "nodespec",
-  "modelHash": "8296ba1915d362e32d865c2d4ef491a20b19c98e47fd8d214cc38a44f33866a4",
+  "modelHash": "2f1274389f7dd355c249babaf7e86634823f63071325d17f2f9c37110b2d340e",
   "nodes": [
     {
       "id": "1c81cf63-c51e-4b0e-b6ad-7d318332d2fe",
@@ -626,7 +626,7 @@
       "nodeId": "c424e85a-6584-4bb7-a48e-2175ebc6a41b",
       "path": "services/api/src/schemas.ts",
       "kind": "source",
-      "contentHash": "000000000d28131a"
+      "contentHash": "000000007de95914"
     },
     {
       "id": "1b30aa33-c945-4448-a9b7-4a7ae469d123",
@@ -750,6 +750,12 @@
       "nodeId": "db8e5409-dc6f-4052-887a-7ba1dd5fb717",
       "path": ".nodespec/tests/req-019.tests.md",
       "kind": "test-plan"
+    },
+    {
+      "id": "4b8d21f7-9c53-4e60-a7d1-5f2e8b0c6a94",
+      "nodeId": "db8e5409-dc6f-4052-887a-7ba1dd5fb717",
+      "path": "services/worker/src/phases/update.ts",
+      "kind": "source"
     },
     {
       "id": "4d5e0f27-6081-4b94-83a5-8c2f10417d63",
@@ -954,7 +960,7 @@
       "nodeId": "db8e5409-dc6f-4052-887a-7ba1dd5fb717",
       "path": "services/worker/src/index.ts",
       "kind": "source",
-      "contentHash": "0000000063df51fd"
+      "contentHash": "0000000055c50aa9"
     },
     {
       "id": "b2d7c018-5063-4e98-ac42-38db610f9e57",
@@ -1037,7 +1043,7 @@
       "nodeId": "db8e5409-dc6f-4052-887a-7ba1dd5fb717",
       "path": "services/worker/src/phases/create.ts",
       "kind": "source",
-      "contentHash": "00000000168ea131"
+      "contentHash": "0000000033dafbff"
     },
     {
       "id": "c8f3a672-9d14-4b58-a0e7-2f6b1d8c4e93",
@@ -1057,6 +1063,12 @@
       "path": "services/worker/src/workspace/noDelegation.test.ts",
       "kind": "test-plan",
       "contentHash": "0000000026d7edb4"
+    },
+    {
+      "id": "ca2bd6c6-e65d-4e5a-8a0c-6a1929bda230",
+      "nodeId": "db8e5409-dc6f-4052-887a-7ba1dd5fb717",
+      "path": ".nodespec/tests/req-005.tests.md",
+      "kind": "test-plan"
     },
     {
       "id": "ca41c646-797e-4357-8e5a-164978cd4219",
@@ -1147,7 +1159,7 @@
       "nodeId": "c424e85a-6584-4bb7-a48e-2175ebc6a41b",
       "path": "packages/shared/src/stepPlans.ts",
       "kind": "source",
-      "contentHash": "000000005ca85213"
+      "contentHash": "000000005918f8dc"
     },
     {
       "id": "e9153a25-3a71-4ecd-a3fe-77950e450ea4",
@@ -1200,7 +1212,7 @@
       "nodeId": "db8e5409-dc6f-4052-887a-7ba1dd5fb717",
       "path": "services/worker/src/steps/executor.ts",
       "kind": "source",
-      "contentHash": "000000005ba89b64"
+      "contentHash": "000000003fc10795"
     },
     {
       "id": "f2a9c817-5d43-4e06-b8e1-9c2f7a0d3b65",

@@ -1,5 +1,5 @@
 import { config } from '../config.js';
-import { WorkspaceError } from '../workspace/directoryClient.js';
+import { UserAlreadyExistsError, WorkspaceError } from '../workspace/directoryClient.js';
 import { registerHandler, type StepContext, type StepResult } from '../steps/handler.js';
 
 /**
@@ -48,12 +48,7 @@ registerHandler({
     const existing = await ctx.directory.getUser(payload.primaryEmail);
 
     if (existing) {
-      throw new WorkspaceError(
-        `A user already exists with primary email ${payload.primaryEmail}`,
-        'terminal',
-        409,
-        'validate-request',
-      );
+      throw new UserAlreadyExistsError(payload.primaryEmail, 'validate-request');
     }
 
     return { status: 'succeeded', output: { validated: payload.primaryEmail } };

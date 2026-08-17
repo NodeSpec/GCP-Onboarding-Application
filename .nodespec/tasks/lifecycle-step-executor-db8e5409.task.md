@@ -29,8 +29,6 @@ Ordered WORK ORDERS synthesized from the model — this node's deliverable kind,
   Build to the contract schema EXACTLY (see Interface Contracts).
   ↳ serves (unverified match): REQ-029 "A /lookup/* request bearing an OIDC token issued to the Cloud Tasks queue invoker identity is rejected with 401, and a /tasks/* request bearing the API service identity is likewise rejected with 401" — requirement not mapped to that node; verify or reassign before relying on it
   ↳ serves (unverified match): REQ-029 "Lookup results are not treated as authoritative: the executing step still performs its own pre-mutation state read, verified by a test where live state changes between lookup and execution and the step observes the newer state" — requirement not mapped to that node; verify or reassign before relying on it
-  ↳ serves (unverified match): REQ-005 "A requested change that already matches live state is recorded as step status 'skipped' and issues no Workspace call" — requirement not mapped to that node; verify or reassign before relying on it
-  ↳ serves (unverified match): REQ-005 "If one group change fails, the other group changes that succeeded are retained and the failing change is reported on its own step" — requirement not mapped to that node; verify or reassign before relying on it
   ↳ serves (unverified match): REQ-006 "The offboarding step plan executes in order: suspend, revoke sessions/tokens, remove group memberships, optional data transfer, delete" — requirement not mapped to that node; verify or reassign before relying on it
   ↳ serves (unverified match): REQ-006 "Suspension takes effect before any destructive step runs, and a request halted after suspension leaves the account suspended but intact" — requirement not mapped to that node; verify or reassign before relying on it
   ↳ serves (unverified match): REQ-006 "The delete step defaults to requiresApproval=true and cannot be configured below two-party approval" — requirement not mapped to that node; verify or reassign before relying on it
@@ -42,11 +40,8 @@ Ordered WORK ORDERS synthesized from the model — this node's deliverable kind,
   ↳ serves (unverified match): REQ-006 "Every offboarding step, including the compensating unsuspend, records the affected user, actor, and outcome to the audit log" — requirement not mapped to that node; verify or reassign before relying on it
 - [ ] **T3 — Implement the integration with Firestore: lifecycle state and audit (gcp-firestore) per Contract "Lifecycle State Store" (nosql).**
   Build to the contract schema EXACTLY (see Interface Contracts).
-  ↳ serves (unverified match): REQ-005 "Submitting an update request computes a diff against the user's live Workspace state and persists it on the request before execution" — requirement not mapped to that node; verify or reassign before relying on it
-  ↳ serves (unverified match): REQ-005 "Applying the update changes exactly the attributes and memberships in the diff and leaves all other user state untouched" — requirement not mapped to that node; verify or reassign before relying on it
 - [ ] **T4 — Implement the integration with Secret Manager (gcp-secret-manager) per Contract "Secret Manager Access" (dependency).**
   Dependency contract — capture the reference/identifier wiring in this node's config artifacts; no payload schema expected.
-  ↳ serves (unverified match): REQ-005 "Changing a user's role is expressed as group membership changes plus role-describing attributes — job title, department, manager and org unit path — and all of these are updatable through this phase" — requirement not mapped to that node; verify or reassign before relying on it
 - [ ] **T5 — Implement the integration with Cloud Logging: audit sink (gcp-cloud-logging) per Contract "Audit Log Sink" (dependency).**
   Dependency contract — capture the reference/identifier wiring in this node's config artifacts; no payload schema expected.
 - [ ] **T6 — Implement the integration with Email Delivery Service per Contract "Welcome Letter Delivery" (rest).**
@@ -55,7 +50,6 @@ Ordered WORK ORDERS synthesized from the model — this node's deliverable kind,
   Build to the contract schema EXACTLY (see Interface Contracts).
   ↳ serves (unverified match): REQ-029 "Every lookup route is read-only — a test enumerates the lookup router and asserts no Directory write operation is bound to any of them" — requirement not mapped to that node; verify or reassign before relying on it
   ↳ serves (unverified match): REQ-029 "Lookup calls pass through the same shared Workspace client as mutations, inheriting its retry and error classification — verified by the absence of any separate Directory client in the lookup path" — requirement not mapped to that node; verify or reassign before relying on it
-  ↳ serves (unverified match): REQ-005 "Workspace ADMIN role assignment is unreachable through any phase — a repository check finds no roleAssignments API call and no admin.directory.rolemanagement scope anywhere in the codebase or IaC" — requirement not mapped to that node; verify or reassign before relying on it
 - [ ] **T8 — Expose the interface Cloud Tasks: lifecycle-steps consumes, per Contract "Step Execution Dispatch" (rest).**
   Record the endpoint/identifiers Cloud Tasks: lifecycle-steps needs in this node's config artifacts — coordinate with Cloud Tasks: lifecycle-steps.
   Build to the contract schema EXACTLY (see Interface Contracts).
@@ -73,22 +67,13 @@ Ordered WORK ORDERS synthesized from the model — this node's deliverable kind,
 - [ ] **T12 — Implement: "The group picker lists domain groups and the org-unit picker lists org unit paths" (REQ-029).**
   No interface contract maps to this criterion — it is this node's internal responsibility.
   ↳ serves: REQ-029 "The group picker lists domain groups and the org-unit picker lists org unit paths"
-- [ ] **T13 — Implement: "The rendered approval payload shows the before/after value of every changed attribute and every group being added or removed" (REQ-005).**
-  No interface contract maps to this criterion — it is this node's internal responsibility.
-  ↳ serves: REQ-005 "The rendered approval payload shows the before/after value of every changed attribute and every group being added or removed"
-- [ ] **T14 — Implement: "Removing a group membership the user does not have is treated as already-satisfied ('skipped'), not as an error" (REQ-005).**
-  No interface contract maps to this criterion — it is this node's internal responsibility.
-  ↳ serves: REQ-005 "Removing a group membership the user does not have is treated as already-satisfied ('skipped'), not as an error"
-- [ ] **T15 — Implement: "An update request targeting a non-existent or suspended-and-deleted user fails validation before any mutation" (REQ-005).**
-  No interface contract maps to this criterion — it is this node's internal responsibility.
-  ↳ serves: REQ-005 "An update request targeting a non-existent or suspended-and-deleted user fails validation before any mutation"
-- [ ] **T16 — Implement: "A creation request for a primary email that already exists in the domain fails validation before any mutation is attempted and the request terminates in 'failed' with a typed AlreadyExists error" (REQ-003).**
+- [ ] **T13 — Implement: "A creation request for a primary email that already exists in the domain fails validation before any mutation is attempted and the request terminates in 'failed' with a typed AlreadyExists error" (REQ-003).**
   No interface contract maps to this criterion — it is this node's internal responsibility.
   ↳ serves: REQ-003 "A creation request for a primary email that already exists in the domain fails validation before any mutation is attempted and the request terminates in 'failed' with a typed AlreadyExists error"
-- [ ] **T17 — Implement: "The console link resolves to the request detail behind IAP, so an approver who is not signed in is authenticated at the perimeter before seeing anything" (REQ-032).**
+- [ ] **T14 — Implement: "The console link resolves to the request detail behind IAP, so an approver who is not signed in is authenticated at the perimeter before seeing anything" (REQ-032).**
   No interface contract maps to this criterion — it is this node's internal responsibility.
   ↳ serves: REQ-032 "The console link resolves to the request detail behind IAP, so an approver who is not signed in is authenticated at the perimeter before seeing anything"
-- [ ] **T18 — Verify every acceptance criterion above and tick its box.**
+- [ ] **T15 — Verify every acceptance criterion above and tick its box.**
   Ordering doctrine — plans follow schemas (contract-first TDD): schemas → test plans → implement → verify. Resolve any open [PLACEHOLDER: schema] gap FIRST (get_build_readiness supplies draftInputs; submit the schema via propose_patches update_contract) — test-plan scenarios touching a schemaless contract stay one-line [blocked by schema: …] markers until the schema lands, then the plan refreshes itself.
   AUTOMATED criteria: call get_test_plan for EACH requirement this node serves, implement the plan's test cases, run them, and report every outcome via report_test_results — a passing result flips the criterion's met flag automatically and the response receipt shows which criteria flipped.
   MANUAL criteria (rows marked (manual) above): report_test_results REFUSES to bind them — prove each by ticking its criterion box in this task doc and having the user approve the resulting change card; that approval is the only thing that flips a manual criterion met.
@@ -186,24 +171,24 @@ Third, and decisively, admin-role management is a privilege-escalation surface. 
 So "roles" here means group memberships, together with the attributes that describe a role: job title, department, manager, and org unit path. Assigning or revoking WORKSPACE ADMIN roles is out of scope, and the custom admin role deliberately lacks the privilege (REQ-027). If Company does want admin-role management, it is an additive change — one additional scope, one additional privilege on the custom admin role, and an explicit acceptance of the escalation surface — and it should be a conversation, not an assumption inherited from an ambiguous word.
 
 **Acceptance criteria — your task boxes:**
-- [ ] Submitting an update request computes a diff against the user's live Workspace state and persists it on the request before execution
-  → covered by Task T3
-- [ ] The rendered approval payload shows the before/after value of every changed attribute and every group being added or removed
-  → covered by Task T13
-- [ ] Applying the update changes exactly the attributes and memberships in the diff and leaves all other user state untouched
-  → covered by Task T3
-- [ ] Changing a user's role is expressed as group membership changes plus role-describing attributes — job title, department, manager and org unit path — and all of these are updatable through this phase
-  → covered by Task T4
-- [ ] A requested change that already matches live state is recorded as step status 'skipped' and issues no Workspace call
-  → covered by Task T2
-- [ ] Removing a group membership the user does not have is treated as already-satisfied ('skipped'), not as an error
-  → covered by Task T14
-- [ ] If one group change fails, the other group changes that succeeded are retained and the failing change is reported on its own step
-  → covered by Task T2
-- [ ] An update request targeting a non-existent or suspended-and-deleted user fails validation before any mutation
-  → covered by Task T15
-- [ ] Workspace ADMIN role assignment is unreachable through any phase — a repository check finds no roleAssignments API call and no admin.directory.rolemanagement scope anywhere in the codebase or IaC
-  → covered by Task T7
+- [x] Submitting an update request computes a diff against the user's live Workspace state and persists it on the request before execution
+  → possible match: Contract "Lifecycle State Store" (nosql) to Firestore: lifecycle state and audit (unverified — requirement not mapped to that node)
+- [x] The rendered approval payload shows the before/after value of every changed attribute and every group being added or removed
+  → THIS NODE: internal logic
+- [x] Applying the update changes exactly the attributes and memberships in the diff and leaves all other user state untouched
+  → possible match: Contract "Lifecycle State Store" (nosql) to Firestore: lifecycle state and audit (unverified — requirement not mapped to that node)
+- [x] Changing a user's role is expressed as group membership changes plus role-describing attributes — job title, department, manager and org unit path — and all of these are updatable through this phase
+  → possible match: Contract "Secret Manager Access" (dependency) to Secret Manager (unverified — requirement not mapped to that node)
+- [x] A requested change that already matches live state is recorded as step status 'skipped' and issues no Workspace call
+  → possible match: Contract "Step Task Enqueue" (rest) to Cloud Tasks: lifecycle-steps (unverified — requirement not mapped to that node)
+- [x] Removing a group membership the user does not have is treated as already-satisfied ('skipped'), not as an error
+  → THIS NODE: internal logic
+- [x] If one group change fails, the other group changes that succeeded are retained and the failing change is reported on its own step
+  → possible match: Contract "Step Task Enqueue" (rest) to Cloud Tasks: lifecycle-steps (unverified — requirement not mapped to that node)
+- [x] An update request targeting a non-existent or suspended-and-deleted user fails validation before any mutation
+  → THIS NODE: internal logic
+- [x] Workspace ADMIN role assignment is unreachable through any phase — a repository check finds no roleAssignments API call and no admin.directory.rolemanagement scope anywhere in the codebase or IaC
+  → possible match: Contract "Google Admin SDK Directory API" (rest) to Google Workspace (Admin SDK Directory) (unverified — requirement not mapped to that node)
 
 ### REQ-003: Phase 1 — User creation with attributes and group assignment
 Category: functional | Status: in-progress
@@ -217,7 +202,7 @@ Generation and protection of the one-time password belong to REQ-019: it is pers
 - [x] Every group listed in the request appears in the created user's membership list after the phase completes
   → THIS NODE: internal logic
 - [ ] A creation request for a primary email that already exists in the domain fails validation before any mutation is attempted and the request terminates in 'failed' with a typed AlreadyExists error
-  → covered by Task T16
+  → covered by Task T13
 - [x] The user is created with changePasswordAtNextLogin=true and a password meeting the configured generation policy
   → possible match: Contract "Audit Log Sink" (dependency) to Cloud Logging: audit sink (unverified — requirement not mapped to that node)
 - [x] If one group assignment fails, the successfully assigned groups are retained, the failing group is reported in the step error, and the request does not report success
@@ -251,7 +236,7 @@ A notification failure must not fail the request. The step is still legitimately
 - [x] The message contains request id, phase, target user, requester, the approval deadline when one is configured, and a console link — and contains no computed diff, no attribute values, no credential and no token, verified by rendering with a fully populated context and asserting none of it appears
   → THIS NODE: internal logic
 - [ ] The console link resolves to the request detail behind IAP, so an approver who is not signed in is authenticated at the perimeter before seeing anything
-  → covered by Task T17
+  → covered by Task T14
 - [x] When a step requires approval but no eligible approver exists, the notification step fails loudly with a typed NoEligibleApprover error and the condition is surfaced to admins — it never resolves as a successful send to nobody
   → possible match: Contract "Step Task Enqueue" (rest) to Cloud Tasks: lifecycle-steps (unverified — requirement not mapped to that node)
 - [x] A notification delivery failure is recorded on the step and retried, and leaves the request in 'awaiting_approval' rather than moving it to 'failed' — the approval is still pending, only the telling failed
@@ -1214,6 +1199,7 @@ Startup/initialization order based on edge directions and interaction patterns.
 | `services/worker/src/tasks/dispatcher.ts` | source | --- | draft |
 | `.nodespec/tests/req-003.tests.md` - Test plan for requirement: Phase 1 — User creation with attributes and group assignment | test-plan | markdown | draft |
 | `.nodespec/tests/req-019.tests.md` - Test plan for requirement: Credential generation and encryption at rest | test-plan | markdown | draft |
+| `services/worker/src/phases/update.ts` | source | --- | draft |
 | `services/worker/src/steps/advance.emulator.test.ts` | test-plan | --- | draft |
 | `services/worker/src/auth/taskAuth.ts` | source | --- | draft |
 | `services/worker/src/config.ts` | source | --- | draft |
@@ -1230,6 +1216,7 @@ Startup/initialization order based on edge directions and interaction patterns.
 | `services/worker/src/phases/create.ts` | source | --- | draft |
 | `services/worker/src/notify/resend.emulator.test.ts` | source | --- | draft |
 | `services/worker/src/workspace/noDelegation.test.ts` | test-plan | --- | draft |
+| `.nodespec/tests/req-005.tests.md` - Test plan for requirement: Phase 3 — Role and attribute updates over time | test-plan | markdown | draft |
 | `services/worker/src/steps/advance.ts` | source | --- | draft |
 | `services/worker/src/workspace/directoryClient.ts` | source | --- | draft |
 | `services/worker/src/credentials/credentialStore.test.ts` | test-plan | --- | draft |

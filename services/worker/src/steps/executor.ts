@@ -3,9 +3,14 @@ import {
   type CredentialStore,
   type LifecycleStep,
   type LifecycleStore,
+  type StepErrorClass,
 } from '@lifecycle/shared';
 import { logger } from '../logging.js';
-import { WorkspaceError } from '../workspace/directoryClient.js';
+import {
+  UserAlreadyExistsError,
+  UserNotFoundError,
+  WorkspaceError,
+} from '../workspace/directoryClient.js';
 import type { DirectoryClient } from '../workspace/directoryClient.js';
 import { resolveHandler, type StepContext } from './handler.js';
 
@@ -152,6 +157,44 @@ export async function executeStep(
   }
 }
 
+/**
+ * The step error a failure is recorded as: a class the console can style and a
+ * stable code an operator can act on.
+ *
+ * A function rather than a chain of conditionals inline, because every entry
+ * here is a case where the generic 'terminal' would have been technically true
+ * and useless. The code is what distinguishes "you asked for an email that is
+ * already taken" from "Workspace refused this" from "we gave up retrying", and
+ * a message string is the only other place that distinction could live.
+ */
+function classifyFailure(err: unknown, exhausted: boolean): { class: StepErrorClass; code: string } {
+  // Checked first: a spent budget describes how the step ended regardless of
+  // what the last attempt happened to fail on.
+  if (exhausted) return { class: 'retryable', code: 'retry_budget_exhausted' };
+
+  // The operator's own input is wrong and no retry will change that (REQ-003
+  // AC-3). Ahead of the generic WorkspaceError branch, which this extends.
+  if (err instanceof UserAlreadyExistsError) return { class: 'validation', code: 'already_exists' };
+
+  // The mirror case for phase 3 and 4: the operator named an account that is
+  // not in the domain (REQ-005 AC-8).
+  if (err instanceof UserNotFoundError) return { class: 'validation', code: 'user_not_found' };
+
+  // A resend that finds no usable credential is the one non-Workspace failure
+  // an operator is expected to hit and act on, so it gets a code they can
+  // recognise rather than 'unhandled' (REQ-030 AC-3).
+  if (err instanceof CredentialUnavailableError) {
+    return { class: 'terminal', code: 'credential_unavailable' };
+  }
+
+  if (err instanceof WorkspaceError) {
+    const permission = err.errorClass === 'permission';
+    return { class: permission ? 'permission' : 'terminal', code: err.errorClass };
+  }
+
+  return { class: 'terminal', code: 'unhandled' };
+}
+
 async function settleFailure(
   deps: ExecutorDeps,
   ctx: {
@@ -202,11 +245,7 @@ async function settleFailure(
   // delivering when it gives up and tells nobody, so waiting for a signal that
   // never comes would leave the request mid-flight forever (REQ-016 AC-5).
   const exhausted = retryable && !budgetLeft;
-  const errorClass = exhausted
-    ? 'retryable'
-    : workspaceError?.errorClass === 'permission'
-      ? 'permission'
-      : 'terminal';
+  const { class: errorClass, code } = classifyFailure(err, exhausted);
 
   await store.transitionStep({
     requestId: ctx.requestId,
@@ -214,18 +253,7 @@ async function settleFailure(
     expectedFrom: 'running',
     to: 'failed',
     patch: {
-      error: {
-        class: errorClass,
-        code: exhausted
-          ? 'retry_budget_exhausted'
-          : // A resend that finds no usable credential is the one non-Workspace
-            // failure an operator is expected to hit and act on, so it gets a
-            // code they can recognise rather than 'unhandled' (REQ-030 AC-3).
-            err instanceof CredentialUnavailableError
-            ? 'credential_unavailable'
-            : (workspaceError?.errorClass ?? 'unhandled'),
-        message,
-      },
+      error: { class: errorClass, code, message },
     },
     audit: {
       actor: { ...SYSTEM_ACTOR, onBehalfOf: ctx.requestedBy },

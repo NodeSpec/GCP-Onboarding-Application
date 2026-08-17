@@ -108,6 +108,7 @@ recommended test types, framework suggestions, and test scenarios.
 - **Lifecycle API Service**: [`services/api/src/routes/authorization.emulator.test.ts`](./services/api/src/routes/authorization.emulator.test.ts)
 - **Lifecycle API Service**: [`packages/shared/src/logging.test.ts`](./packages/shared/src/logging.test.ts)
 - **Lifecycle Step Executor**: [`services/worker/src/workspace/noDelegation.test.ts`](./services/worker/src/workspace/noDelegation.test.ts)
+- **Lifecycle Step Executor**: [`.nodespec/tests/req-005.tests.md`](./.nodespec/tests/req-005.tests.md)
 - **Lifecycle API Service**: [`services/api/src/config.test.ts`](./services/api/src/config.test.ts)
 - **Lifecycle Step Executor**: [`services/worker/src/credentials/credentialStore.test.ts`](./services/worker/src/credentials/credentialStore.test.ts)
 - **Lifecycle Step Executor**: [`services/worker/src/steps/executor.emulator.test.ts`](./services/worker/src/steps/executor.emulator.test.ts)

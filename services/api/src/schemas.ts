@@ -68,10 +68,78 @@ export const notifyPayloadSchema = z
       'the notification address must differ from the new primary mailbox, which cannot be read yet',
   });
 
+/** The attribute fields of an update payload, in the order a diff lists them. */
+export const ATTRIBUTE_FIELDS = [
+  'givenName',
+  'familyName',
+  'title',
+  'department',
+  'managerEmail',
+  'orgUnitPath',
+] as const;
+
+/**
+ * Phase 3: role and attribute updates (REQ-005).
+ *
+ * A desired-state submission, not a diff. The operator names the fields they
+ * want changed and the groups to add or remove; what that means against the
+ * live account is computed at execution time and frozen onto the request (AC-1).
+ *
+ * Three shapes of "no value" are distinguished, and that distinction is why
+ * these are nullable rather than merely optional. An ABSENT field is not being
+ * changed. An explicit null CLEARS it, which is a real thing an operator asks
+ * for when someone stops reporting to a manager or leaves a department. The
+ * empty string is neither, so it is refused rather than quietly treated as one
+ * of them. Name and org unit cannot be cleared at all: an account with no name
+ * is not a state Workspace has, and every user is in some org unit.
+ */
+export const updatePayloadSchema = z
+  .object({
+    primaryEmail: email,
+    givenName: z.string().trim().min(1).max(60).optional(),
+    familyName: z.string().trim().min(1).max(60).optional(),
+    title: z.string().trim().min(1).max(120).nullable().optional(),
+    department: z.string().trim().min(1).max(120).nullable().optional(),
+    managerEmail: email.nullable().optional(),
+    orgUnitPath: z
+      .string()
+      .trim()
+      .regex(/^\/[^\s]*$/, 'orgUnitPath must start with / and contain no whitespace')
+      .optional(),
+    addGroups: z.array(email).max(50).optional(),
+    removeGroups: z.array(email).max(50).optional(),
+  })
+  .strict()
+  .refine(
+    (p) =>
+      ATTRIBUTE_FIELDS.some((field) => p[field] !== undefined) ||
+      (p.addGroups?.length ?? 0) > 0 ||
+      (p.removeGroups?.length ?? 0) > 0,
+    {
+      // Without this an operator could submit a request that plans no work at
+      // all, which would run to 'succeeded' having changed nothing and read as
+      // a completed update.
+      message: 'an update must change at least one attribute or group membership',
+    },
+  )
+  .refine(
+    (p) => {
+      const adds = new Set(p.addGroups ?? []);
+      return (p.removeGroups ?? []).every((group) => !adds.has(group));
+    },
+    {
+      path: ['removeGroups'],
+      // The add step and the remove step would race, and which one happened to
+      // land last would decide the membership.
+      message: 'a group cannot be both added and removed in one request',
+    },
+  );
+
 /** Phases with no implementation have no schema, so submission is refused. */
 const PHASE_SCHEMAS: Partial<Record<Phase, z.ZodTypeAny>> = {
   create: createPayloadSchema,
   notify: notifyPayloadSchema,
+  update: updatePayloadSchema,
 };
 
 export interface ValidationIssue {
@@ -101,8 +169,13 @@ export function validatePayload(phase: Phase, payload: unknown): ValidationResul
   }
 
   const value = parsed.data as Record<string, unknown>;
-  const groups = value.groups as string[] | undefined;
-  if (groups) value.groups = [...new Set(groups)];
+  // Deduplicated after parsing rather than in the schema, so the group lists of
+  // every phase are normalised in one place. Two identical entries would
+  // otherwise become two steps racing on the same membership.
+  for (const field of ['groups', 'addGroups', 'removeGroups']) {
+    const list = value[field] as string[] | undefined;
+    if (list) value[field] = [...new Set(list)];
+  }
 
   return { ok: true, value };
 }

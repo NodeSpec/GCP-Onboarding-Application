@@ -43,6 +43,36 @@ function groupsOf(payload: Record<string, unknown>): string[] {
   return groups as string[];
 }
 
+function groupListOf(phase: Phase, payload: Record<string, unknown>, field: string): string[] {
+  const groups = payload[field];
+  if (groups === undefined) return [];
+  if (!Array.isArray(groups) || groups.some((g) => typeof g !== 'string' || g.length === 0)) {
+    throw new InvalidPhasePayload(phase, `${field} must be an array of non-empty strings`);
+  }
+  return groups as string[];
+}
+
+/** The attribute fields phase 3 can change (REQ-005 AC-4). */
+const UPDATABLE_ATTRIBUTES = [
+  'givenName',
+  'familyName',
+  'title',
+  'department',
+  'managerEmail',
+  'orgUnitPath',
+] as const;
+
+/**
+ * Whether the payload asks for any attribute change at all.
+ *
+ * A present-and-null field counts. Null is a request to CLEAR the attribute,
+ * which is as much a change as any other value, so a truthiness test here would
+ * drop the apply step from exactly the requests that need it most.
+ */
+function touchesAttributes(payload: Record<string, unknown>): boolean {
+  return UPDATABLE_ATTRIBUTES.some((field) => payload[field] !== undefined);
+}
+
 /**
  * The ordered plan for a phase. Pure: the same payload always yields the same
  * plan, which is what makes a request's steps reproducible from its payload.
@@ -77,11 +107,39 @@ export function stepPlanFor(phase: Phase, payload: Record<string, unknown>): Ste
           : { name: 'confirm-credential', input: {} },
         { name: 'send-welcome-letter', input: {} },
       ];
-    case 'update':
+    case 'update': {
+      // Phase 3 (REQ-005). Validate, then compute the diff against live state
+      // and freeze it, then apply.
+      //
+      // The diff is its own step, ahead of everything that mutates, for two
+      // reasons. An approver has to see what will actually change rather than
+      // the raw payload (AC-2), which means the diff must exist before any
+      // later step can halt for approval. And the apply steps read what was
+      // approved rather than recomputing it, so an account that drifts between
+      // approval and execution cannot quietly widen the change someone signed
+      // off on.
+      //
+      // One step per group change, as in phase 1, so a single failing group
+      // does not discard the ones already applied and the failure names which
+      // group it was (AC-7).
+      const adds = groupListOf(phase, payload, 'addGroups');
+      const removes = groupListOf(phase, payload, 'removeGroups');
+      return [
+        { name: 'validate-update-request', input: {} },
+        { name: 'compute-update-diff', input: {} },
+        // Omitted entirely when no attribute was submitted. A step that exists
+        // only to skip tells an operator a change was considered when none was
+        // ever asked for.
+        ...(touchesAttributes(payload) ? [{ name: 'apply-update-attributes', input: {} }] : []),
+        ...adds.map((groupKey) => ({ name: 'add-group', input: { groupKey } })),
+        ...removes.map((groupKey) => ({ name: 'remove-group', input: { groupKey } })),
+        { name: 'verify-update', input: {} },
+      ];
+    }
     case 'delete':
-      // Phases 3 and 4 are not implemented. Refusing here is deliberate: an
-      // empty plan would persist a request with no steps, which would sit in
-      // 'pending' forever looking like a stuck job rather than an unbuilt one.
+      // Phase 4 is not implemented. Refusing here is deliberate: an empty plan
+      // would persist a request with no steps, which would sit in 'pending'
+      // forever looking like a stuck job rather than an unbuilt one.
       throw new InvalidPhasePayload(phase, 'this phase is not implemented yet');
     default: {
       const exhaustive: never = phase;

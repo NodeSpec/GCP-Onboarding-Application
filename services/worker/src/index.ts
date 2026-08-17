@@ -18,6 +18,7 @@ import { DirectoryClient } from './workspace/directoryClient.js';
 // skipping work.
 import './phases/create.js';
 import './phases/notify.js';
+import './phases/update.js';
 
 /**
  * Worker entry point.
