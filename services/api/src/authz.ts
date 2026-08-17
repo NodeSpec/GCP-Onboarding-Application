@@ -44,7 +44,17 @@ declare global {
 
 export interface AuthzOptions {
   resolver?: RoleResolver;
-  onDenied?: (identity: OperatorIdentity, required: OperatorRole, path: string) => void;
+  /**
+   * Records the refusal (REQ-010 AC-3). Carries the path and source IP as well
+   * as the identity, because a role denial with neither says someone was turned
+   * away and nothing about what they were reaching for.
+   */
+  onDenied?: (event: {
+    identity: OperatorIdentity;
+    required: OperatorRole;
+    path: string;
+    sourceIp: string;
+  }) => void;
 }
 
 /**
@@ -65,7 +75,12 @@ export function requireRole(required: OperatorRole, options: AuthzOptions = {}):
     if (!roles.includes(required)) {
       // The refusal names what was needed, not what the caller has: telling an
       // operator their exact role set is more than a denial needs to say.
-      options.onDenied?.(identity, required, req.path);
+      options.onDenied?.({
+        identity,
+        required,
+        path: req.originalUrl,
+        sourceIp: req.ip ?? 'unknown',
+      });
       res.status(403).json({ error: 'forbidden', requiredRole: required });
       return;
     }

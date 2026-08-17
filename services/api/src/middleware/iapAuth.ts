@@ -55,6 +55,19 @@ export interface IapAuthOptions {
   keySet?: JWTVerifyGetKey;
   logger?: Logger;
   /**
+   * Records the refusal when verification fails (REQ-010 AC-3).
+   *
+   * Optional, and awaited only on the refusal path, so a store outage cannot
+   * turn a 401 into a 500: the caller is unauthenticated either way, and the
+   * response must not depend on the audit write succeeding. A failure to record
+   * is logged and the refusal still stands.
+   */
+  auditDenied?: (event: {
+    reason: string;
+    path: string;
+    sourceIp: string;
+  }) => Promise<void>;
+  /**
    * Local development only. When set, verification is skipped and this identity
    * is used. loadConfig refuses the combination that produces this outside
    * NODE_ENV=development, so it cannot be reached in a deployed service.
@@ -92,7 +105,18 @@ export function createIapAuth(options: IapAuthOptions): RequestHandler {
     // Log the reason and the source, never the assertion itself. A raw
     // assertion in a log is a replayable credential for the length of its
     // validity.
-    log.warn({ reason, sourceIp: req.ip, path: req.path }, 'IAP assertion rejected');
+    const sourceIp = req.ip ?? 'unknown';
+    log.warn({ reason, sourceIp, path: req.path }, 'IAP assertion rejected');
+
+    // Audited as well as logged (REQ-010 AC-3). The response is sent without
+    // waiting: a caller who failed verification learns nothing from how long
+    // the audit write took, and a store outage must not convert a 401 into a
+    // 500. NO IDENTITY is recorded - nothing about this caller was verified,
+    // and writing a claimed email would let an attacker forge attribution.
+    void options
+      .auditDenied?.({ reason, path: req.path, sourceIp })
+      .catch((err: unknown) => log.error({ err, reason }, 'failed to audit an assertion refusal'));
+
     res.status(401).json({ error: 'unauthenticated' });
   }
 
