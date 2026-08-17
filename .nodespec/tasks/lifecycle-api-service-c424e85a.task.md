@@ -48,8 +48,6 @@ Ordered WORK ORDERS synthesized from the model — this node's deliverable kind,
   Dependency contract — capture the reference/identifier wiring in this node's config artifacts; no payload schema expected.
 - [ ] **T5 — Implement the integration with Cloud Tasks: lifecycle-steps (gcp-cloud-tasks) per Contract "Step Task Enqueue" (rest).**
   Build to the contract schema EXACTLY (see Interface Contracts).
-  ↳ serves (unverified match): REQ-001 "Creating a lifecycle request persists a LifecycleRequest document plus one step document per step in the phase's step plan, all with status 'pending' and attempt=0, before any Workspace call is made" — requirement not mapped to that node; verify or reassign before relying on it
-  ↳ serves (unverified match): REQ-001 "Each persisted step carries a stable idempotency key derived from requestId, stepId and an attempt-invariant payload hash, distinct across requests and steps" — requirement not mapped to that node; verify or reassign before relying on it
   ↳ serves (unverified match): REQ-001 "The full step history of a request (status, attempts, timestamps, actor, error) is retrievable through a single API call for operator inspection" — requirement not mapped to that node; verify or reassign before relying on it
   ↳ serves (unverified match): REQ-001 "The first step of a newly created request is either dispatched or halted in 'awaiting_approval' according to the policy snapshotted onto the request" — requirement not mapped to that node; verify or reassign before relying on it
   ↳ serves (unverified match): REQ-001 "When the first step is halted in 'awaiting_approval', an approver-notification task is enqueued in the same transaction as the halt, so a halt can never be committed without the notification being scheduled (REQ-032 performs the send)" — requirement not mapped to that node; verify or reassign before relying on it
@@ -145,12 +143,12 @@ Category: functional | Status: in-progress
 Owned by the Lifecycle API Service. Every lifecycle action (create, notify, update, delete) is admitted as a persisted LifecycleRequest plus one durable step document per step in the phase's step plan, written before any Workspace call is made. Each step record carries its own status (pending, awaiting_approval, ready, running, succeeded, failed, skipped), attempt counter, input snapshot, output, error, and a stable idempotency key. The API also owns the concurrency guard: a target user may have only one non-terminal request at a time, so two operators cannot drive conflicting changes against the same account. Durable execution of these steps is REQ-016, owned by the step executor.
 
 **Acceptance criteria — your task boxes:**
-- [ ] Creating a lifecycle request persists a LifecycleRequest document plus one step document per step in the phase's step plan, all with status 'pending' and attempt=0, before any Workspace call is made
-  → covered by Task T5
+- [x] Creating a lifecycle request persists a LifecycleRequest document plus one step document per step in the phase's step plan, all with status 'pending' and attempt=0, before any Workspace call is made
+  → possible match: Contract "Step Task Enqueue" (rest) to Cloud Tasks: lifecycle-steps (unverified — requirement not mapped to that node)
 - [ ] Submitting a request for a target user that already has a non-terminal request returns 409 and creates no second request, so two operators cannot drive conflicting changes against the same account concurrently
   → covered by Task T9
-- [ ] Each persisted step carries a stable idempotency key derived from requestId, stepId and an attempt-invariant payload hash, distinct across requests and steps
-  → covered by Task T5
+- [x] Each persisted step carries a stable idempotency key derived from requestId, stepId and an attempt-invariant payload hash, distinct across requests and steps
+  → possible match: Contract "Step Task Enqueue" (rest) to Cloud Tasks: lifecycle-steps (unverified — requirement not mapped to that node)
 - [ ] The submitted payload is validated against the phase schema and rejected with 400 before any document is persisted
   → covered by Task T10
 - [ ] The full step history of a request (status, attempts, timestamps, actor, error) is retrievable through a single API call for operator inspection
@@ -1541,7 +1539,9 @@ Startup/initialization order based on edge directions and interaction patterns.
 | `.nodespec/tests/req-007.tests.md` - Test plan for requirement: IAP protection with server-side JWT assertion verification | test-plan | markdown | draft |
 | `packages/shared/src/logging.ts` | source | --- | draft |
 | `.nodespec/tests/req-010.tests.md` - Test plan for requirement: Audit event model, operator-action auditing and log redaction | test-plan | markdown | draft |
+| `services/api/src/schemas.ts` | source | --- | draft |
 | `services/api/src/index.ts` | source | --- | draft |
+| `services/api/src/authz.ts` | source | --- | draft |
 | `packages/shared/src/transitions.test.ts` | test-plan | --- | draft |
 | `packages/shared/src/store.ts` | source | --- | draft |
 | `services/api/package.json` | config | --- | draft |
@@ -1551,8 +1551,12 @@ Startup/initialization order based on edge directions and interaction patterns.
 | `packages/shared/src/index.ts` | source | --- | draft |
 | `services/api/src/logging.ts` | source | --- | draft |
 | `packages/shared/package.json` | config | --- | draft |
+| `packages/shared/src/policy.ts` | source | --- | draft |
+| `packages/shared/src/store.emulator.test.ts` | test-plan | --- | draft |
+| `packages/shared/src/requestFactory.ts` | source | --- | draft |
 | `packages/shared/src/logging.test.ts` | test-plan | --- | draft |
 | `services/api/src/config.test.ts` | test-plan | --- | draft |
+| `packages/shared/src/requestFactory.test.ts` | test-plan | --- | draft |
 | `packages/shared/src/stepPlans.ts` | source | --- | draft |
 | `packages/shared/src/transitions.ts` | source | --- | draft |
 | `services/api/src/config.ts` | source | --- | draft |

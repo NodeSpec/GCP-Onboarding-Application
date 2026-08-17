@@ -1,7 +1,7 @@
 {
   "modelVersion": 1,
   "generatedBy": "nodespec",
-  "modelHash": "bea95c4a99250a8e85e657ace243f7031e85971b36e076e67fe57b22b5b99059",
+  "modelHash": "96be13abc05a886a4ec2ee437cea97b11682df018ebd3148034655c29112169c",
   "nodes": [
     {
       "id": "1c81cf63-c51e-4b0e-b6ad-7d318332d2fe",
@@ -610,6 +610,12 @@
       "kind": "test-plan"
     },
     {
+      "id": "1a2b7c94-3d58-4e61-9072-5f9c8d1e4a30",
+      "nodeId": "c424e85a-6584-4bb7-a48e-2175ebc6a41b",
+      "path": "services/api/src/schemas.ts",
+      "kind": "source"
+    },
+    {
       "id": "1b30aa33-c945-4448-a9b7-4a7ae469d123",
       "nodeId": "db8e5409-dc6f-4052-887a-7ba1dd5fb717",
       "path": "services/worker/tsconfig.json",
@@ -634,6 +640,12 @@
       "path": "services/api/src/index.ts",
       "kind": "source",
       "contentHash": "000000002db8b598"
+    },
+    {
+      "id": "2b3c8d05-4e69-4f72-8183-6a0d9e2f5b41",
+      "nodeId": "c424e85a-6584-4bb7-a48e-2175ebc6a41b",
+      "path": "services/api/src/authz.ts",
+      "kind": "source"
     },
     {
       "id": "330aa1e9-7fa7-490f-a1ba-a447bf2502d8",
