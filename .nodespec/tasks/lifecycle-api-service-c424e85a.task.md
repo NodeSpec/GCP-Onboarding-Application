@@ -1532,6 +1532,7 @@ Startup/initialization order based on edge directions and interaction patterns.
 | `packages/shared/src/policy.ts` | source | --- | draft |
 | `packages/shared/src/store.emulator.test.ts` | test-plan | --- | draft |
 | `services/api/src/routes/authorization.emulator.test.ts` | test-plan | --- | draft |
+| `services/api/src/routes/admin.ts` | source | --- | draft |
 | `packages/shared/src/requestFactory.ts` | source | --- | draft |
 | `packages/shared/src/logging.test.ts` | test-plan | --- | draft |
 | `services/api/src/config.test.ts` | test-plan | --- | draft |

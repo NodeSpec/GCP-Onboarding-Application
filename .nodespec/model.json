@@ -1,7 +1,7 @@
 {
   "modelVersion": 1,
   "generatedBy": "nodespec",
-  "modelHash": "047a1a18af8dab93817c9a33ba7f30d28b2ddd613ad5c346002d57a44c94ed38",
+  "modelHash": "bdffc754c98469814fcc423f971f9ee8711c0e068858e6ef03a1e95feccb6db5",
   "nodes": [
     {
       "id": "1c81cf63-c51e-4b0e-b6ad-7d318332d2fe",
@@ -936,6 +936,12 @@
       "nodeId": "c424e85a-6584-4bb7-a48e-2175ebc6a41b",
       "path": "services/api/src/routes/authorization.emulator.test.ts",
       "kind": "test-plan"
+    },
+    {
+      "id": "c4b1add2-76c4-4549-9c72-ed3f67266bae",
+      "nodeId": "c424e85a-6584-4bb7-a48e-2175ebc6a41b",
+      "path": "services/api/src/routes/admin.ts",
+      "kind": "source"
     },
     {
       "id": "c52ea038-7d14-4b69-a023-9f16b8d4e7c2",
