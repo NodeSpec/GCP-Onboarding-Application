@@ -34,7 +34,6 @@ Ordered WORK ORDERS synthesized from the model — this node's deliverable kind,
   ↳ serves (unverified match): REQ-017 "The one-time password is returned only to the authenticated operator who created the request, verified against the IAP identity, and a retrieval attempt by any other operator returns 403" — requirement not mapped to that node; verify or reassign before relying on it
 - [ ] **T3 — Implement the integration with Cloud Logging: audit sink (gcp-cloud-logging) per Contract "Audit Log Sink" (dependency).**
   Dependency contract — capture the reference/identifier wiring in this node's config artifacts; no payload schema expected.
-  ↳ serves (unverified match): REQ-012 "The admin role can edit approval policy, cancel or resume any request, and read the full audit trail" — requirement not mapped to that node; verify or reassign before relying on it
   ↳ serves (unverified match): REQ-010 "Each audit event records actor identity, action, target user, before/after state, outcome, and timestamp" — requirement not mapped to that node; verify or reassign before relying on it
   ↳ serves (unverified match): REQ-010 "When an operator performs an approve, reject, cancel, resume, credential retrieval, or role-binding change, the API shall write the audit event and the state change it describes in a single Firestore transaction, verified by a test that forces the transaction to fail and observes neither the state change nor the audit event" — requirement not mapped to that node; verify or reassign before relying on it
   ↳ serves (unverified match): REQ-010 "When an automated step writes an audit event, the API shall record the actor as the system principal and shall also record the originating human requester of the parent request, so no machine action is left unattributable" — requirement not mapped to that node; verify or reassign before relying on it
@@ -139,8 +138,8 @@ IAP proves who the caller is; the application decides what they may do. Operator
   → THIS NODE: internal logic
 - [x] The approver role can approve requests created by others and is still refused approval of its own requests
   → THIS NODE: internal logic
-- [ ] The admin role can edit approval policy, cancel or resume any request, and read the full audit trail
-  → covered by Task T3
+- [x] The admin role can edit approval policy, cancel or resume any request, and read the full audit trail
+  → possible match: Contract "Audit Log Sink" (dependency) to Cloud Logging: audit sink (unverified — requirement not mapped to that node)
 - [x] Role binding changes write audit events recording the actor, the subject, and the before/after roles
   → possible match: Contract "Audit Log Sink" (dependency) to Cloud Logging: audit sink (unverified — requirement not mapped to that node)
 - [x] Group-based bindings resolve to the same effective permissions as an equivalent individual binding

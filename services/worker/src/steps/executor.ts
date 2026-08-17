@@ -9,10 +9,17 @@ import { resolveHandler, type StepContext } from './handler.js';
  * The execution loop: one step per invocation.
  *
  * Cloud Tasks delivers at least once, so the first thing this does is try to
- * claim the step by moving it ready -> running with `expectedFrom: ready`. If
- * the claim does not apply, another delivery already has it and this one is an
- * acknowledged no-op. That claim, and every subsequent move, carries its audit
- * event in the same transaction because the store gives no way to do otherwise.
+ * claim the step. If the claim does not apply, another delivery already has it
+ * and this one is an acknowledged no-op. That claim, and every subsequent move,
+ * carries its audit event in the same transaction because the store gives no
+ * way to do otherwise.
+ *
+ * Two failure modes are handled explicitly rather than left to a sweep that
+ * does not exist. An instance killed mid-step leaves its step 'running' with
+ * nobody working on it; the claim reclaims that step once its lease expires
+ * (REQ-016 AC-1). And Cloud Tasks stops delivering when its retry budget runs
+ * out without telling anyone, so the last attempt settles the step and the
+ * request itself rather than waiting for a signal that never comes (AC-5).
  *
  * The return value tells the route which HTTP status to send, which is how
  * Cloud Tasks learns whether to retry. Getting that mapping wrong is the
@@ -36,9 +43,26 @@ export interface ExecutorDeps {
   credentials: CredentialStore;
   /** Enqueues the next step, or schedules the approval notice when it halts. */
   advance: (requestId: string, completedStepId: string) => Promise<void>;
+  /**
+   * How long a claim is honoured before another delivery may reclaim the step.
+   * Must exceed the longest a step can legitimately take (REQ-016 AC-1).
+   */
+  leaseSeconds?: number;
+  /**
+   * The queue's retry budget. When the incoming attempt reaches it, a retryable
+   * failure settles terminally instead of asking for another delivery, so a step
+   * that exhausts its budget lands 'failed' with the request failed behind it
+   * rather than sitting mid-flight forever (REQ-016 AC-5).
+   */
+  maxAttempts?: number;
 }
 
 const SYSTEM_ACTOR = { kind: 'system' as const, email: 'lifecycle-worker' };
+
+/** Well above the longest a Workspace step should take. */
+const DEFAULT_LEASE_SECONDS = 600;
+/** Matches the queue's configured maxAttempts (REQ-021). */
+const DEFAULT_MAX_ATTEMPTS = 5;
 
 export async function executeStep(
   deps: ExecutorDeps,
@@ -53,13 +77,13 @@ export async function executeStep(
     return { kind: 'settled', status: 'failed' };
   }
 
-  // Claim. ready -> running, guarded, with its audit event.
-  const claim = await store.transitionStep({
+  // Claim, guarded, with its audit event. Also reclaims a step left 'running'
+  // by an instance that died mid-step, once its lease has expired.
+  const claim = await store.claimStep({
     requestId,
     stepId,
-    expectedFrom: 'ready',
-    to: 'running',
-    patch: { attempts: params.attempt },
+    attempt: params.attempt,
+    leaseSeconds: deps.leaseSeconds ?? DEFAULT_LEASE_SECONDS,
     audit: {
       actor: { ...SYSTEM_ACTOR, onBehalfOf: request.requestedBy },
       action: 'step.claim',
@@ -67,9 +91,16 @@ export async function executeStep(
     },
   });
 
-  if (!claim.applied) {
+  if (!claim.claimed) {
     logger.info({ requestId, stepId, observed: claim.observed }, 'step not claimable, acknowledging');
     return { kind: 'not-claimable', observed: claim.observed };
+  }
+
+  if (claim.reclaimed) {
+    // Worth saying out loud: this step was abandoned mid-flight, so the handler
+    // is about to re-run against a domain it may already have changed. That is
+    // safe only because every handler reads before it mutates (REQ-013 AC-1).
+    logger.warn({ requestId, stepId }, 'reclaimed a step whose lease expired; replaying it');
   }
 
   const steps = await store.listSteps(requestId);
@@ -102,57 +133,95 @@ export async function executeStep(
 
     return { kind: 'settled', status: result.status };
   } catch (err) {
-    return settleFailure(deps, { requestId, stepId, step, targetUser: request.targetUser, requestedBy: request.requestedBy }, err);
+    return settleFailure(
+      deps,
+      {
+        requestId,
+        stepId,
+        step,
+        targetUser: request.targetUser,
+        requestedBy: request.requestedBy,
+        attempt: params.attempt,
+      },
+      err,
+    );
   }
 }
 
 async function settleFailure(
   deps: ExecutorDeps,
-  ctx: { requestId: string; stepId: string; step: LifecycleStep; targetUser: string; requestedBy: string },
+  ctx: {
+    requestId: string;
+    stepId: string;
+    step: LifecycleStep;
+    targetUser: string;
+    requestedBy: string;
+    attempt: number;
+  },
   err: unknown,
 ): Promise<ExecutionOutcome> {
   const { store } = deps;
   const workspaceError = err instanceof WorkspaceError ? err : null;
   const retryable = workspaceError ? workspaceError.errorClass === 'retryable' : false;
   const message = err instanceof Error ? err.message : String(err);
+  const maxAttempts = deps.maxAttempts ?? DEFAULT_MAX_ATTEMPTS;
+  const budgetLeft = retryable && ctx.attempt < maxAttempts;
 
-  if (retryable) {
-    // Hand the step back so the next delivery can claim it. The step stays
-    // alive; Cloud Tasks owns the backoff and the attempt budget, and when that
-    // budget is exhausted the queue stops delivering and the step is left
-    // failed by the sweep rather than by a guess made here.
+  if (budgetLeft) {
+    // Hand the step back to 'ready' so the next delivery can CLAIM it. Failing
+    // it here instead would wedge the step permanently: claiming requires
+    // 'ready', so a step parked in 'failed' can never be picked up again, and
+    // every transient Workspace error would be fatal in practice.
     await store.transitionStep({
       requestId: ctx.requestId,
       stepId: ctx.stepId,
       expectedFrom: 'running',
-      to: 'failed',
+      to: 'ready',
       patch: { error: { class: 'retryable', code: 'workspace_retryable', message } },
       audit: {
         actor: { ...SYSTEM_ACTOR, onBehalfOf: ctx.requestedBy },
         action: 'step.attempt_failed',
         targetUser: ctx.targetUser,
         outcome: 'failure',
-        after: { error: message },
+        after: { error: message, attempt: ctx.attempt, maxAttempts },
       },
     });
-    logger.warn({ ...ctx, err: message }, 'retryable step failure, asking Cloud Tasks to redeliver');
+    logger.warn(
+      { requestId: ctx.requestId, stepId: ctx.stepId, attempt: ctx.attempt, err: message },
+      'retryable step failure, asking Cloud Tasks to redeliver',
+    );
     return { kind: 'retry', reason: message };
   }
 
-  const errorClass = workspaceError?.errorClass === 'permission' ? 'permission' : 'terminal';
+  // Either the error was terminal, or it was retryable and the budget is spent.
+  // A budget-exhausted step must settle HERE: Cloud Tasks simply stops
+  // delivering when it gives up and tells nobody, so waiting for a signal that
+  // never comes would leave the request mid-flight forever (REQ-016 AC-5).
+  const exhausted = retryable && !budgetLeft;
+  const errorClass = exhausted
+    ? 'retryable'
+    : workspaceError?.errorClass === 'permission'
+      ? 'permission'
+      : 'terminal';
 
   await store.transitionStep({
     requestId: ctx.requestId,
     stepId: ctx.stepId,
     expectedFrom: 'running',
     to: 'failed',
-    patch: { error: { class: errorClass, code: workspaceError?.errorClass ?? 'unhandled', message } },
+    patch: {
+      error: {
+        class: errorClass,
+        code: exhausted ? 'retry_budget_exhausted' : (workspaceError?.errorClass ?? 'unhandled'),
+        message,
+      },
+    },
     audit: {
       actor: { ...SYSTEM_ACTOR, onBehalfOf: ctx.requestedBy },
       action: 'step.failed',
       targetUser: ctx.targetUser,
       outcome: 'failure',
-      after: { error: message },
+      after: { error: message, attempt: ctx.attempt, maxAttempts, retryBudgetExhausted: exhausted },
     },
   });
 
@@ -170,6 +239,9 @@ async function settleFailure(
     },
   });
 
-  logger.error({ ...ctx, err: message }, 'terminal step failure, request failed');
+  logger.error(
+    { requestId: ctx.requestId, stepId: ctx.stepId, exhausted, err: message },
+    exhausted ? 'retry budget exhausted, request failed' : 'terminal step failure, request failed',
+  );
   return { kind: 'settled', status: 'failed' };
 }

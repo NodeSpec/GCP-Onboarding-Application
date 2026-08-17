@@ -52,10 +52,6 @@ Ordered WORK ORDERS synthesized from the model — this node's deliverable kind,
   ↳ serves (unverified match): REQ-006 "When a Drive data-transfer successor is specified, the transfer is initiated and confirmed complete before the delete step is dispatched" — requirement not mapped to that node; verify or reassign before relying on it
   ↳ serves (unverified match): REQ-006 "Every offboarding step, including the compensating unsuspend, records the affected user, actor, and outcome to the audit log" — requirement not mapped to that node; verify or reassign before relying on it
   ↳ serves (unverified match): REQ-013 "Concurrent duplicate task deliveries for the same step result in exactly one Workspace mutation" — requirement not mapped to that node; verify or reassign before relying on it
-  ↳ serves (unverified match): REQ-016 "A request whose executing instance is terminated mid-step resumes from the last committed step status on the next task delivery, with no step executed twice and no step skipped" — requirement not mapped to that node; verify or reassign before relying on it
-  ↳ serves (unverified match): REQ-016 "Delivering the same step task twice results in exactly one execution: the second delivery observes a non-'ready' status inside the transaction and returns without side effects" — requirement not mapped to that node; verify or reassign before relying on it
-  ↳ serves (unverified match): REQ-016 "Every step status transition writes its audit event in the same Firestore transaction as the transition, verified by a test that fails the transaction and observes neither the transition nor the audit event" — requirement not mapped to that node; verify or reassign before relying on it
-  ↳ serves (unverified match): REQ-016 "A step that exhausts its retry budget lands in status 'failed' with the terminal error recorded, the parent request moves to 'failed', and no subsequent step is dispatched" — requirement not mapped to that node; verify or reassign before relying on it
 - [ ] **T3 — Implement the integration with Firestore: lifecycle state and audit (gcp-firestore) per Contract "Lifecycle State Store" (nosql).**
   Build to the contract schema EXACTLY (see Interface Contracts).
   ↳ serves (unverified match): REQ-005 "Submitting an update request computes a diff against the user's live Workspace state and persists it on the request before execution" — requirement not mapped to that node; verify or reassign before relying on it
@@ -424,16 +420,16 @@ Category: functional | Status: in-progress
 Owned by the Lifecycle Step Executor. Steps admitted by REQ-001 are executed one per invocation, durably and exactly once in effect. State lives in Firestore, never in process memory, so a Cloud Run instance killed mid-step resumes from the last committed status on the next task delivery. Cloud Tasks delivers at least once, so every transition is performed inside a Firestore transaction that reads the current step status and refuses illegal transitions — a duplicate delivery observes a non-'ready' status and returns without side effects. Every transition writes its audit event in that same transaction, so a state change can never be recorded without its audit event or vice versa. On completion the executor evaluates the next step and either dispatches it or halts it in 'awaiting_approval' per the policy snapshotted onto the request.
 
 **Acceptance criteria — your task boxes:**
-- [ ] A request whose executing instance is terminated mid-step resumes from the last committed step status on the next task delivery, with no step executed twice and no step skipped
-  → covered by Task T2
-- [ ] Delivering the same step task twice results in exactly one execution: the second delivery observes a non-'ready' status inside the transaction and returns without side effects
-  → covered by Task T2
+- [x] A request whose executing instance is terminated mid-step resumes from the last committed step status on the next task delivery, with no step executed twice and no step skipped
+  → possible match: Contract "Step Task Enqueue" (rest) to Cloud Tasks: lifecycle-steps (unverified — requirement not mapped to that node)
+- [x] Delivering the same step task twice results in exactly one execution: the second delivery observes a non-'ready' status inside the transaction and returns without side effects
+  → possible match: Contract "Step Task Enqueue" (rest) to Cloud Tasks: lifecycle-steps (unverified — requirement not mapped to that node)
 - [x] An illegal state transition (e.g. 'succeeded' -> 'running') is rejected by the transition guard and raises a typed InvalidTransition error rather than mutating state
   → possible match: Contract "Lifecycle State Store" (nosql) to Firestore: lifecycle state and audit (unverified — requirement not mapped to that node)
-- [ ] Every step status transition writes its audit event in the same Firestore transaction as the transition, verified by a test that fails the transaction and observes neither the transition nor the audit event
-  → covered by Task T2
-- [ ] A step that exhausts its retry budget lands in status 'failed' with the terminal error recorded, the parent request moves to 'failed', and no subsequent step is dispatched
-  → covered by Task T2
+- [x] Every step status transition writes its audit event in the same Firestore transaction as the transition, verified by a test that fails the transaction and observes neither the transition nor the audit event
+  → possible match: Contract "Step Task Enqueue" (rest) to Cloud Tasks: lifecycle-steps (unverified — requirement not mapped to that node)
+- [x] A step that exhausts its retry budget lands in status 'failed' with the terminal error recorded, the parent request moves to 'failed', and no subsequent step is dispatched
+  → possible match: Contract "Step Task Enqueue" (rest) to Cloud Tasks: lifecycle-steps (unverified — requirement not mapped to that node)
 - [x] On successful completion the executor dispatches the next step, or halts it in 'awaiting_approval' when the snapshotted policy requires approval
   → possible match: Contract "Step Task Enqueue" (rest) to Cloud Tasks: lifecycle-steps (unverified — requirement not mapped to that node)
 - [x] When the executor halts a step in 'awaiting_approval', the approver-notification record is written in the same Firestore transaction as the halt, so a halt can never be committed without its notification record; the notification task is then enqueued from that record after the transaction commits, and an enqueue that fails leaves the record outstanding for a sweeper rather than losing the halt (REQ-032 performs the send)
