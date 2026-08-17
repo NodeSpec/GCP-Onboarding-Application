@@ -98,6 +98,7 @@ recommended test types, framework suggestions, and test scenarios.
 - **Lifecycle Step Executor**: [`services/worker/src/workspace/noDelegation.test.ts`](./services/worker/src/workspace/noDelegation.test.ts)
 - **Lifecycle API Service**: [`services/api/src/config.test.ts`](./services/api/src/config.test.ts)
 - **Lifecycle Step Executor**: [`services/worker/src/credentials/credentialStore.test.ts`](./services/worker/src/credentials/credentialStore.test.ts)
+- **Lifecycle API Service**: [`packages/shared/src/requestFactory.test.ts`](./packages/shared/src/requestFactory.test.ts)
 - **Lifecycle Step Executor**: [`services/worker/src/workspace/retry.test.ts`](./services/worker/src/workspace/retry.test.ts)
 - **Lifecycle Step Executor**: [`services/worker/src/phases/create.test.ts`](./services/worker/src/phases/create.test.ts)
 - **Lifecycle API Service**: [`packages/shared/src/stepPlans.test.ts`](./packages/shared/src/stepPlans.test.ts)
