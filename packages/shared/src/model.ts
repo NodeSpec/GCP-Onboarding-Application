@@ -112,7 +112,13 @@ export interface AuditActor {
 
 export interface AuditEvent {
   eventId: string;
-  requestId: string;
+  /**
+   * Null for events that are not about a lifecycle request. A role binding
+   * change is the case that forced this: it is a real audited action with an
+   * actor and a subject, but no request to hang it on, and inventing a sentinel
+   * request id would have made the per-request audit query lie.
+   */
+  requestId: string | null;
   stepId: string | null;
   actor: AuditActor;
   action: string;
