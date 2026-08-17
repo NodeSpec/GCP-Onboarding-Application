@@ -1,7 +1,7 @@
 {
   "modelVersion": 1,
   "generatedBy": "nodespec",
-  "modelHash": "539e94cc9c270cd2fac3b02da15afca214f87b3ea0ca69d0ebc0c45d585223ce",
+  "modelHash": "318870307e937de4624b5e2ae3a519c174307f37a67056f8990454bb66b3c6b8",
   "nodes": [
     {
       "id": "1c81cf63-c51e-4b0e-b6ad-7d318332d2fe",
@@ -640,7 +640,7 @@
       "nodeId": "c424e85a-6584-4bb7-a48e-2175ebc6a41b",
       "path": "services/api/src/index.ts",
       "kind": "source",
-      "contentHash": "000000000e749229"
+      "contentHash": "000000001e9b9771"
     },
     {
       "id": "2b3c8d05-4e69-4f72-8183-6a0d9e2f5b41",
@@ -710,6 +710,12 @@
       "id": "4d5e0f27-6081-4b94-83a5-8c2f10417d63",
       "nodeId": "c424e85a-6584-4bb7-a48e-2175ebc6a41b",
       "path": "services/api/src/schemas.test.ts",
+      "kind": "test-plan"
+    },
+    {
+      "id": "5f26207f-5dbf-4b77-aee0-50d6f6600b67",
+      "nodeId": "c424e85a-6584-4bb7-a48e-2175ebc6a41b",
+      "path": "packages/shared/src/dispatcher.test.ts",
       "kind": "test-plan"
     },
     {
@@ -835,7 +841,8 @@
       "id": "ac2c40e9-50ed-48a4-98b2-03a80c66aa34",
       "nodeId": "db8e5409-dc6f-4052-887a-7ba1dd5fb717",
       "path": "services/worker/src/index.ts",
-      "kind": "source"
+      "kind": "source",
+      "contentHash": "00000000192f4249"
     },
     {
       "id": "b2d7c018-5063-4e98-ac42-38db610f9e57",

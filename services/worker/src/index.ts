@@ -7,7 +7,7 @@ import { CredentialStore } from './credentials/credentialStore.js';
 import { logger } from './logging.js';
 import { taskRoutes } from './routes/tasks.js';
 import { advance } from './steps/advance.js';
-import { CloudTasksDispatcher } from './tasks/dispatcher.js';
+import { createDispatcher } from './tasks/dispatcher.js';
 import { DirectoryClient } from './workspace/directoryClient.js';
 
 // Registering the phase modules is what populates the step handler registry.
@@ -37,7 +37,7 @@ const db = new Firestore({
 const store = new LifecycleStore(db);
 const credentials = new CredentialStore(db);
 const directory = new DirectoryClient({ customerId: config.WORKSPACE_CUSTOMER_ID });
-const dispatcher = new CloudTasksDispatcher();
+const dispatcher = createDispatcher();
 
 const app = express();
 app.disable('x-powered-by');

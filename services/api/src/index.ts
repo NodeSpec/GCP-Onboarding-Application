@@ -6,6 +6,7 @@ import { config } from './config.js';
 import { logger } from './logging.js';
 import { createIapAuth } from './middleware/iapAuth.js';
 import { requestRoutes } from './routes/requests.js';
+import { createDispatcher } from './tasks/dispatcher.js';
 
 /**
  * Service entry point.
@@ -64,7 +65,9 @@ async function loadPolicy(): Promise<ApprovalPolicy> {
   return normalisePolicy(snap.exists ? snap.data() : undefined);
 }
 
-app.use('/api/requests', requestRoutes({ store, loadPolicy }));
+const dispatcher = createDispatcher();
+
+app.use('/api/requests', requestRoutes({ store, loadPolicy, dispatcher }));
 
 app.get('/api/me', (req, res) => {
   // Roles are resolved from the role binding store in a later change. Returning
