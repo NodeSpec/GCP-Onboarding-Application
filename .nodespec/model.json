@@ -1,7 +1,7 @@
 {
   "modelVersion": 1,
   "generatedBy": "nodespec",
-  "modelHash": "731ef27abb4183eb4431423f6a5c5df70116f33a58c13e428aaaca3f13eddd59",
+  "modelHash": "e56859c014569010bf8b34afcca977f7642bffde4bb6abc0b606607092d4a181",
   "nodes": [
     {
       "id": "1c81cf63-c51e-4b0e-b6ad-7d318332d2fe",
@@ -701,6 +701,12 @@
       "contentHash": "0000000023265dc4"
     },
     {
+      "id": "3a1f44c2-282f-449d-9e81-43913f139c3e",
+      "nodeId": "db8e5409-dc6f-4052-887a-7ba1dd5fb717",
+      "path": "services/worker/src/notify/sender.ts",
+      "kind": "source"
+    },
+    {
       "id": "3c3da20e-2412-457c-abb4-cca5be7fe009",
       "nodeId": "c424e85a-6584-4bb7-a48e-2175ebc6a41b",
       "path": "services/api/src/tasks/dispatcher.ts",
@@ -1106,6 +1112,12 @@
       "nodeId": "565b92bd-2c2c-4a82-be62-b691decdbadf",
       "path": "README.md",
       "kind": "doc"
+    },
+    {
+      "id": "f27d1a00-5bb9-4392-8008-33332460a094",
+      "nodeId": "db8e5409-dc6f-4052-887a-7ba1dd5fb717",
+      "path": "services/worker/src/notify/templates.ts",
+      "kind": "source"
     },
     {
       "id": "f2a2048d-473a-454f-b09f-7e2053fbfd5e",

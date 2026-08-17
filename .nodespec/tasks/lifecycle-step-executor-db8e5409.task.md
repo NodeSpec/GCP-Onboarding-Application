@@ -1230,6 +1230,7 @@ Startup/initialization order based on edge directions and interaction patterns.
 | `services/worker/tsconfig.json` | config | --- | draft |
 | `services/worker/src/notify/approvers.ts` | source | --- | draft |
 | `services/worker/src/phases/notify.ts` | source | --- | draft |
+| `services/worker/src/notify/sender.ts` | source | --- | draft |
 | `services/worker/src/tasks/dispatcher.ts` | source | --- | draft |
 | `.nodespec/tests/req-003.tests.md` - Test plan for requirement: Phase 1 — User creation with attributes and group assignment | test-plan | markdown | draft |
 | `.nodespec/tests/req-019.tests.md` - Test plan for requirement: Credential generation and encryption at rest | test-plan | markdown | draft |
@@ -1250,5 +1251,6 @@ Startup/initialization order based on edge directions and interaction patterns.
 | `services/worker/src/steps/executor.emulator.test.ts` | test-plan | --- | draft |
 | `services/worker/src/workspace/retry.test.ts` | test-plan | --- | draft |
 | `services/worker/src/logging.ts` | source | --- | draft |
+| `services/worker/src/notify/templates.ts` | source | --- | draft |
 | `services/worker/src/steps/executor.ts` | source | --- | draft |
 | `services/worker/src/phases/create.test.ts` | test-plan | --- | draft |
