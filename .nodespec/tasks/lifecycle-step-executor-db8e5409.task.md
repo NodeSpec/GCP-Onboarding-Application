@@ -1207,6 +1207,7 @@ Startup/initialization order based on edge directions and interaction patterns.
 | `services/worker/src/phases/delete.test.ts` | test-plan | --- | draft |
 | `services/worker/src/auth/taskAuth.test.ts` | test-plan | --- | draft |
 | `services/worker/src/workspace/passwordReset.test.ts` | source | --- | draft |
+| `packages/shared/src/stepPlans.test.ts` | test-plan | --- | draft |
 | `services/worker/src/routes/tasks.ts` | source | --- | draft |
 | `services/worker/src/phases/update.emulator.test.ts` | test-plan | --- | draft |
 | `services/worker/src/phases/create.ts` | source | --- | draft |
