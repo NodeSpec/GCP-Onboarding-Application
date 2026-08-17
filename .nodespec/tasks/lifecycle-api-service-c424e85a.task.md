@@ -48,7 +48,6 @@ Ordered WORK ORDERS synthesized from the model — this node's deliverable kind,
   Dependency contract — capture the reference/identifier wiring in this node's config artifacts; no payload schema expected.
 - [ ] **T5 — Implement the integration with Cloud Tasks: lifecycle-steps (gcp-cloud-tasks) per Contract "Step Task Enqueue" (rest).**
   Build to the contract schema EXACTLY (see Interface Contracts).
-  ↳ serves (unverified match): REQ-001 "The full step history of a request (status, attempts, timestamps, actor, error) is retrievable through a single API call for operator inspection" — requirement not mapped to that node; verify or reassign before relying on it
   ↳ serves (unverified match): REQ-001 "The first step of a newly created request is either dispatched or halted in 'awaiting_approval' according to the policy snapshotted onto the request" — requirement not mapped to that node; verify or reassign before relying on it
   ↳ serves (unverified match): REQ-001 "When the first step is halted in 'awaiting_approval', an approver-notification task is enqueued in the same transaction as the halt, so a halt can never be committed without the notification being scheduled (REQ-032 performs the send)" — requirement not mapped to that node; verify or reassign before relying on it
   ↳ serves (unverified match): REQ-002 "A step whose policy sets requiresApproval=true halts in status 'awaiting_approval' and dispatches no Workspace call until approved" — requirement not mapped to that node; verify or reassign before relying on it
@@ -75,41 +74,37 @@ Ordered WORK ORDERS synthesized from the model — this node's deliverable kind,
 - [ ] **T9 — Expose the interface Operator Console UI consumes, per Contract "Lifecycle Operator API" (rest).**
   Record the endpoint/identifiers Operator Console UI needs in this node's config artifacts — coordinate with Operator Console UI.
   Build to the contract schema EXACTLY (see Interface Contracts).
-  ↳ serves (unverified match): REQ-001 "Submitting a request for a target user that already has a non-terminal request returns 409 and creates no second request, so two operators cannot drive conflicting changes against the same account concurrently" — requirement not mapped to that node; verify or reassign before relying on it
   ↳ serves (unverified match): REQ-012 "Every API route declares a required role, and a call from an identity lacking it is rejected with 403 before the handler executes" — requirement not mapped to that node; verify or reassign before relying on it
   ↳ serves (unverified match): REQ-012 "Every action the console offers is independently authorized server-side, verified by tests that call the API directly while bypassing the UI — hiding a control in the console is never the enforcement" — requirement not mapped to that node; verify or reassign before relying on it
   ↳ serves (unverified match): REQ-031 "An operator with the admin role is refused just as a requester is — protection is not a permission level that can be escalated past" — requirement not mapped to that node; verify or reassign before relying on it
-- [ ] **T10 — Implement: "The submitted payload is validated against the phase schema and rejected with 400 before any document is persisted" (REQ-001).**
-  No interface contract maps to this criterion — it is this node's internal responsibility.
-  ↳ serves: REQ-001 "The submitted payload is validated against the phase schema and rejected with 400 before any document is persisted"
-- [ ] **T11 — Implement: "An authenticated identity with no role binding can read nothing and submit nothing — every route returns 403" (REQ-012).**
+- [ ] **T10 — Implement: "An authenticated identity with no role binding can read nothing and submit nothing — every route returns 403" (REQ-012).**
   No interface contract maps to this criterion — it is this node's internal responsibility.
   ↳ serves: REQ-012 "An authenticated identity with no role binding can read nothing and submit nothing — every route returns 403"
-- [ ] **T12 — Implement: "The requester role can create and submit requests but cannot approve any request, including requests created by others" (REQ-012).**
+- [ ] **T11 — Implement: "The requester role can create and submit requests but cannot approve any request, including requests created by others" (REQ-012).**
   No interface contract maps to this criterion — it is this node's internal responsibility.
   ↳ serves: REQ-012 "The requester role can create and submit requests but cannot approve any request, including requests created by others"
-- [ ] **T13 — Implement: "The approver role can approve requests created by others and is still refused approval of its own requests" (REQ-012).**
+- [ ] **T12 — Implement: "The approver role can approve requests created by others and is still refused approval of its own requests" (REQ-012).**
   No interface contract maps to this criterion — it is this node's internal responsibility.
   ↳ serves: REQ-012 "The approver role can approve requests created by others and is still refused approval of its own requests"
-- [ ] **T14 — Implement: "Group-based bindings resolve to the same effective permissions as an equivalent individual binding" (REQ-012).**
+- [ ] **T13 — Implement: "Group-based bindings resolve to the same effective permissions as an equivalent individual binding" (REQ-012).**
   No interface contract maps to this criterion — it is this node's internal responsibility.
   ↳ serves: REQ-012 "Group-based bindings resolve to the same effective permissions as an equivalent individual binding"
-- [ ] **T15 — Implement: "An approval or rejection submitted with an empty or whitespace-only justification is refused by the server with 400, independently of any client-side check" (REQ-002).**
+- [ ] **T14 — Implement: "An approval or rejection submitted with an empty or whitespace-only justification is refused by the server with 400, independently of any client-side check" (REQ-002).**
   No interface contract maps to this criterion — it is this node's internal responsibility.
   ↳ serves: REQ-002 "An approval or rejection submitted with an empty or whitespace-only justification is refused by the server with 400, independently of any client-side check"
-- [ ] **T16 — Implement: "Approval policy is read from configuration at request-creation time and snapshotted onto the request, so a later policy edit cannot retroactively change an in-flight request's approval requirements" (REQ-002).**
+- [ ] **T15 — Implement: "Approval policy is read from configuration at request-creation time and snapshotted onto the request, so a later policy edit cannot retroactively change an in-flight request's approval requirements" (REQ-002).**
   No interface contract maps to this criterion — it is this node's internal responsibility.
   ↳ serves: REQ-002 "Approval policy is read from configuration at request-creation time and snapshotted onto the request, so a later policy edit cannot retroactively change an in-flight request's approval requirements"
-- [ ] **T17 — Implement: "The deployed system exposes no unauthenticated route: an unauthenticated request to every path in the application's route table is rejected, enumerated as a test rather than spot-checked" (REQ-007).**
+- [ ] **T16 — Implement: "The deployed system exposes no unauthenticated route: an unauthenticated request to every path in the application's route table is rejected, enumerated as a test rather than spot-checked" (REQ-007).**
   No interface contract maps to this criterion — it is this node's internal responsibility.
   ↳ serves: REQ-007 "The deployed system exposes no unauthenticated route: an unauthenticated request to every path in the application's route table is rejected, enumerated as a test rather than spot-checked"
-- [ ] **T18 — Implement: "The one-time password can be retrieved exactly once; the ciphertext is destroyed on retrieval and a second attempt returns 410" (REQ-017).**
+- [ ] **T17 — Implement: "The one-time password can be retrieved exactly once; the ciphertext is destroyed on retrieval and a second attempt returns 410" (REQ-017).**
   No interface contract maps to this criterion — it is this node's internal responsibility.
   ↳ serves: REQ-017 "The one-time password can be retrieved exactly once; the ciphertext is destroyed on retrieval and a second attempt returns 410"
-- [ ] **T19 — Implement: "A retrieval after the credential record's TTL has expired returns 410 with the ciphertext already removed" (REQ-017).**
+- [ ] **T18 — Implement: "A retrieval after the credential record's TTL has expired returns 410 with the ciphertext already removed" (REQ-017).**
   No interface contract maps to this criterion — it is this node's internal responsibility.
   ↳ serves: REQ-017 "A retrieval after the credential record's TTL has expired returns 410 with the ciphertext already removed"
-- [ ] **T20 — Verify every acceptance criterion above and tick its box.**
+- [ ] **T19 — Verify every acceptance criterion above and tick its box.**
   Ordering doctrine — plans follow schemas (contract-first TDD): schemas → test plans → implement → verify. Resolve any open [PLACEHOLDER: schema] gap FIRST (get_build_readiness supplies draftInputs; submit the schema via propose_patches update_contract) — test-plan scenarios touching a schemaless contract stay one-line [blocked by schema: …] markers until the schema lands, then the plan refreshes itself.
   AUTOMATED criteria: call get_test_plan for EACH requirement this node serves, implement the plan's test cases, run them, and report every outcome via report_test_results — a passing result flips the criterion's met flag automatically and the response receipt shows which criteria flipped.
   MANUAL criteria (rows marked (manual) above): report_test_results REFUSES to bind them — prove each by ticking its criterion box in this task doc and having the user approve the resulting change card; that approval is the only thing that flips a manual criterion met.
@@ -145,14 +140,14 @@ Owned by the Lifecycle API Service. Every lifecycle action (create, notify, upda
 **Acceptance criteria — your task boxes:**
 - [x] Creating a lifecycle request persists a LifecycleRequest document plus one step document per step in the phase's step plan, all with status 'pending' and attempt=0, before any Workspace call is made
   → possible match: Contract "Step Task Enqueue" (rest) to Cloud Tasks: lifecycle-steps (unverified — requirement not mapped to that node)
-- [ ] Submitting a request for a target user that already has a non-terminal request returns 409 and creates no second request, so two operators cannot drive conflicting changes against the same account concurrently
-  → covered by Task T9
+- [x] Submitting a request for a target user that already has a non-terminal request returns 409 and creates no second request, so two operators cannot drive conflicting changes against the same account concurrently
+  → possible match: Contract "Lifecycle Operator API" (rest) from Operator Console UI (unverified — requirement not mapped to that node)
 - [x] Each persisted step carries a stable idempotency key derived from requestId, stepId and an attempt-invariant payload hash, distinct across requests and steps
   → possible match: Contract "Step Task Enqueue" (rest) to Cloud Tasks: lifecycle-steps (unverified — requirement not mapped to that node)
-- [ ] The submitted payload is validated against the phase schema and rejected with 400 before any document is persisted
-  → covered by Task T10
-- [ ] The full step history of a request (status, attempts, timestamps, actor, error) is retrievable through a single API call for operator inspection
-  → covered by Task T5
+- [x] The submitted payload is validated against the phase schema and rejected with 400 before any document is persisted
+  → THIS NODE: internal logic
+- [x] The full step history of a request (status, attempts, timestamps, actor, error) is retrievable through a single API call for operator inspection
+  → possible match: Contract "Step Task Enqueue" (rest) to Cloud Tasks: lifecycle-steps (unverified — requirement not mapped to that node)
 - [ ] The first step of a newly created request is either dispatched or halted in 'awaiting_approval' according to the policy snapshotted onto the request
   → covered by Task T5
 - [ ] When the first step is halted in 'awaiting_approval', an approver-notification task is enqueued in the same transaction as the halt, so a halt can never be committed without the notification being scheduled (REQ-032 performs the send)
@@ -166,17 +161,17 @@ IAP proves who the caller is; the application decides what they may do. Operator
 - [ ] Every API route declares a required role, and a call from an identity lacking it is rejected with 403 before the handler executes
   → covered by Task T9
 - [ ] An authenticated identity with no role binding can read nothing and submit nothing — every route returns 403
-  → covered by Task T11
+  → covered by Task T10
 - [ ] The requester role can create and submit requests but cannot approve any request, including requests created by others
-  → covered by Task T12
+  → covered by Task T11
 - [ ] The approver role can approve requests created by others and is still refused approval of its own requests
-  → covered by Task T13
+  → covered by Task T12
 - [ ] The admin role can edit approval policy, cancel or resume any request, and read the full audit trail
   → covered by Task T3
 - [ ] Role binding changes write audit events recording the actor, the subject, and the before/after roles
   → covered by Task T3
 - [ ] Group-based bindings resolve to the same effective permissions as an equivalent individual binding
-  → covered by Task T14
+  → covered by Task T13
 - [ ] Every action the console offers is independently authorized server-side, verified by tests that call the API directly while bypassing the UI — hiding a control in the console is never the enforcement
   → covered by Task T9
 
@@ -194,9 +189,9 @@ Any step in any lifecycle phase can be marked as requiring two-party approval by
 - [ ] A rejection transitions the request to 'rejected', records approver identity, timestamp and justification, and dispatches no further steps
   → covered by Task T5
 - [ ] An approval or rejection submitted with an empty or whitespace-only justification is refused by the server with 400, independently of any client-side check
-  → covered by Task T15
+  → covered by Task T14
 - [ ] Approval policy is read from configuration at request-creation time and snapshotted onto the request, so a later policy edit cannot retroactively change an in-flight request's approval requirements
-  → covered by Task T16
+  → covered by Task T15
 - [ ] When a step enters 'awaiting_approval' with an expiry configured, a Cloud Task is scheduled for the expiry instant; if the approval is still pending when that task fires the request terminates in 'rejected' with reason 'approval_expired', and if the step was already decided the task is a no-op
   → covered by Task T5
 - [ ] With requiresApproval=false for every step, a request runs end to end with no human interaction beyond submission
@@ -288,7 +283,7 @@ There is no end-user-facing surface anywhere in this system. Users being onboard
 - [ ] Every load-balancer backend service in the deployment has IAP enabled — asserted against the committed Terraform, so a backend added without IAP fails the check
   → covered by Task T2
 - [ ] The deployed system exposes no unauthenticated route: an unauthenticated request to every path in the application's route table is rejected, enumerated as a test rather than spot-checked
-  → covered by Task T17
+  → covered by Task T16
 - [ ] IAP is enabled on the operator backend service and access is granted only to the intended operator group in the OAuth/IAM configuration (manual)
   → covered by Task T2
 
@@ -300,11 +295,11 @@ Owned by the Lifecycle API Service. Credential handoff is split-channel: the wel
 - [ ] The one-time password is returned only to the authenticated operator who created the request, verified against the IAP identity, and a retrieval attempt by any other operator returns 403
   → covered by Task T2
 - [ ] The one-time password can be retrieved exactly once; the ciphertext is destroyed on retrieval and a second attempt returns 410
-  → covered by Task T18
+  → covered by Task T17
 - [ ] Retrieval reads and clears the ciphertext inside a single Firestore transaction, so two concurrent retrievals yield exactly one success
   → covered by Task T6
 - [ ] A retrieval after the credential record's TTL has expired returns 410 with the ciphertext already removed
-  → covered by Task T19
+  → covered by Task T18
 - [ ] The decrypted plaintext appears only in the response body — never in a URL, a redirect target, or any log entry
   → covered by Task T3
 - [ ] Every retrieval attempt — success, wrong operator, second attempt, expired — produces an audit event naming the operator identity
@@ -1544,6 +1539,7 @@ Startup/initialization order based on edge directions and interaction patterns.
 | `services/api/src/authz.ts` | source | --- | draft |
 | `packages/shared/src/transitions.test.ts` | test-plan | --- | draft |
 | `packages/shared/src/store.ts` | source | --- | draft |
+| `services/api/src/routes/requests.ts` | source | --- | draft |
 | `services/api/package.json` | config | --- | draft |
 | `services/api/src/middleware/iapAuth.ts` | source | --- | draft |
 | `services/api/tsconfig.json` | config | --- | draft |

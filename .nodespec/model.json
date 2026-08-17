@@ -1,7 +1,7 @@
 {
   "modelVersion": 1,
   "generatedBy": "nodespec",
-  "modelHash": "96be13abc05a886a4ec2ee437cea97b11682df018ebd3148034655c29112169c",
+  "modelHash": "039ed22eb76626325a1bdeecf344e0d44b3a49ca978451ed59d90d89bc1ece0d",
   "nodes": [
     {
       "id": "1c81cf63-c51e-4b0e-b6ad-7d318332d2fe",
@@ -666,6 +666,12 @@
       "path": ".nodespec/tasks/secret-manager-ed7660ce.task.md",
       "kind": "task",
       "contentHash": "0000000023265dc4"
+    },
+    {
+      "id": "3c4d9e16-5f70-4a83-9294-7b1e0f306c52",
+      "nodeId": "c424e85a-6584-4bb7-a48e-2175ebc6a41b",
+      "path": "services/api/src/routes/requests.ts",
+      "kind": "source"
     },
     {
       "id": "4038fb45-11ae-474b-8fd2-d6bf72d410e8",
