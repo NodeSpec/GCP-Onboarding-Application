@@ -18,6 +18,7 @@ import {
   type RequestStatus,
   type RoleBinding,
   type StepStatus,
+  type UpdateDiff,
 } from './model.js';
 import { normalisePolicy, policyPath } from './policy.js';
 import type { NewRequestDocuments } from './requestFactory.js';
@@ -732,6 +733,48 @@ export class LifecycleStore {
     input: AuditInput,
   ): AuditEvent {
     return appendAuditEvent(this.db, tx, requestId, stepId, input);
+  }
+
+  /**
+   * Freezes a phase 3 request's computed diff onto the request (REQ-005 AC-1).
+   *
+   * Written once, before anything mutates, and audited in the same transaction
+   * like every other state change. The audit event carries the change set in
+   * full rather than a count: this is the record of what an approver was shown,
+   * and "3 attributes changed" would not answer the question an auditor is
+   * actually asking six months later.
+   */
+  async recordComputedDiff(params: {
+    requestId: string;
+    stepId: string;
+    diff: UpdateDiff;
+    actor: AuditActor;
+  }): Promise<void> {
+    await this.db.runTransaction(async (tx) => {
+      const ref = this.requestRef(params.requestId);
+      const snap = await tx.get(ref);
+      if (!snap.exists) throw new Error(`Request ${params.requestId} not found`);
+
+      const existing = (snap.data() as LifecycleRequest).computedDiff;
+
+      tx.update(ref, { computedDiff: params.diff, updatedAt: Timestamp.now() });
+
+      this.appendAudit(tx, params.requestId, params.stepId, {
+        actor: params.actor,
+        action: 'request.diff_computed',
+        targetUser: params.diff.targetUser,
+        // Non-null only on a recompute, which happens when a step is
+        // redelivered. Recording the prior diff makes that visible rather than
+        // silently replacing what an approver may already have seen.
+        before: existing === null ? null : { computedDiff: existing },
+        after: {
+          attributes: params.diff.attributes.filter((a) => a.changed),
+          groups: params.diff.groups.filter((g) => g.changed),
+          requestedAttributes: params.diff.attributes.length,
+          requestedGroups: params.diff.groups.length,
+        },
+      });
+    });
   }
 
   /**

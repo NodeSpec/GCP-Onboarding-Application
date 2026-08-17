@@ -1,10 +1,12 @@
 {
   "specVersion": 1,
   "generatedBy": "nodespec",
-  "specHash": "f516cd57b08210178fd53c356dc9b57e3846c1ced859040ff39300722b966ba6",
+  "specHash": "76bd2cf70a06a34f727abc5d354b63b61b36ef99341e6e1d987638e724fbca21",
   "vision": "Company wants an application that supports the full user lifecycle in four phases:\n\n1. User creation, including assignment of attributes and groups\n2. Notifying the user of their new account with a welcome letter and initial password setting instructions\n3. Updating a user's roles/attributes over time\n4. Account deletion\n\nScope and constraints as stated by the customer:\n\n- The application should only worry about one IDP for now — Google Workspace.\n- All of the steps in account creation must be stateful and have optional two-party approval features.\n- The application should run serverless — Cloud Run on GCP.\n- Because it uses Google Workspace, the app must include instructions on how to configure a GCP service account to have admin permissions in Workspace WITHOUT using Domain-Wide Delegation.\n- The serverless application must be protected by IAP, and must include code to verify the IAP JWT header so the security controls cannot be bypassed by reaching the service directly.\n\nThe product is an internal, operator-facing lifecycle console: an IAP-protected web UI plus an API where a requester drafts a lifecycle action, an optional second approver signs off, and a durable state machine executes the Workspace changes step by step — every step resumable, auditable, and idempotent, so a partially-completed onboarding is never left in an unknown state.",
   "constraints": [],
-  "preferences": {},
+  "preferences": {
+    "specEnabled": true
+  },
   "requirements": [
     {
       "requirementId": "REQ-001",
