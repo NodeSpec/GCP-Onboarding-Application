@@ -1,0 +1,98 @@
+import { describe, expect, it } from 'vitest';
+import { validatePayload } from './schemas.js';
+
+/**
+ * TC-REQ-001-4: the payload is validated before anything is persisted.
+ *
+ * These assert the schema's decisions only. That validation runs BEFORE the
+ * write is a property of the route's ordering and is asserted in the emulator
+ * suite, where a rejected submission can be shown to have left no documents.
+ */
+
+const VALID = {
+  primaryEmail: 'ada.lovelace@company.com',
+  givenName: 'Ada',
+  familyName: 'Lovelace',
+  orgUnitPath: '/Engineering',
+  groups: ['engineering@company.com'],
+};
+
+describe('the create payload schema', () => {
+  it('accepts a well-formed payload', () => {
+    const result = validatePayload('create', VALID);
+    expect(result.ok).toBe(true);
+  });
+
+  it('accepts a payload carrying only the required fields', () => {
+    const result = validatePayload('create', {
+      primaryEmail: 'a@company.com',
+      givenName: 'A',
+      familyName: 'B',
+    });
+    expect(result.ok).toBe(true);
+  });
+
+  it.each([
+    ['a missing primary email', { givenName: 'A', familyName: 'B' }],
+    ['a malformed primary email', { ...VALID, primaryEmail: 'not-an-email' }],
+    ['an empty given name', { ...VALID, givenName: '   ' }],
+    ['a malformed manager email', { ...VALID, managerEmail: 'nope' }],
+    ['a malformed group address', { ...VALID, groups: ['not-an-email'] }],
+    ['an org unit path with no leading slash', { ...VALID, orgUnitPath: 'Engineering' }],
+    ['an org unit path containing whitespace', { ...VALID, orgUnitPath: '/Eng Team' }],
+  ])('refuses %s', (_label, payload) => {
+    const result = validatePayload('create', payload);
+    expect(result.ok).toBe(false);
+  });
+
+  it('refuses an unrecognised field rather than dropping it', () => {
+    // A typo in an attribute name should fail at submission, not quietly
+    // produce an account missing the attribute the operator thought they set.
+    const result = validatePayload('create', { ...VALID, departmnet: 'Platform' });
+
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(JSON.stringify(result.issues)).toContain('departmnet');
+    }
+  });
+
+  it('names the offending field in every issue it reports', () => {
+    const result = validatePayload('create', { ...VALID, primaryEmail: 'bad', givenName: '' });
+
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.issues.map((i) => i.path).sort()).toEqual(['givenName', 'primaryEmail']);
+    }
+  });
+
+  it('normalises email casing so identity cannot fork on it', () => {
+    const result = validatePayload('create', { ...VALID, primaryEmail: 'Ada.Lovelace@Company.com' });
+
+    expect(result.ok).toBe(true);
+    if (result.ok) expect(result.value.primaryEmail).toBe('ada.lovelace@company.com');
+  });
+
+  it('deduplicates groups, so one membership cannot become two racing steps', () => {
+    const result = validatePayload('create', {
+      ...VALID,
+      groups: ['eng@company.com', 'eng@company.com', 'platform@company.com'],
+    });
+
+    expect(result.ok).toBe(true);
+    if (result.ok) expect(result.value.groups).toEqual(['eng@company.com', 'platform@company.com']);
+  });
+
+  it('trims surrounding whitespace rather than persisting it', () => {
+    const result = validatePayload('create', { ...VALID, givenName: '  Ada  ' });
+
+    expect(result.ok).toBe(true);
+    if (result.ok) expect(result.value.givenName).toBe('Ada');
+  });
+
+  it.each(['notify', 'update', 'delete'] as const)('refuses the unimplemented %s phase', (phase) => {
+    const result = validatePayload(phase, VALID);
+
+    expect(result.ok).toBe(false);
+    if (!result.ok) expect(result.issues[0]!.message).toContain('not implemented');
+  });
+});
