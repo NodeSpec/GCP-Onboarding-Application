@@ -94,11 +94,12 @@ export interface RetryPolicy {
 
 export const DEFAULT_RETRY: RetryPolicy = { maxAttempts: 5, baseDelayMs: 500, maxDelayMs: 20_000 };
 
-const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+const realSleep = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms));
 
-function backoffMs(attempt: number, policy: RetryPolicy): number {
+/** Full jitter: a uniform draw below an exponentially growing ceiling. */
+export function backoffMs(attempt: number, policy: RetryPolicy, random: () => number = Math.random): number {
   const ceiling = Math.min(policy.maxDelayMs, policy.baseDelayMs * 2 ** attempt);
-  return Math.random() * ceiling;
+  return random() * ceiling;
 }
 
 export interface InsertUserInput {
@@ -116,18 +117,38 @@ export interface UserSummary {
   suspended: boolean;
 }
 
+/**
+ * Test seams. The Directory API and the retry clock are the two things that
+ * make this class untestable offline: one needs credentials and a network, the
+ * other needs real elapsed time. Substituting them lets the retry and
+ * classification rules, which are the part worth verifying, run in
+ * milliseconds. Both default to the production values.
+ */
+export interface DirectoryClientOptions {
+  customerId: string;
+  retry?: RetryPolicy;
+  api?: admin_directory_v1.Admin;
+  sleep?: (ms: number) => Promise<void>;
+  random?: () => number;
+}
+
 export class DirectoryClient {
-  private readonly auth: GoogleAuth;
+  private readonly auth: GoogleAuth | undefined;
   private readonly retry: RetryPolicy;
   private readonly customerId: string;
+  private readonly sleep: (ms: number) => Promise<void>;
+  private readonly random: () => number;
   private api: admin_directory_v1.Admin | undefined;
 
-  constructor(options: { customerId: string; retry?: RetryPolicy }) {
+  constructor(options: DirectoryClientOptions) {
     // Application Default Credentials from the Cloud Run metadata server.
     // No keyFile, no credentials object, no subject.
-    this.auth = new GoogleAuth({ scopes: [...DIRECTORY_SCOPES] });
+    this.auth = options.api ? undefined : new GoogleAuth({ scopes: [...DIRECTORY_SCOPES] });
+    this.api = options.api;
     this.retry = options.retry ?? DEFAULT_RETRY;
     this.customerId = options.customerId;
+    this.sleep = options.sleep ?? realSleep;
+    this.random = options.random ?? Math.random;
   }
 
   private async client(): Promise<admin_directory_v1.Admin> {
@@ -166,12 +187,13 @@ export class DirectoryClient {
         if (attempt === this.retry.maxAttempts - 1) break;
 
         const honoured = retryAfterSeconds(err);
-        const delay = honoured !== undefined ? honoured * 1000 : backoffMs(attempt, this.retry);
+        const delay =
+          honoured !== undefined ? honoured * 1000 : backoffMs(attempt, this.retry, this.random);
         logger.warn(
           { operation, status, attempt: attempt + 1, delayMs: Math.round(delay) },
           'retrying Workspace call',
         );
-        await sleep(delay);
+        await this.sleep(delay);
       }
     }
 
