@@ -136,17 +136,20 @@ describe('AC-9: no admin-role management anywhere in the repository', () => {
     for (const scope of DIRECTORY_SCOPES) {
       expect(scope).not.toContain('rolemanagement');
     }
-    expect(DIRECTORY_SCOPES).toHaveLength(4);
+    expect(DIRECTORY_SCOPES).toHaveLength(5);
   });
 
-  it('requests only user, group-member, group-read and orgunit-read scopes', () => {
-    // Pinned exactly. A scope added later is a deliberate decision that has to
-    // change this list, rather than something that slips in with a feature.
+  it('requests exactly the five scopes the application consumes', () => {
+    // Pinned exactly, and the pin has already done its job once: adding the
+    // data-transfer scope for phase 4 failed this test, which is what makes a
+    // new scope a decision somebody takes rather than something that arrives
+    // with a feature.
     expect([...DIRECTORY_SCOPES]).toEqual([
       'https://www.googleapis.com/auth/admin.directory.user',
       'https://www.googleapis.com/auth/admin.directory.group.member',
       'https://www.googleapis.com/auth/admin.directory.group.readonly',
       'https://www.googleapis.com/auth/admin.directory.orgunit.readonly',
+      'https://www.googleapis.com/auth/admin.datatransfer',
     ]);
   });
 

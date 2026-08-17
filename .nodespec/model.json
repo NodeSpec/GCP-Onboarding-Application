@@ -1,7 +1,7 @@
 {
   "modelVersion": 1,
   "generatedBy": "nodespec",
-  "modelHash": "4ddd6c94de7aa9aa1a60e017815932236b4efaa9a4005c8a95055d1b57c264d1",
+  "modelHash": "34f1d75bed866b5852b2ca8674020b5025b2c5a830aceb2f5be4e77baf274750",
   "nodes": [
     {
       "id": "1c81cf63-c51e-4b0e-b6ad-7d318332d2fe",
@@ -831,7 +831,8 @@
       "id": "6d2f9b14-7a58-4c03-9e61-8b4d0f3c5a72",
       "nodeId": "db8e5409-dc6f-4052-887a-7ba1dd5fb717",
       "path": "services/worker/src/workspace/noAdminRoles.test.ts",
-      "kind": "source"
+      "kind": "source",
+      "contentHash": "000000005041a036"
     },
     {
       "id": "6ef6583b-4078-48df-a707-beab36fe91eb",
