@@ -1,7 +1,7 @@
 {
   "modelVersion": 1,
   "generatedBy": "nodespec",
-  "modelHash": "00136b488445e651aa245f7d66f475eb48a18d8bf928773bcd59654009e7e4f3",
+  "modelHash": "5fb7736eabee0b8070acd64b2936d288a17aaa67ba17da50505d20beb6de1522",
   "nodes": [
     {
       "id": "1c81cf63-c51e-4b0e-b6ad-7d318332d2fe",
@@ -588,6 +588,12 @@
       "nodeId": "c424e85a-6584-4bb7-a48e-2175ebc6a41b",
       "path": "packages/shared/src/logging.ts",
       "kind": "source"
+    },
+    {
+      "id": "16fb9631-638b-4acf-9a2c-29ed21dcbaa5",
+      "nodeId": "db8e5409-dc6f-4052-887a-7ba1dd5fb717",
+      "path": ".nodespec/tests/req-008.tests.md",
+      "kind": "test-plan"
     },
     {
       "id": "1723c2fe-9ff6-4001-a9b5-0691bdbbd488",

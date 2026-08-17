@@ -63,7 +63,6 @@ Ordered WORK ORDERS synthesized from the model — this node's deliverable kind,
   ↳ serves (unverified match): REQ-016 "A step that exhausts its retry budget lands in status 'failed' with the terminal error recorded, the parent request moves to 'failed', and no subsequent step is dispatched" — requirement not mapped to that node; verify or reassign before relying on it
   ↳ serves (unverified match): REQ-016 "On successful completion the executor dispatches the next step, or halts it in 'awaiting_approval' when the snapshotted policy requires approval" — requirement not mapped to that node; verify or reassign before relying on it
   ↳ serves (unverified match): REQ-016 "When the executor halts a step in 'awaiting_approval', an approver-notification task is enqueued in the same transaction as the halt, so a halt can never be committed without the notification being scheduled (REQ-032 performs the send)" — requirement not mapped to that node; verify or reassign before relying on it
-  ↳ serves (unverified match): REQ-016 "The /tasks/execute-step route accepts a step task only when it carries a valid OIDC token issued to the Cloud Tasks queue invoker service account, and rejects unauthenticated requests, tokens issued to any other service account, and specifically tokens issued to the lifecycle-api identity that is admitted on the lookup routes" — requirement not mapped to that node; verify or reassign before relying on it
 - [ ] **T3 — Implement the integration with Firestore: lifecycle state and audit (gcp-firestore) per Contract "Lifecycle State Store" (nosql).**
   Build to the contract schema EXACTLY (see Interface Contracts).
   ↳ serves (unverified match): REQ-005 "Submitting an update request computes a diff against the user's live Workspace state and persists it on the request before execution" — requirement not mapped to that node; verify or reassign before relying on it
@@ -94,11 +93,6 @@ Ordered WORK ORDERS synthesized from the model — this node's deliverable kind,
   ↳ serves (unverified match): REQ-029 "Every lookup route is read-only — a test enumerates the lookup router and asserts no Directory write operation is bound to any of them" — requirement not mapped to that node; verify or reassign before relying on it
   ↳ serves (unverified match): REQ-029 "Lookup calls pass through the same shared Workspace client as mutations, inheriting its retry and error classification — verified by the absence of any separate Directory client in the lookup path" — requirement not mapped to that node; verify or reassign before relying on it
   ↳ serves (unverified match): REQ-005 "Workspace ADMIN role assignment is unreachable through any phase — a repository check finds no roleAssignments API call and no admin.directory.rolemanagement scope anywhere in the codebase or IaC" — requirement not mapped to that node; verify or reassign before relying on it
-  ↳ serves (unverified match): REQ-008 "The Directory API client is constructed from Application Default Credentials with no 'subject'/impersonation parameter anywhere in the code path" — requirement not mapped to that node; verify or reassign before relying on it
-  ↳ serves (unverified match): REQ-008 "The Directory client requests only the least-privilege scopes the phases and the lookup surface actually use, enumerated in one place, and every requested scope has a named consumer — a scope with no consumer fails the check" — requirement not mapped to that node; verify or reassign before relying on it
-  ↳ serves (unverified match): REQ-008 "A Workspace call that fails with 403 surfaces a typed AdminRoleNotGranted error naming the missing privilege, rather than a generic API failure" — requirement not mapped to that node; verify or reassign before relying on it
-  ↳ serves (unverified match): REQ-008 "The Directory client is the single construction site for Workspace credentials — no phase handler and no lookup handler builds its own client, verified by a repository check" — requirement not mapped to that node; verify or reassign before relying on it
-  ↳ serves (unverified match): REQ-008 "The Directory API is reachable only from the worker: a repository check finds no Directory client construction or Workspace scope reference in the API service" — requirement not mapped to that node; verify or reassign before relying on it
   ↳ serves (unverified match): REQ-013 "A 429 or 5xx from the Directory API is retried with exponential backoff and jitter, honoring Retry-After when present" — requirement not mapped to that node; verify or reassign before relying on it
 - [ ] **T8 — Expose the interface Cloud Tasks: lifecycle-steps consumes, per Contract "Step Execution Dispatch" (rest).**
   Record the endpoint/identifiers Cloud Tasks: lifecycle-steps needs in this node's config artifacts — coordinate with Cloud Tasks: lifecycle-steps.
@@ -159,19 +153,13 @@ Ordered WORK ORDERS synthesized from the model — this node's deliverable kind,
 - [ ] **T26 — Implement: "The console link resolves to the request detail behind IAP, so an approver who is not signed in is authenticated at the perimeter before seeing anything" (REQ-032).**
   No interface contract maps to this criterion — it is this node's internal responsibility.
   ↳ serves: REQ-032 "The console link resolves to the request detail behind IAP, so an approver who is not signed in is authenticated at the perimeter before seeing anything"
-- [ ] **T27 — Implement: "No service-account JSON key file is referenced, mounted, or read by the application at any point" (REQ-008).**
-  No interface contract maps to this criterion — it is this node's internal responsibility.
-  ↳ serves: REQ-008 "No service-account JSON key file is referenced, mounted, or read by the application at any point"
-- [ ] **T28 — Implement: "A repository-wide check finds no Domain-Wide Delegation configuration, no OAuth client-id delegation instructions, and no impersonation scopes in code or IaC" (REQ-008).**
-  No interface contract maps to this criterion — it is this node's internal responsibility.
-  ↳ serves: REQ-008 "A repository-wide check finds no Domain-Wide Delegation configuration, no OAuth client-id delegation instructions, and no impersonation scopes in code or IaC"
-- [ ] **T29 — Implement: "The persisted record carries the key version used, so a rotated key can still decrypt in-flight ciphertext or the drain procedure applies" (REQ-019).**
+- [ ] **T27 — Implement: "The persisted record carries the key version used, so a rotated key can still decrypt in-flight ciphertext or the drain procedure applies" (REQ-019).**
   No interface contract maps to this criterion — it is this node's internal responsibility.
   ↳ serves: REQ-019 "The persisted record carries the key version used, so a rotated key can still decrypt in-flight ciphertext or the drain procedure applies"
-- [ ] **T30 — Implement: "The plaintext is discarded from worker memory once the ciphertext is committed" (REQ-019).**
+- [ ] **T28 — Implement: "The plaintext is discarded from worker memory once the ciphertext is committed" (REQ-019).**
   No interface contract maps to this criterion — it is this node's internal responsibility.
   ↳ serves: REQ-019 "The plaintext is discarded from worker memory once the ciphertext is committed"
-- [ ] **T31 — Verify every acceptance criterion above and tick its box.**
+- [ ] **T29 — Verify every acceptance criterion above and tick its box.**
   Ordering doctrine — plans follow schemas (contract-first TDD): schemas → test plans → implement → verify. Resolve any open [PLACEHOLDER: schema] gap FIRST (get_build_readiness supplies draftInputs; submit the schema via propose_patches update_contract) — test-plan scenarios touching a schemaless contract stay one-line [blocked by schema: …] markers until the schema lands, then the plan refreshes itself.
   AUTOMATED criteria: call get_test_plan for EACH requirement this node serves, implement the plan's test cases, run them, and report every outcome via report_test_results — a passing result flips the criterion's met flag automatically and the response receipt shows which criteria flipped.
   MANUAL criteria (rows marked (manual) above): report_test_results REFUSES to bind them — prove each by ticking its criterion box in this task doc and having the user approve the resulting change card; that approval is the only thing that flips a manual criterion met.
@@ -373,20 +361,20 @@ Category: technical | Status: in-progress
 The app authenticates to the Google Workspace Admin SDK as the service account itself, holding a directly-assigned Workspace admin role — it never impersonates a human administrator and Domain-Wide Delegation is not configured anywhere in the setup. At runtime the app mints its own access token from the Cloud Run metadata server for the admin.directory scopes and calls the Directory API directly, with no 'subject' impersonation parameter and no downloaded service-account key. This requirement owns the APPLICATION-SIDE proof that no impersonation and no delegation exist in the code path; the tenant-side configuration that grants the role, and the setup guide documenting it, are REQ-027.
 
 **Acceptance criteria — your task boxes:**
-- [ ] The Directory API client is constructed from Application Default Credentials with no 'subject'/impersonation parameter anywhere in the code path
-  → covered by Task T7
-- [ ] No service-account JSON key file is referenced, mounted, or read by the application at any point
-  → covered by Task T27
-- [ ] A repository-wide check finds no Domain-Wide Delegation configuration, no OAuth client-id delegation instructions, and no impersonation scopes in code or IaC
-  → covered by Task T28
-- [ ] The Directory client requests only the least-privilege scopes the phases and the lookup surface actually use, enumerated in one place, and every requested scope has a named consumer — a scope with no consumer fails the check
-  → covered by Task T7
-- [ ] A Workspace call that fails with 403 surfaces a typed AdminRoleNotGranted error naming the missing privilege, rather than a generic API failure
-  → covered by Task T7
-- [ ] The Directory client is the single construction site for Workspace credentials — no phase handler and no lookup handler builds its own client, verified by a repository check
-  → covered by Task T7
-- [ ] The Directory API is reachable only from the worker: a repository check finds no Directory client construction or Workspace scope reference in the API service
-  → covered by Task T7
+- [x] The Directory API client is constructed from Application Default Credentials with no 'subject'/impersonation parameter anywhere in the code path
+  → possible match: Contract "Google Admin SDK Directory API" (rest) to Google Workspace (Admin SDK Directory) (unverified — requirement not mapped to that node)
+- [x] No service-account JSON key file is referenced, mounted, or read by the application at any point
+  → THIS NODE: internal logic
+- [x] A repository-wide check finds no Domain-Wide Delegation configuration, no OAuth client-id delegation instructions, and no impersonation scopes in code or IaC
+  → THIS NODE: internal logic
+- [x] The Directory client requests only the least-privilege scopes the phases and the lookup surface actually use, enumerated in one place, and every requested scope has a named consumer — a scope with no consumer fails the check
+  → possible match: Contract "Google Admin SDK Directory API" (rest) to Google Workspace (Admin SDK Directory) (unverified — requirement not mapped to that node)
+- [x] A Workspace call that fails with 403 surfaces a typed AdminRoleNotGranted error naming the missing privilege, rather than a generic API failure
+  → possible match: Contract "Google Admin SDK Directory API" (rest) to Google Workspace (Admin SDK Directory) (unverified — requirement not mapped to that node)
+- [x] The Directory client is the single construction site for Workspace credentials — no phase handler and no lookup handler builds its own client, verified by a repository check
+  → possible match: Contract "Google Admin SDK Directory API" (rest) to Google Workspace (Admin SDK Directory) (unverified — requirement not mapped to that node)
+- [x] The Directory API is reachable only from the worker: a repository check finds no Directory client construction or Workspace scope reference in the API service
+  → possible match: Contract "Google Admin SDK Directory API" (rest) to Google Workspace (Admin SDK Directory) (unverified — requirement not mapped to that node)
 
 ### REQ-006: Phase 4 — Account offboarding and deletion
 Category: functional | Status: in-progress
@@ -446,13 +434,13 @@ Owned by the Lifecycle Step Executor. The worker generates the initial one-time 
 - [ ] The one-time password is persisted only as ciphertext under the Secret Manager credential encryption key, never as plaintext and never as a hash, and a test asserts the stored field decrypts to the issued value
   → covered by Task T3
 - [ ] The persisted record carries the key version used, so a rotated key can still decrypt in-flight ciphertext or the drain procedure applies
-  → covered by Task T29
+  → covered by Task T27
 - [ ] The credential record carries a Firestore TTL and is removed on expiry without operator action
   → covered by Task T3
 - [ ] The generated plaintext password never appears in any Firestore document, any worker API response body, or any log entry, verified by a test that provisions a user and greps the emitted records
   → covered by Task T3
 - [ ] The plaintext is discarded from worker memory once the ciphertext is committed
-  → covered by Task T30
+  → covered by Task T28
 
 ### REQ-016: Durable step execution, resumability and transition integrity
 Category: functional | Status: in-progress
@@ -473,8 +461,8 @@ Owned by the Lifecycle Step Executor. Steps admitted by REQ-001 are executed one
   → covered by Task T2
 - [ ] When the executor halts a step in 'awaiting_approval', an approver-notification task is enqueued in the same transaction as the halt, so a halt can never be committed without the notification being scheduled (REQ-032 performs the send)
   → covered by Task T2
-- [ ] The /tasks/execute-step route accepts a step task only when it carries a valid OIDC token issued to the Cloud Tasks queue invoker service account, and rejects unauthenticated requests, tokens issued to any other service account, and specifically tokens issued to the lifecycle-api identity that is admitted on the lookup routes
-  → covered by Task T2
+- [x] The /tasks/execute-step route accepts a step task only when it carries a valid OIDC token issued to the Cloud Tasks queue invoker service account, and rejects unauthenticated requests, tokens issued to any other service account, and specifically tokens issued to the lifecycle-api identity that is admitted on the lookup routes
+  → possible match: Contract "Step Task Enqueue" (rest) to Cloud Tasks: lifecycle-steps (unverified — requirement not mapped to that node)
 
 ## Interface Contracts
 
@@ -1286,6 +1274,7 @@ Startup/initialization order based on edge directions and interaction patterns.
 |------|------|----------|--------|
 | `services/worker/src/workspace/directoryClient.test.ts` | test-plan | --- | draft |
 | `services/worker/package.json` | config | --- | draft |
+| `.nodespec/tests/req-008.tests.md` - Test plan for requirement: Workspace admin access without Domain-Wide Delegation | test-plan | markdown | draft |
 | `.nodespec/tests/req-016.tests.md` - Test plan for requirement: Durable step execution, resumability and transition integrity | test-plan | markdown | draft |
 | `services/worker/tsconfig.json` | config | --- | draft |
 | `services/worker/src/tasks/dispatcher.ts` | source | --- | draft |
@@ -1297,6 +1286,7 @@ Startup/initialization order based on edge directions and interaction patterns.
 | `services/worker/src/steps/handler.ts` | source | --- | draft |
 | `services/worker/src/credentials/credentialStore.ts` | source | --- | draft |
 | `services/worker/src/index.ts` | source | --- | draft |
+| `services/worker/src/auth/taskAuth.test.ts` | test-plan | --- | draft |
 | `services/worker/src/routes/tasks.ts` | source | --- | draft |
 | `services/worker/src/phases/create.ts` | source | --- | draft |
 | `services/worker/src/steps/advance.ts` | source | --- | draft |
