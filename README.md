@@ -14,7 +14,7 @@ Three reasons.
 
 **Some actions should need a second person to agree.** Google Workspace has no approval step. An administrator clicks delete and the account is gone. Here, any step can be configured to pause until a second, different person approves it. Deleting an account always requires that second approval and cannot be configured otherwise.
 
-**Half finished work should not be invisible.** Setting up a new starter is not one action, it is a sequence: create the account, apply attributes, add each group, send the welcome letter. If one of those fails partway through, the admin console leaves no record of what is left to do. This application tracks every step, so a stalled setup is visible and can be picked up exactly where it stopped.
+**Half finished work should not be invisible.** Setting up a new starter is not one action and must accomplish as a sequence: create the account, apply attributes, add each group, send the welcome letter. If one of those fails partway through, the admin console leaves no record of what is left to do. This application tracks every step, so a stalled setup is visible and can be picked up exactly where it stopped.
 
 The result is a small internal tool that sits in front of Google Workspace and adds the process, the permissions and the paper trail around actions Workspace already supports.
 
