@@ -36,27 +36,78 @@ export interface ResolvedKey {
 
 /** Resolves the data-encryption key. Swapped for a fixture in tests. */
 export interface KeyProvider {
+  /** The current key, for writes. */
   resolve(): Promise<ResolvedKey>;
+  /**
+   * A specific key version, for reads. Ciphertext must be decrypted under the
+   * key it was written with, not whatever is current, or a rotation makes every
+   * outstanding handoff unrecoverable (REQ-019 AC-3).
+   */
+  resolveVersion(version: string): Promise<ResolvedKey>;
+}
+
+/**
+ * The credential was written under a key version that can no longer be read,
+ * which in practice means the version was destroyed. Typed and specific,
+ * because a raw GCM auth-tag failure looks like data corruption and gets
+ * escalated as one; this tells the operator what actually happened and that the
+ * recovery is regeneration (REQ-030).
+ */
+export class CredentialUnrecoverableError extends Error {
+  constructor(
+    readonly requestId: string,
+    readonly keyVersion: string,
+    options?: { cause?: unknown },
+  ) {
+    super(
+      `The one-time password for ${requestId} was encrypted under key version ${keyVersion}, ` +
+        'which is no longer accessible. This is expected after an emergency key rotation that ' +
+        'destroyed the old version. Regenerate the credential rather than treating this as corruption.',
+      options,
+    );
+    this.name = 'CredentialUnrecoverableError';
+  }
 }
 
 /** Reads the key from Secret Manager, base64 encoded, latest version. */
 export class SecretManagerKeyProvider implements KeyProvider {
   private readonly secrets = new SecretManagerServiceClient();
-  private cached: ResolvedKey | undefined;
+  /**
+   * Keyed by version resource name, plus 'latest'. A single cached key was
+   * enough while only the current version was ever read; decrypting historic
+   * ciphertext means several versions can be live at once on one instance.
+   * Bounded in practice by how many rotations a short-lived Cloud Run instance
+   * can span, which is one or two.
+   */
+  private readonly cache = new Map<string, ResolvedKey>();
 
   constructor(private readonly secretName: string = config.CREDENTIAL_KEY_SECRET) {}
 
   async resolve(): Promise<ResolvedKey> {
     // Cached for the instance lifetime. A rotation is picked up when Cloud Run
     // replaces the instance, or on the next cold start, without a redeploy.
-    if (this.cached) return this.cached;
+    return this.access('latest');
+  }
 
-    const [version] = await this.secrets.accessSecretVersion({
-      name: `${this.secretName}/versions/latest`,
-    });
+  async resolveVersion(version: string): Promise<ResolvedKey> {
+    // Records written before the key version was captured carry 'unknown'.
+    // Falling back to latest is the best available guess and still succeeds
+    // whenever no rotation has happened since.
+    if (!version || version === 'unknown') return this.resolve();
+    return this.access(version);
+  }
+
+  private async access(versionRef: string): Promise<ResolvedKey> {
+    const cached = this.cache.get(versionRef);
+    if (cached) return cached;
+
+    // A bare 'latest' needs the secret prefix; a recorded version is already a
+    // full resource name.
+    const name = versionRef === 'latest' ? `${this.secretName}/versions/latest` : versionRef;
+    const [version] = await this.secrets.accessSecretVersion({ name });
 
     const material = version.payload?.data;
-    if (!material) throw new Error(`Secret ${this.secretName} has no payload`);
+    if (!material) throw new Error(`Secret ${name} has no payload`);
 
     const key = Buffer.from(material.toString(), 'base64');
     if (key.length !== KEY_BYTES) {
@@ -66,8 +117,12 @@ export class SecretManagerKeyProvider implements KeyProvider {
       );
     }
 
-    this.cached = { key, version: version.name ?? 'unknown' };
-    return this.cached;
+    const resolved: ResolvedKey = { key, version: version.name ?? 'unknown' };
+    this.cache.set(versionRef, resolved);
+    // Also cache under the concrete version, so a later read of the same
+    // version resolved through 'latest' does not re-fetch.
+    if (version.name) this.cache.set(version.name, resolved);
+    return resolved;
   }
 }
 
@@ -135,7 +190,24 @@ export class CredentialStore {
    * tell an unauthorised caller more than they should learn.
    */
   async retrieveOnce(requestId: string): Promise<{ primaryEmail: string; password: string } | null> {
-    const { key } = await this.keys.resolve();
+    // Resolve the key BEFORE the claim transaction, not after.
+    //
+    // The claim destroys the ciphertext. If key resolution or decryption then
+    // failed, the password would be gone AND unreadable, turning a recoverable
+    // situation into a permanent loss. Reading the record first costs one extra
+    // get and means an unresolvable key fails while the ciphertext is still
+    // intact. The pre-read is not a substitute for the transaction: the claim
+    // below is still what guarantees exactly one caller wins.
+    const preRead = await this.handoffRef(requestId).get();
+    if (!preRead.exists) return null;
+    const recordedVersion = (preRead.data() as CredentialHandoff).keyVersion;
+
+    let key: Buffer;
+    try {
+      ({ key } = await this.keys.resolveVersion(recordedVersion));
+    } catch (err) {
+      throw new CredentialUnrecoverableError(requestId, recordedVersion, { cause: err });
+    }
 
     const claimed = await this.db.runTransaction(async (tx) => {
       const ref = this.handoffRef(requestId);
@@ -153,10 +225,26 @@ export class CredentialStore {
         oneTimePasswordCiphertext: '',
       });
 
-      return { ciphertext: record.oneTimePasswordCiphertext, primaryEmail: record.primaryEmail };
+      return {
+        ciphertext: record.oneTimePasswordCiphertext,
+        primaryEmail: record.primaryEmail,
+        keyVersion: record.keyVersion,
+      };
     });
 
     if (!claimed) return null;
+
+    // The record could have been rewritten between the pre-read and the claim.
+    // Vanishingly unlikely, but decrypting with the wrong key would produce an
+    // auth-tag failure that reads as corruption, so re-resolve rather than
+    // guess.
+    if (claimed.keyVersion !== recordedVersion) {
+      try {
+        ({ key } = await this.keys.resolveVersion(claimed.keyVersion));
+      } catch (err) {
+        throw new CredentialUnrecoverableError(requestId, claimed.keyVersion, { cause: err });
+      }
+    }
 
     const parts = unpack(claimed.ciphertext);
     if (!parts) throw new Error(`Credential record for ${requestId} is malformed`);

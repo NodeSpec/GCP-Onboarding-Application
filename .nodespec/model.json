@@ -1,7 +1,7 @@
 {
   "modelVersion": 1,
   "generatedBy": "nodespec",
-  "modelHash": "f675115c1983452e13d40f970721d23ef7c437413d1fcc0a903ee17f0ef2205f",
+  "modelHash": "995669a7ff3bd8c4f409528f3ca40cd2e18f5706c4a297798703058577e6c85b",
   "nodes": [
     {
       "id": "1c81cf63-c51e-4b0e-b6ad-7d318332d2fe",
@@ -785,7 +785,7 @@
       "nodeId": "db8e5409-dc6f-4052-887a-7ba1dd5fb717",
       "path": "services/worker/src/credentials/credentialStore.ts",
       "kind": "source",
-      "contentHash": "000000001f202e71"
+      "contentHash": "0000000005cdd946"
     },
     {
       "id": "a69dd899-09db-432c-9e71-a6ad6110de25",

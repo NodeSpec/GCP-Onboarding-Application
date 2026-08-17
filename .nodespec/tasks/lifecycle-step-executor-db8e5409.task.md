@@ -139,10 +139,7 @@ Ordered WORK ORDERS synthesized from the model — this node's deliverable kind,
 - [ ] **T24 — Implement: "The console link resolves to the request detail behind IAP, so an approver who is not signed in is authenticated at the perimeter before seeing anything" (REQ-032).**
   No interface contract maps to this criterion — it is this node's internal responsibility.
   ↳ serves: REQ-032 "The console link resolves to the request detail behind IAP, so an approver who is not signed in is authenticated at the perimeter before seeing anything"
-- [ ] **T25 — Implement: "The persisted record carries the key version used, so a rotated key can still decrypt in-flight ciphertext or the drain procedure applies" (REQ-019).**
-  No interface contract maps to this criterion — it is this node's internal responsibility.
-  ↳ serves: REQ-019 "The persisted record carries the key version used, so a rotated key can still decrypt in-flight ciphertext or the drain procedure applies"
-- [ ] **T26 — Verify every acceptance criterion above and tick its box.**
+- [ ] **T25 — Verify every acceptance criterion above and tick its box.**
   Ordering doctrine — plans follow schemas (contract-first TDD): schemas → test plans → implement → verify. Resolve any open [PLACEHOLDER: schema] gap FIRST (get_build_readiness supplies draftInputs; submit the schema via propose_patches update_contract) — test-plan scenarios touching a schemaless contract stay one-line [blocked by schema: …] markers until the schema lands, then the plan refreshes itself.
   AUTOMATED criteria: call get_test_plan for EACH requirement this node serves, implement the plan's test cases, run them, and report every outcome via report_test_results — a passing result flips the criterion's met flag automatically and the response receipt shows which criteria flipped.
   MANUAL criteria (rows marked (manual) above): report_test_results REFUSES to bind them — prove each by ticking its criterion box in this task doc and having the user approve the resulting change card; that approval is the only thing that flips a manual criterion met.
@@ -416,8 +413,8 @@ Owned by the Lifecycle Step Executor. The worker generates the initial one-time 
   → covered by Task T5
 - [x] The one-time password is persisted only as ciphertext under the Secret Manager credential encryption key, never as plaintext and never as a hash, and a test asserts the stored field decrypts to the issued value
   → possible match: Contract "Lifecycle State Store" (nosql) to Firestore: lifecycle state and audit (unverified — requirement not mapped to that node)
-- [ ] The persisted record carries the key version used, so a rotated key can still decrypt in-flight ciphertext or the drain procedure applies
-  → covered by Task T25
+- [x] The persisted record carries the key version used, so a rotated key can still decrypt in-flight ciphertext or the drain procedure applies
+  → THIS NODE: internal logic
 - [ ] The credential record carries a Firestore TTL and is removed on expiry without operator action
   → covered by Task T3
 - [ ] The generated plaintext password never appears in any Firestore document, any worker API response body, or any log entry, verified by a test that provisions a user and greps the emitted records
