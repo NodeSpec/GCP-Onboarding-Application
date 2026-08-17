@@ -1,7 +1,7 @@
 {
   "modelVersion": 1,
   "generatedBy": "nodespec",
-  "modelHash": "03a30a9954f949fa9587666c051dc97b0cbec3386ac0a33a71b05a15e5961143",
+  "modelHash": "2cd571b2fbda7513f44824a4b9535ed1118b2d4b3f2813a05eac4268e7c36436",
   "nodes": [
     {
       "id": "1c81cf63-c51e-4b0e-b6ad-7d318332d2fe",
@@ -870,7 +870,7 @@
       "nodeId": "db8e5409-dc6f-4052-887a-7ba1dd5fb717",
       "path": ".nodespec/tasks/lifecycle-step-executor-db8e5409.task.md",
       "kind": "task",
-      "contentHash": "00000000474c0d1b"
+      "contentHash": "0000000013c34211"
     },
     {
       "id": "e4b8d215-7c93-4a06-b52f-8e1d94c30a67",
