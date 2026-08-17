@@ -1,7 +1,7 @@
 {
   "modelVersion": 1,
   "generatedBy": "nodespec",
-  "modelHash": "4aeb9c245201cbef3aa4617485b7f9ad44d273fd03002cc5804c6a45a557e7bf",
+  "modelHash": "37c4d75db50001d94bc7e9b7007611513cb12af03d569bce2bb7807b309bf543",
   "nodes": [
     {
       "id": "1c81cf63-c51e-4b0e-b6ad-7d318332d2fe",
@@ -845,6 +845,12 @@
       "nodeId": "db8e5409-dc6f-4052-887a-7ba1dd5fb717",
       "path": ".nodespec/tests/req-013.tests.md",
       "kind": "test-plan"
+    },
+    {
+      "id": "7b2e4c81-6a95-4d30-8f27-1e5b3c9d0a64",
+      "nodeId": "c424e85a-6584-4bb7-a48e-2175ebc6a41b",
+      "path": "services/api/src/routes/audit.emulator.test.ts",
+      "kind": "source"
     },
     {
       "id": "7c0bb8ce-04db-4651-b75a-5bad75c9ffc1",

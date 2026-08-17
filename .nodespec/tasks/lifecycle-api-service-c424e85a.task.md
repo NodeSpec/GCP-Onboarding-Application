@@ -1507,6 +1507,7 @@ Startup/initialization order based on edge directions and interaction patterns.
 | `services/api/src/roles.test.ts` | test-plan | --- | draft |
 | `services/api/src/routes/roleBindings.ts` | source | --- | draft |
 | `services/api/tsconfig.json` | config | --- | draft |
+| `services/api/src/routes/audit.emulator.test.ts` | source | --- | draft |
 | `services/api/src/routes/admin.emulator.test.ts` | test-plan | --- | draft |
 | `packages/shared/tsconfig.json` | config | --- | draft |
 | `packages/shared/src/credentials.ts` | source | --- | draft |
