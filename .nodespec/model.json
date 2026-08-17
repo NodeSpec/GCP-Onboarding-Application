@@ -1,7 +1,7 @@
 {
   "modelVersion": 1,
   "generatedBy": "nodespec",
-  "modelHash": "c3682e56064701ea80e2a3b16fc565c8038598ccfba956eb4b856d0bf2a09b8a",
+  "modelHash": "9fff6ea3a92aea7105fe70fb8955b159676f7d669e090331a1d2b315a7322d68",
   "nodes": [
     {
       "id": "1c81cf63-c51e-4b0e-b6ad-7d318332d2fe",
@@ -821,6 +821,12 @@
       "path": ".nodespec/tasks/identity-aware-proxy-4f626e62.task.md",
       "kind": "task",
       "contentHash": "0000000023af8c46"
+    },
+    {
+      "id": "81d2fca9-9bf0-4c7d-b3a2-89955a220175",
+      "nodeId": "c424e85a-6584-4bb7-a48e-2175ebc6a41b",
+      "path": "services/api/src/routes/admin.emulator.test.ts",
+      "kind": "test-plan"
     },
     {
       "id": "84fe5a85-b4d5-42a6-95f6-3860624baece",
