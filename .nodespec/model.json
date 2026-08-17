@@ -1,7 +1,7 @@
 {
   "modelVersion": 1,
   "generatedBy": "nodespec",
-  "modelHash": "af61c8a1c1eb81297130f9896c1147876430a92a2924683ce94faaddb134c73b",
+  "modelHash": "a274ad2b84610e122ab66cab5b1bc879b65ada11e94b1ba8f2d4b177d5f3801f",
   "nodes": [
     {
       "id": "1c81cf63-c51e-4b0e-b6ad-7d318332d2fe",
@@ -957,7 +957,7 @@
       "nodeId": "c424e85a-6584-4bb7-a48e-2175ebc6a41b",
       "path": ".nodespec/tasks/lifecycle-api-service-c424e85a.task.md",
       "kind": "task",
-      "contentHash": "0000000064ba3c14"
+      "contentHash": "000000003f78f0cf"
     },
     {
       "id": "d3a17f60-9e24-4b83-a175-6c02f8194e39",
@@ -990,7 +990,7 @@
       "nodeId": "db8e5409-dc6f-4052-887a-7ba1dd5fb717",
       "path": ".nodespec/tasks/lifecycle-step-executor-db8e5409.task.md",
       "kind": "task",
-      "contentHash": "00000000002f4f75"
+      "contentHash": "00000000049cfc1a"
     },
     {
       "id": "e4b8d215-7c93-4a06-b52f-8e1d94c30a67",
