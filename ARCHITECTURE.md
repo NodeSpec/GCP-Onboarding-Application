@@ -95,4 +95,5 @@ recommended test types, framework suggestions, and test scenarios.
 - **Lifecycle Step Executor**: [`.nodespec/tests/req-013.tests.md`](./.nodespec/tests/req-013.tests.md)
 - **Lifecycle Step Executor**: [`services/worker/src/auth/taskAuth.test.ts`](./services/worker/src/auth/taskAuth.test.ts)
 - **Lifecycle API Service**: [`packages/shared/src/logging.test.ts`](./packages/shared/src/logging.test.ts)
+- **Lifecycle Step Executor**: [`services/worker/src/workspace/noDelegation.test.ts`](./services/worker/src/workspace/noDelegation.test.ts)
 - **Lifecycle API Service**: [`services/api/src/config.test.ts`](./services/api/src/config.test.ts)

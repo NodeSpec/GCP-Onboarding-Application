@@ -1289,6 +1289,7 @@ Startup/initialization order based on edge directions and interaction patterns.
 | `services/worker/src/auth/taskAuth.test.ts` | test-plan | --- | draft |
 | `services/worker/src/routes/tasks.ts` | source | --- | draft |
 | `services/worker/src/phases/create.ts` | source | --- | draft |
+| `services/worker/src/workspace/noDelegation.test.ts` | test-plan | --- | draft |
 | `services/worker/src/steps/advance.ts` | source | --- | draft |
 | `services/worker/src/workspace/directoryClient.ts` | source | --- | draft |
 | `services/worker/src/logging.ts` | source | --- | draft |

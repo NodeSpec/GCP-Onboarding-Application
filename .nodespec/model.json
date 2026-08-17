@@ -1,7 +1,7 @@
 {
   "modelVersion": 1,
   "generatedBy": "nodespec",
-  "modelHash": "5fb7736eabee0b8070acd64b2936d288a17aaa67ba17da50505d20beb6de1522",
+  "modelHash": "4e37d263815e6b58914aee20837d7fb4b7f54397b3eff7647d3e2bcbb21130d0",
   "nodes": [
     {
       "id": "1c81cf63-c51e-4b0e-b6ad-7d318332d2fe",
@@ -817,6 +817,12 @@
       "id": "c99f6643-0ad0-4ccf-b1ed-1d13407c9927",
       "nodeId": "c424e85a-6584-4bb7-a48e-2175ebc6a41b",
       "path": "packages/shared/src/logging.test.ts",
+      "kind": "test-plan"
+    },
+    {
+      "id": "c9f2a730-6b41-4e85-8d19-2a7c05e6b3d4",
+      "nodeId": "db8e5409-dc6f-4052-887a-7ba1dd5fb717",
+      "path": "services/worker/src/workspace/noDelegation.test.ts",
       "kind": "test-plan"
     },
     {
