@@ -1,5 +1,6 @@
 import { Firestore } from '@google-cloud/firestore';
 import {
+  ANONYMOUS_ACTOR,
   CredentialStore,
   LifecycleStore,
   SecretManagerKeyProvider,
@@ -38,11 +39,50 @@ app.get('/healthz', (_req, res) => {
   res.status(200).json({ status: 'ok' });
 });
 
+const db = new Firestore({
+  projectId: config.GCP_PROJECT_ID,
+  databaseId: config.FIRESTORE_DATABASE,
+});
+const store = new LifecycleStore(db);
+
+// Retrieval is the only path by which a credential leaves the system, and it
+// terminates at an authenticated operator inside the perimeter (REQ-017).
+const credentials = new CredentialStore(
+  db,
+  new SecretManagerKeyProvider(config.CREDENTIAL_KEY_SECRET),
+);
+
+/**
+ * Records an authorisation refusal (REQ-010 AC-3).
+ *
+ * Shared by the 401 path and every role check. requestId is null for a 401,
+ * which is refused before any route runs and therefore belongs to no request;
+ * a sentinel id would make the per-request audit query answer for events that
+ * were never about it.
+ */
+const auditRefusal = (event: {
+  actor: Parameters<typeof store.recordDenied>[0]['actor'];
+  action: string;
+  reason: string;
+  path: string;
+  sourceIp: string;
+}) =>
+  store.recordDenied({ requestId: null, ...event });
+
 // Everything past this point requires a verified IAP assertion. Built here, in
 // the composition root, rather than at module scope in the middleware: that
 // kept the middleware module unimportable without a full environment.
 app.use(
   createIapAuth({
+    auditDenied: ({ reason, path, sourceIp }) =>
+      auditRefusal({
+        // Nothing about this caller was verified, so no identity is recorded.
+        actor: ANONYMOUS_ACTOR,
+        action: 'auth.assertion_refused',
+        reason,
+        path,
+        sourceIp,
+      }),
     audience: config.IAP_AUDIENCE ?? '',
     clockToleranceSeconds: config.IAP_CLOCK_SKEW_SECONDS,
     // Spread rather than assign: under exactOptionalPropertyTypes an explicit
@@ -59,18 +99,6 @@ app.use(
   }),
 );
 
-const db = new Firestore({
-  projectId: config.GCP_PROJECT_ID,
-  databaseId: config.FIRESTORE_DATABASE,
-});
-const store = new LifecycleStore(db);
-
-// Retrieval is the only path by which a credential leaves the system, and it
-// terminates at an authenticated operator inside the perimeter (REQ-017).
-const credentials = new CredentialStore(
-  db,
-  new SecretManagerKeyProvider(config.CREDENTIAL_KEY_SECRET),
-);
 
 /**
  * Reads the live approval policy. Called per submission rather than cached, so
@@ -97,7 +125,31 @@ const dispatcher = createDispatcher();
  */
 const resolver = new BindingRoleResolver(store, { bootstrapAdmins: config.BOOTSTRAP_ADMINS });
 
-app.use('/api/requests', requestRoutes({ store, loadPolicy, dispatcher, resolver, credentials }));
+/**
+ * Every role refusal is audited with the identity that was refused, what was
+ * required, and where they were reaching (REQ-010 AC-3). Fire-and-forget for
+ * the same reason as the 401: the refusal is the answer, and an audit write
+ * that fails must not turn a 403 into a 500.
+ */
+const onDenied = (event: {
+  identity: { email: string };
+  required: string;
+  path: string;
+  sourceIp: string;
+}) => {
+  void auditRefusal({
+    actor: { kind: 'human', email: event.identity.email },
+    action: 'authz.role_refused',
+    reason: `requires role '${event.required}'`,
+    path: event.path,
+    sourceIp: event.sourceIp,
+  }).catch((err: unknown) => logger.error({ err }, 'failed to audit a role refusal'));
+};
+
+app.use(
+  '/api/requests',
+  requestRoutes({ store, loadPolicy, dispatcher, resolver, credentials, onDenied }),
+);
 app.use(
   '/api/role-bindings',
   roleBindingRoutes({ store, resolver, onChanged: (subject) => resolver.invalidate(subject) }),

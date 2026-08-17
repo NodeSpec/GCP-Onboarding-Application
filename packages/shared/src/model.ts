@@ -147,11 +147,23 @@ export interface LifecycleStep {
 }
 
 export interface AuditActor {
-  kind: 'human' | 'system';
+  kind: 'human' | 'system' | 'anonymous';
   email: string;
   /** For automated steps: the human whose request set the work in motion. */
   onBehalfOf?: string;
 }
+
+/**
+ * The actor for a refusal where nothing about the caller was ever verified: a
+ * 401 from assertion verification (REQ-010 AC-3).
+ *
+ * Recording a claimed identity here would be worse than recording none. The
+ * assertion did not verify, so any email in it is a string an attacker chose,
+ * and writing it into the trail would let them forge attribution for their own
+ * failed attempts. What IS known is the path and the source IP, which
+ * recordDenied carries alongside.
+ */
+export const ANONYMOUS_ACTOR: AuditActor = { kind: 'anonymous', email: 'unauthenticated' };
 
 export interface AuditEvent {
   eventId: string;
