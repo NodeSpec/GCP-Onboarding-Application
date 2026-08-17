@@ -60,13 +60,46 @@ describe('the create step plan', () => {
     expect(() => stepPlanFor(phase, PAYLOAD)).toThrow(InvalidPhasePayload);
   });
 
-  it('plans the notify phase as validate then send', () => {
+  it('plans the notify phase as validate, settle the credential, then send', () => {
     // Sending is ONE step: splitting render from deliver would create a step
     // that can succeed while the person still hears nothing (REQ-004).
     expect(stepPlanFor('notify', PAYLOAD).map((s) => s.name)).toEqual([
       'validate-notify-request',
+      'confirm-credential',
       'send-welcome-letter',
     ]);
+  });
+
+  it('swaps in the regeneration step when the operator asked for a new password', () => {
+    // Two names rather than one step that branches internally, because approval
+    // policy is keyed by step name. A tenant that wants a second pair of eyes on
+    // a password reset must be able to require it WITHOUT putting an approval in
+    // front of every ordinary resend (REQ-030 AC-7).
+    expect(stepPlanFor('notify', { ...PAYLOAD, regenerate: true }).map((s) => s.name)).toEqual([
+      'validate-notify-request',
+      'regenerate-credential',
+      'send-welcome-letter',
+    ]);
+  });
+
+  it('treats a missing or false regenerate flag as no regeneration', () => {
+    // Only an explicit true regenerates. Anything else resetting a real
+    // person's password would be the worst kind of default.
+    for (const regenerate of [undefined, false, 'true', 1, null]) {
+      const plan = stepPlanFor('notify', { ...PAYLOAD, regenerate }).map((s) => s.name);
+      expect(plan).toContain('confirm-credential');
+      expect(plan).not.toContain('regenerate-credential');
+    }
+  });
+
+  it('validates before it touches the credential, on both notify plans', () => {
+    // AC-9 rests on this ordering: a resend for a deleted account has to fail in
+    // validation, before any step resets a password or sends anything.
+    for (const regenerate of [false, true]) {
+      const plan = stepPlanFor('notify', { ...PAYLOAD, regenerate }).map((s) => s.name);
+      expect(plan[0]).toBe('validate-notify-request');
+      expect(plan[plan.length - 1]).toBe('send-welcome-letter');
+    }
   });
 });
 

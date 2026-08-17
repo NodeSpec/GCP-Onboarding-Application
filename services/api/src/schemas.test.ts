@@ -129,6 +129,41 @@ describe('the notify payload schema (REQ-004)', () => {
   });
 
   it('refuses an unrecognised field rather than dropping it', () => {
-    expect(validatePayload('notify', { ...NOTIFY, regenerate: true }).ok).toBe(false);
+    expect(validatePayload('notify', { ...NOTIFY, regenrate: true }).ok).toBe(false);
+  });
+});
+
+describe('the resend flag on the notify payload (REQ-030)', () => {
+  const NOTIFY = {
+    primaryEmail: 'ada.lovelace@company.com',
+    givenName: 'Ada',
+    familyName: 'Lovelace',
+    notificationEmail: 'ada.personal@example.com',
+  };
+
+  it('defaults regenerate to false when the operator does not mention it', () => {
+    // The default is the whole point. Resetting a real person's password has to
+    // be something an operator asked for, never a fallback the system reaches
+    // for because a stored credential turned out to be unusable (AC-4).
+    const result = validatePayload('notify', NOTIFY);
+
+    expect(result.ok).toBe(true);
+    if (result.ok) expect(result.value.regenerate).toBe(false);
+  });
+
+  it('accepts an explicit regeneration request', () => {
+    const result = validatePayload('notify', { ...NOTIFY, regenerate: true });
+
+    expect(result.ok).toBe(true);
+    if (result.ok) expect(result.value.regenerate).toBe(true);
+  });
+
+  it('refuses a truthy non-boolean rather than coercing it', () => {
+    // 'false' as a string is truthy in JavaScript. Coercing here is how a
+    // console bug that sends strings would start resetting passwords nobody
+    // asked to reset.
+    for (const regenerate of ['true', 'false', 1, 0, 'yes']) {
+      expect(validatePayload('notify', { ...NOTIFY, regenerate }).ok).toBe(false);
+    }
   });
 });
