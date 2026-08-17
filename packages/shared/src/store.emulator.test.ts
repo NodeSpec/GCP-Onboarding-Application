@@ -7,7 +7,7 @@ import { stepPlanFor } from './stepPlans.js';
 import { ConflictingRequestError, LifecycleStore } from './store.js';
 
 /**
- * TC-REQ-001-1 and TC-REQ-001-2, against the Firestore emulator.
+ * TC-REQ-001-1, TC-REQ-001-2 and TC-REQ-001-6, against the Firestore emulator.
  *
  * These criteria are about PERSISTENCE and about a race, and neither can be
  * proven against a hand-rolled fake: a fake would confirm the fake's rollback
@@ -34,14 +34,16 @@ const PAYLOAD = {
   groups: ['engineering@company.com', 'platform@company.com'],
 };
 
-function documents(overrides: { targetUser?: string; requestedBy?: string } = {}) {
+function documents(
+  overrides: { targetUser?: string; requestedBy?: string; policy?: typeof DEFAULT_POLICY } = {},
+) {
   return buildNewRequest({
     phase: 'create',
     targetUser: overrides.targetUser ?? PAYLOAD.primaryEmail,
     requestedBy: overrides.requestedBy ?? 'operator@company.com',
     payload: PAYLOAD,
     plan: stepPlanFor('create', PAYLOAD),
-    policy: DEFAULT_POLICY,
+    policy: overrides.policy ?? DEFAULT_POLICY,
   });
 }
 
@@ -213,5 +215,107 @@ describe('the create is atomic', () => {
     // A partially applied create would leave orphan steps or a second audit
     // event behind. Firestore rolls the whole transaction back.
     expect((await db.collection(COLLECTIONS.audit).get()).size).toBe(before);
+  });
+});
+
+describe('AC-6: the first step is dispatched or halted per the snapshotted policy', () => {
+  it('releases the first step when no approval is required', async () => {
+    const { request } = await store.createRequest(documents(), ACTOR);
+
+    const result = await store.startFirstStep(request.requestId, ACTOR);
+
+    expect(result.outcome).toBe('dispatched');
+    const [first] = await store.listSteps(request.requestId);
+    expect(first!.status).toBe('ready');
+    expect((await store.getRequest(request.requestId))!.status).toBe('running');
+  });
+
+  it('halts the first step when the snapshot requires approval', async () => {
+    const policy = {
+      ...DEFAULT_POLICY,
+      create: { 'validate-request': { requiresApproval: true, approverRole: 'approver' as const } },
+    };
+    const { request } = await store.createRequest(documents({ policy }), ACTOR);
+
+    const result = await store.startFirstStep(request.requestId, ACTOR);
+
+    expect(result.outcome).toBe('awaiting_approval');
+    const [first] = await store.listSteps(request.requestId);
+    expect(first!.status).toBe('awaiting_approval');
+    expect((await store.getRequest(request.requestId))!.status).toBe('awaiting_approval');
+  });
+
+  it('reads the snapshot, so a policy edit after creation changes nothing', async () => {
+    const policy = {
+      ...DEFAULT_POLICY,
+      create: { 'validate-request': { requiresApproval: true, approverRole: 'approver' as const } },
+    };
+    const { request } = await store.createRequest(documents({ policy }), ACTOR);
+
+    // The live policy is irrelevant by now: requiresApproval was frozen onto
+    // the step document at creation.
+    policy.create['validate-request']!.requiresApproval = false;
+
+    expect((await store.startFirstStep(request.requestId, ACTOR)).outcome).toBe('awaiting_approval');
+  });
+
+  it('leaves every later step pending, so only the first is released', async () => {
+    const { request } = await store.createRequest(documents(), ACTOR);
+    await store.startFirstStep(request.requestId, ACTOR);
+
+    const steps = await store.listSteps(request.requestId);
+    expect(steps.slice(1).every((s) => s.status === 'pending')).toBe(true);
+  });
+});
+
+describe('AC-7: a halt cannot commit without the notification being committed to', () => {
+  const approvalPolicy = {
+    ...DEFAULT_POLICY,
+    create: { 'validate-request': { requiresApproval: true, approverRole: 'approver' as const } },
+  };
+
+  it('writes the notification record in the same transaction as the halt', async () => {
+    const { request } = await store.createRequest(documents({ policy: approvalPolicy }), ACTOR);
+
+    await store.startFirstStep(request.requestId, ACTOR);
+
+    const [first] = await store.listSteps(request.requestId);
+    expect(first!.status).toBe('awaiting_approval');
+    // The outbox entry. Unsent: REQ-032 sends from it and stamps sentAt.
+    expect(first!.approverNotification).not.toBeNull();
+    expect(first!.approverNotification!.sentAt).toBeNull();
+  });
+
+  it('never leaves a halted step without a notification record', async () => {
+    const { request } = await store.createRequest(documents({ policy: approvalPolicy }), ACTOR);
+    await store.startFirstStep(request.requestId, ACTOR);
+
+    const halted = (await store.listSteps(request.requestId)).filter(
+      (s) => s.status === 'awaiting_approval',
+    );
+
+    expect(halted).toHaveLength(1);
+    for (const step of halted) {
+      expect(step.approverNotification).not.toBeNull();
+    }
+  });
+
+  it('records the halt and its notification commitment in one audit event', async () => {
+    const { request } = await store.createRequest(documents({ policy: approvalPolicy }), ACTOR);
+    await store.startFirstStep(request.requestId, ACTOR);
+
+    const audit = await store.listAudit(request.requestId);
+    const halt = audit.find((e) => e.action === 'step.awaiting_approval');
+
+    expect(halt).toBeDefined();
+    expect(halt!.after).toMatchObject({ status: 'awaiting_approval', notificationScheduled: true });
+  });
+
+  it('writes no notification record when the step is dispatched instead', async () => {
+    const { request } = await store.createRequest(documents(), ACTOR);
+    await store.startFirstStep(request.requestId, ACTOR);
+
+    const [first] = await store.listSteps(request.requestId);
+    expect(first!.approverNotification).toBeNull();
   });
 });
