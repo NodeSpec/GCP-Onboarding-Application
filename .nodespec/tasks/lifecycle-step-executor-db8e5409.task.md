@@ -52,7 +52,6 @@ Ordered WORK ORDERS synthesized from the model — this node's deliverable kind,
   ↳ serves (unverified match): REQ-006 "When a Drive data-transfer successor is specified, the transfer is initiated and confirmed complete before the delete step is dispatched" — requirement not mapped to that node; verify or reassign before relying on it
   ↳ serves (unverified match): REQ-006 "Every offboarding step, including the compensating unsuspend, records the affected user, actor, and outcome to the audit log" — requirement not mapped to that node; verify or reassign before relying on it
   ↳ serves (unverified match): REQ-013 "Replaying any step of any phase against a Workspace state where the intended change already holds produces no additional mutation and resolves the step as satisfied" — requirement not mapped to that node; verify or reassign before relying on it
-  ↳ serves (unverified match): REQ-013 "Each step's idempotency key is stable across attempts and distinct across requests and steps" — requirement not mapped to that node; verify or reassign before relying on it
   ↳ serves (unverified match): REQ-013 "Concurrent duplicate task deliveries for the same step result in exactly one Workspace mutation" — requirement not mapped to that node; verify or reassign before relying on it
   ↳ serves (unverified match): REQ-016 "A request whose executing instance is terminated mid-step resumes from the last committed step status on the next task delivery, with no step executed twice and no step skipped" — requirement not mapped to that node; verify or reassign before relying on it
   ↳ serves (unverified match): REQ-016 "Delivering the same step task twice results in exactly one execution: the second delivery observes a non-'ready' status inside the transaction and returns without side effects" — requirement not mapped to that node; verify or reassign before relying on it
@@ -395,8 +394,8 @@ Because Cloud Tasks delivers at least once and Workspace calls can time out afte
 **Acceptance criteria — your task boxes:**
 - [ ] Replaying any step of any phase against a Workspace state where the intended change already holds produces no additional mutation and resolves the step as satisfied
   → covered by Task T2
-- [ ] Each step's idempotency key is stable across attempts and distinct across requests and steps
-  → covered by Task T2
+- [x] Each step's idempotency key is stable across attempts and distinct across requests and steps
+  → possible match: Contract "Step Task Enqueue" (rest) to Cloud Tasks: lifecycle-steps (unverified — requirement not mapped to that node)
 - [x] A 429 or 5xx from the Directory API is retried with exponential backoff and jitter, honoring Retry-After when present
   → possible match: Contract "Google Admin SDK Directory API" (rest) to Google Workspace (Admin SDK Directory) (unverified — requirement not mapped to that node)
 - [x] A 400 or 403 fails the step immediately and does not consume further retry attempts
