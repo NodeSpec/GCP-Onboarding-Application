@@ -1057,19 +1057,39 @@ export class LifecycleStore {
    * Records an authorisation refusal. These carry no state change, so this is
    * the one audit path with nothing to pair with. It is a create-only write to
    * the audit collection and still exposes no update or delete.
+   *
+   * `path` and `sourceIp` are recorded alongside the reason (REQ-010 AC-3). A
+   * refusal without them says someone was turned away and nothing about who
+   * from where, which is precisely the question an investigation opens with;
+   * with a request id often absent on a 401, they are frequently the ONLY
+   * identifying detail the event can carry.
+   *
+   * `requestId` is nullable because a 401 is refused before any route runs, so
+   * there is no request to hang the event on. Inventing a sentinel id would
+   * make the per-request audit query return events that were never about it.
+   *
+   * The ACTOR may be the anonymous principal. On a failed assertion nothing
+   * about the caller has been verified, and recording a claimed identity would
+   * put an attacker's chosen string into the trail as though it were checked.
    */
   async recordDenied(params: {
-    requestId: string;
+    requestId: string | null;
     stepId?: string | null;
     actor: AuditActor;
     action: string;
     reason: string;
+    path?: string;
+    sourceIp?: string;
   }): Promise<void> {
     await this.db.runTransaction(async (tx) => {
       this.appendAudit(tx, params.requestId, params.stepId ?? null, {
         actor: params.actor,
         action: params.action,
-        after: { reason: params.reason },
+        after: {
+          reason: params.reason,
+          path: params.path ?? null,
+          sourceIp: params.sourceIp ?? null,
+        },
         outcome: 'denied',
       });
     });
