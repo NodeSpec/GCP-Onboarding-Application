@@ -1,7 +1,7 @@
 {
   "modelVersion": 1,
   "generatedBy": "nodespec",
-  "modelHash": "e56859c014569010bf8b34afcca977f7642bffde4bb6abc0b606607092d4a181",
+  "modelHash": "9bc0a504cde28b55019bc301891ceccef14d0c5b630148e082a57c56985c8586",
   "nodes": [
     {
       "id": "1c81cf63-c51e-4b0e-b6ad-7d318332d2fe",
@@ -620,7 +620,7 @@
       "nodeId": "c424e85a-6584-4bb7-a48e-2175ebc6a41b",
       "path": "services/api/src/schemas.ts",
       "kind": "source",
-      "contentHash": "000000000edabc82"
+      "contentHash": "000000006e6c40c1"
     },
     {
       "id": "1b30aa33-c945-4448-a9b7-4a7ae469d123",
@@ -904,7 +904,7 @@
       "nodeId": "db8e5409-dc6f-4052-887a-7ba1dd5fb717",
       "path": "services/worker/src/index.ts",
       "kind": "source",
-      "contentHash": "00000000192f4249"
+      "contentHash": "000000007647e557"
     },
     {
       "id": "b2d7c018-5063-4e98-ac42-38db610f9e57",
@@ -972,7 +972,8 @@
       "id": "c52ea038-7d14-4b69-a023-9f16b8d4e7c2",
       "nodeId": "c424e85a-6584-4bb7-a48e-2175ebc6a41b",
       "path": "packages/shared/src/requestFactory.ts",
-      "kind": "source"
+      "kind": "source",
+      "contentHash": "000000007b5ed1bf"
     },
     {
       "id": "c58244ee-bd8f-4e31-a567-bbd2c278f651",

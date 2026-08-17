@@ -8,6 +8,9 @@ import { logger } from './logging.js';
 import { taskRoutes } from './routes/tasks.js';
 import { advance } from './steps/advance.js';
 import { createDispatcher } from './tasks/dispatcher.js';
+import { notifyApprovers } from './notify/approvers.js';
+import { SmtpNotificationSender } from './notify/sender.js';
+import { useNotificationSender } from './phases/notify.js';
 import { DirectoryClient } from './workspace/directoryClient.js';
 
 // Registering the phase modules is what populates the step handler registry.
@@ -15,6 +18,7 @@ import { DirectoryClient } from './workspace/directoryClient.js';
 // so a missing import here fails loudly at execution rather than silently
 // skipping work.
 import './phases/create.js';
+import './phases/notify.js';
 
 /**
  * Worker entry point.
@@ -39,6 +43,12 @@ const credentials = new CredentialStore(db);
 const directory = new DirectoryClient({ customerId: config.WORKSPACE_CUSTOMER_ID });
 const dispatcher = createDispatcher();
 
+// One sender for both message kinds. The worker is the only service holding an
+// SMTP credential, which is why approval notices are queued to it rather than
+// sent by the API service (REQ-004 AC-7, REQ-032 AC-9).
+const sender = new SmtpNotificationSender();
+useNotificationSender(sender);
+
 const app = express();
 app.disable('x-powered-by');
 app.use(express.json({ limit: '256kb' }));
@@ -57,6 +67,7 @@ app.use(
     credentials,
     advance: (requestId, completedStepId) =>
       advance({ store, dispatcher }, requestId, completedStepId),
+    notifyApprovers: (params) => notifyApprovers({ store, sender }, params),
   }),
 );
 

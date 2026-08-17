@@ -38,9 +38,33 @@ export const createPayloadSchema = z
 
 export type CreatePayload = z.infer<typeof createPayloadSchema>;
 
+/**
+ * Phase 2, and the resend path (REQ-030).
+ *
+ * notificationEmail is REQUIRED and is refused when it equals the primary
+ * address. The new mailbox cannot be read until the first sign-in that the
+ * letter is explaining, so sending there is a guaranteed dead end rather than an
+ * edge case; catching it at the boundary tells the operator immediately instead
+ * of after a step has run (REQ-004 AC-2).
+ */
+export const notifyPayloadSchema = z
+  .object({
+    primaryEmail: email,
+    givenName: z.string().trim().min(1).max(60),
+    familyName: z.string().trim().min(1).max(60),
+    notificationEmail: email,
+  })
+  .strict()
+  .refine((p) => p.notificationEmail !== p.primaryEmail, {
+    path: ['notificationEmail'],
+    message:
+      'the notification address must differ from the new primary mailbox, which cannot be read yet',
+  });
+
 /** Phases with no implementation have no schema, so submission is refused. */
 const PHASE_SCHEMAS: Partial<Record<Phase, z.ZodTypeAny>> = {
   create: createPayloadSchema,
+  notify: notifyPayloadSchema,
 };
 
 export interface ValidationIssue {
