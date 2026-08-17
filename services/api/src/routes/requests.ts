@@ -8,9 +8,11 @@ import {
   stepPlanFor,
   type ApprovalPolicy,
   type LifecycleStore,
+  type TaskDispatcher,
 } from '@lifecycle/shared';
 import { Router } from 'express';
 import { requireRole, type RoleResolver } from '../authz.js';
+import { logger } from '../logging.js';
 import { requireIdentity } from '../middleware/iapAuth.js';
 import { decisionSchema, submitRequestSchema, validatePayload } from '../schemas.js';
 
@@ -30,6 +32,8 @@ export interface RequestRouteDeps {
   store: LifecycleStore;
   /** Reads the live approval policy. Snapshotted onto each request. */
   loadPolicy: () => Promise<ApprovalPolicy>;
+  /** Enqueues onto the lifecycle-steps queue. Shared with the worker. */
+  dispatcher: TaskDispatcher;
   resolver?: RoleResolver;
 }
 
@@ -103,6 +107,13 @@ export function requestRoutes(deps: RequestRouteDeps): Router {
       email: identity.email,
     });
 
+    // Enqueued after the commit, never inside it. A Cloud Tasks call cannot
+    // join a Firestore transaction, so the durable record is what the halt or
+    // the dispatch is committed against and the task is the follow-up. The
+    // enqueue is idempotent on the step's idempotency key, so a repeat is
+    // collapsed by Cloud Tasks rather than executing the step twice.
+    const dispatch = await enqueueForStep(deps.dispatcher, documents.request.requestId, started);
+
     res.status(201).json({
       requestId: documents.request.requestId,
       phase: documents.request.phase,
@@ -110,6 +121,7 @@ export function requestRoutes(deps: RequestRouteDeps): Router {
       firstStep: { stepId: started.step.stepId, status: started.step.status },
       targetUser: documents.request.targetUser,
       steps: documents.steps.map((s) => ({ stepId: s.stepId, name: s.name, status: s.status })),
+      dispatch,
     });
   });
 
@@ -152,12 +164,26 @@ export function requestRoutes(deps: RequestRouteDeps): Router {
           justification: parsed.data.justification,
         });
 
+        // Only an approval releases work. A rejection terminates the request,
+        // so there is deliberately nothing to enqueue (REQ-002 AC-4).
+        const dispatch =
+          outcome.stepStatus === 'ready'
+            ? await tryEnqueue(() =>
+                deps.dispatcher.enqueueStep({
+                  requestId: req.params.requestId!,
+                  stepId: req.params.stepId!,
+                  idempotencyKey: outcome.idempotencyKey,
+                }),
+              )
+            : ('not_applicable' as const);
+
         res.status(200).json({
           requestId: req.params.requestId,
           stepId: req.params.stepId,
           decision,
           stepStatus: outcome.stepStatus,
           requestStatus: outcome.requestStatus,
+          dispatch,
         });
       } catch (err) {
         if (err instanceof SelfApprovalError) {
@@ -207,4 +233,53 @@ export function requestRoutes(deps: RequestRouteDeps): Router {
   });
 
   return router;
+}
+
+/**
+ * The outcome of the post-commit enqueue, reported back to the operator.
+ *
+ * 'deferred' is not a lie dressed up as success. The request itself is durable
+ * and correct at this point; what failed is the follow-up task. Returning 500
+ * would tell the operator to retry a submission that has already been admitted,
+ * and their retry would come back 409 against their own request. Saying
+ * 'deferred' instead states exactly what happened: the work is recorded, the
+ * task is not yet scheduled, and the reconciliation sweep over steps left in
+ * 'ready' with no task is what picks it up.
+ */
+export type DispatchOutcome = 'enqueued' | 'deferred' | 'not_applicable';
+
+async function tryEnqueue(enqueue: () => Promise<void>): Promise<DispatchOutcome> {
+  try {
+    await enqueue();
+    return 'enqueued';
+  } catch (err) {
+    logger.error({ err }, 'enqueue failed after the state was committed; left for reconciliation');
+    return 'deferred';
+  }
+}
+
+/**
+ * Enqueues whatever the first step's outcome calls for: the execution task when
+ * it was dispatched, the approver notification when it halted. The halt already
+ * wrote its notification record inside the transaction, so this is the drain of
+ * that record rather than the record of the intent.
+ */
+async function enqueueForStep(
+  dispatcher: TaskDispatcher,
+  requestId: string,
+  started: { outcome: 'dispatched' | 'awaiting_approval'; step: { stepId: string; idempotencyKey: string } },
+): Promise<DispatchOutcome> {
+  if (started.outcome === 'awaiting_approval') {
+    return tryEnqueue(() =>
+      dispatcher.enqueueApproverNotification({ requestId, stepId: started.step.stepId }),
+    );
+  }
+
+  return tryEnqueue(() =>
+    dispatcher.enqueueStep({
+      requestId,
+      stepId: started.step.stepId,
+      idempotencyKey: started.step.idempotencyKey,
+    }),
+  );
 }
