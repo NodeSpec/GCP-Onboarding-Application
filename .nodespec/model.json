@@ -1,7 +1,7 @@
 {
   "modelVersion": 1,
   "generatedBy": "nodespec",
-  "modelHash": "7d7f8d8e2d798ff44b674fba0ce922b257564054e4033e9fba71c7273662a22a",
+  "modelHash": "0b8061683d7fe519853ef8b0a8e7514e9807e3ec7fb0521506c6c83e1ea2fdce",
   "nodes": [
     {
       "id": "1c81cf63-c51e-4b0e-b6ad-7d318332d2fe",
@@ -1027,6 +1027,12 @@
       "path": "services/worker/src/workspace/directoryClient.ts",
       "kind": "source",
       "contentHash": "0000000070be7333"
+    },
+    {
+      "id": "cd6cd78e-b5bb-4790-9bb1-8a2cde22d942",
+      "nodeId": "db8e5409-dc6f-4052-887a-7ba1dd5fb717",
+      "path": "services/worker/src/notify/notify.emulator.test.ts",
+      "kind": "test-plan"
     },
     {
       "id": "ceeaf1e6-c9fc-478a-8720-e9169693274c",
