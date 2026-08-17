@@ -51,12 +51,20 @@ export interface ApprovalRecord {
   at: FirebaseFirestore.Timestamp;
 }
 
-export interface ApproverNotificationRecord {
+/**
+ * The outcome of one outbound message, and the thing that makes sending
+ * idempotent: a non-null deliveryId means the provider accepted it, so a replay
+ * short-circuits instead of sending a second copy (REQ-004 AC-3, REQ-032 AC-4).
+ */
+export interface NotificationRecord {
   sentAt: FirebaseFirestore.Timestamp | null;
   recipients: string[];
   deliveryId: string | null;
   error: string | null;
 }
+
+/** The approver notice written when a step halts. Same shape, distinct role. */
+export type ApproverNotificationRecord = NotificationRecord;
 
 /** Per-step approval configuration, frozen onto a request at creation. */
 export interface StepPolicy {
@@ -99,6 +107,13 @@ export interface LifecycleStep {
   error: StepError | null;
   approval: ApprovalRecord | null;
   approverNotification: ApproverNotificationRecord | null;
+  /**
+   * The message this step itself sent, for steps whose work IS sending: the
+   * welcome letter (REQ-004). Kept separate from approverNotification, which
+   * records the notice about a halt rather than the step's own output, so a
+   * replay of either can short-circuit on its own record.
+   */
+  notification: NotificationRecord | null;
   startedAt: FirebaseFirestore.Timestamp | null;
   completedAt: FirebaseFirestore.Timestamp | null;
 }
