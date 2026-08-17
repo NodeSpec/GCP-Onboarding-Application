@@ -165,6 +165,15 @@ describe('AC-4: every requested scope has a named consumer', () => {
     ],
     'https://www.googleapis.com/auth/admin.directory.group.readonly': ['listGroups'],
     'https://www.googleapis.com/auth/admin.directory.orgunit.readonly': ['listOrgUnits'],
+    // Phase 4 hands a leaver's Drive to a named successor before the account is
+    // deleted, which is a separate API and therefore a separate scope
+    // (REQ-006 AC-8).
+    'https://www.googleapis.com/auth/admin.datatransfer': [
+      'driveApplicationId',
+      'findDriveTransfer',
+      'startDriveTransfer',
+      'driveTransferStatus',
+    ],
   };
 
   it('enumerates the scopes in exactly one place', () => {

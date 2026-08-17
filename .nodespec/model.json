@@ -1,7 +1,7 @@
 {
   "modelVersion": 1,
   "generatedBy": "nodespec",
-  "modelHash": "5df2c57abea14974392779c7aeafbec8b6e864cc40f57958115476264732a431",
+  "modelHash": "4ddd6c94de7aa9aa1a60e017815932236b4efaa9a4005c8a95055d1b57c264d1",
   "nodes": [
     {
       "id": "1c81cf63-c51e-4b0e-b6ad-7d318332d2fe",
@@ -1094,11 +1094,10 @@
       "kind": "test-plan"
     },
     {
-      "id": "c9f2a730-6b41-4e85-8d19-2a7c05e6b3d4",
+      "id": "c9d0e1f2-3a4b-5c6d-7e8f-9a0b1c2d3e4f",
       "nodeId": "db8e5409-dc6f-4052-887a-7ba1dd5fb717",
       "path": "services/worker/src/workspace/noDelegation.test.ts",
-      "kind": "test-plan",
-      "contentHash": "0000000026d7edb4"
+      "kind": "test-plan"
     },
     {
       "id": "ca2bd6c6-e65d-4e5a-8a0c-6a1929bda230",
