@@ -1,7 +1,14 @@
 import { createCipheriv, createDecipheriv, randomBytes } from 'node:crypto';
 import { SecretManagerServiceClient } from '@google-cloud/secret-manager';
 import { Firestore, Timestamp } from '@google-cloud/firestore';
-import { COLLECTIONS, credentialState, type CredentialHandoff, type CredentialState } from './model.js';
+import {
+  COLLECTIONS,
+  credentialState,
+  type AuditActor,
+  type CredentialHandoff,
+  type CredentialState,
+} from './model.js';
+import { appendAuditEvent } from './store.js';
 
 /**
  * Protects the one-time password between generation and operator retrieval.
@@ -270,8 +277,18 @@ export class CredentialStore {
    * expired, or superseded by a regeneration. The caller maps that to 410;
    * distinguishing them would tell an unauthorised caller more than they should
    * learn.
+   *
+   * When `audit` is supplied, the event naming the operator who took the
+   * credential is written INSIDE the claim transaction (REQ-017 AC-6). That is
+   * the only ordering that works: an audit written afterwards would be lost by
+   * a crash that had already destroyed the ciphertext, leaving a credential
+   * gone with no record of who has it. Refusals carry no state change and are
+   * audited by the caller, which is what recordDenied exists for.
    */
-  async retrieveOnce(requestId: string): Promise<{ primaryEmail: string; password: string } | null> {
+  async retrieveOnce(
+    requestId: string,
+    audit?: { actor: AuditActor; targetUser?: string },
+  ): Promise<{ primaryEmail: string; password: string } | null> {
     // Resolve the key BEFORE the claim transaction, not after.
     //
     // The claim destroys the ciphertext. If key resolution or decryption then
@@ -301,7 +318,27 @@ export class CredentialStore {
       // resend precondition. A regeneration supersedes this record, and a
       // superseded record must not yield a password an operator would then hand
       // over believing it still signs in (REQ-030 AC-5).
-      if (credentialState(record, Date.now()) !== 'valid') return null;
+      const state = credentialState(record, Date.now());
+      if (state !== 'valid') {
+        // An expired record has no further use, and leaving readable ciphertext
+        // sitting behind a TTL that has already passed is exactly the exposure
+        // the TTL exists to end. Destroy it on the way past, in this same
+        // transaction, rather than waiting for a sweep that does not exist
+        // (REQ-017 AC-4). Superseded and retrieved records are already empty.
+        if (state === 'expired' && record.oneTimePasswordCiphertext !== '') {
+          tx.update(ref, { oneTimePasswordCiphertext: '' });
+          if (audit) {
+            appendAuditEvent(this.db, tx, requestId, null, {
+              actor: audit.actor,
+              action: 'credential.expired',
+              targetUser: audit.targetUser ?? record.primaryEmail,
+              after: { state },
+              outcome: 'failure',
+            });
+          }
+        }
+        return null;
+      }
 
       tx.update(ref, {
         retrievedAt: Timestamp.now(),
@@ -309,6 +346,18 @@ export class CredentialStore {
         // left alongside readable ciphertext is one bug away from a second read.
         oneTimePasswordCiphertext: '',
       });
+
+      if (audit) {
+        // Same transaction as the destruction. The event says WHO took it and
+        // WHEN, and deliberately nothing about what they got: an audit trail is
+        // not a second copy of the credential (REQ-017 AC-5, AC-6).
+        appendAuditEvent(this.db, tx, requestId, null, {
+          actor: audit.actor,
+          action: 'credential.retrieved',
+          targetUser: audit.targetUser ?? record.primaryEmail,
+          after: { keyVersion: record.keyVersion },
+        });
+      }
 
       return {
         ciphertext: record.oneTimePasswordCiphertext,

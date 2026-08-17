@@ -224,6 +224,8 @@ export function requestRoutes(deps: RequestRouteDeps): Router {
       const identity = requireIdentity(req);
       const requestId = req.params.requestId!;
 
+      const actor = { kind: 'human' as const, email: identity.email };
+
       const request = await deps.store.getRequest(requestId);
       if (!request) {
         res.status(404).json({ error: 'not_found' });
@@ -235,6 +237,16 @@ export function requestRoutes(deps: RequestRouteDeps): Router {
       // credential leaves the system, and widening it to a role rather than a
       // person would make "who could have read it" unanswerable (REQ-017 AC-1).
       if (request.requestedBy !== identity.email.toLowerCase()) {
+        // Audited before the response. A refused attempt on someone else's
+        // credential is exactly the event an investigation needs, and it is the
+        // one an implementation is most likely to forget because nothing
+        // changed (REQ-017 AC-6).
+        await deps.store.recordDenied({
+          requestId,
+          actor,
+          action: 'credential.retrieval',
+          reason: 'not_the_requester',
+        });
         res.status(403).json({ error: 'not_the_requester' });
         return;
       }
@@ -242,12 +254,27 @@ export function requestRoutes(deps: RequestRouteDeps): Router {
       // A resend reuses the credential the create request produced, so the
       // handoff document is not always keyed by the request being asked about.
       const handoffId = await deps.store.resolveCredentialRequestId(requestId);
-      const claimed = await credentials.retrieveOnce(handoffId);
+      // The success audit is written INSIDE the claim transaction, so a crash
+      // cannot destroy a ciphertext without recording who took it.
+      const claimed = await credentials.retrieveOnce(handoffId, {
+        actor,
+        targetUser: request.targetUser,
+      });
 
       if (!claimed) {
         // Gone: never stored, already retrieved, expired, or superseded by a
         // regeneration. One status for all four. Telling the caller which would
         // let someone who should not be here learn the account's history.
+        //
+        // Still audited: a second attempt and an expiry are both attempts on a
+        // credential, and the trail has to show them even though the response
+        // is deliberately uninformative.
+        await deps.store.recordDenied({
+          requestId,
+          actor,
+          action: 'credential.retrieval',
+          reason: 'credential_unavailable',
+        });
         res.status(410).json({ error: 'credential_unavailable' });
         return;
       }
