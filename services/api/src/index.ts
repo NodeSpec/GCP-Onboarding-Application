@@ -6,6 +6,8 @@ import { config } from './config.js';
 import { logger } from './logging.js';
 import { createIapAuth } from './middleware/iapAuth.js';
 import { requestRoutes } from './routes/requests.js';
+import { roleBindingRoutes } from './routes/roleBindings.js';
+import { BindingRoleResolver } from './roles.js';
 import { createDispatcher } from './tasks/dispatcher.js';
 
 /**
@@ -67,13 +69,36 @@ async function loadPolicy(): Promise<ApprovalPolicy> {
 
 const dispatcher = createDispatcher();
 
-app.use('/api/requests', requestRoutes({ store, loadPolicy, dispatcher }));
+/**
+ * Roles come from the binding store now, not from the provisional resolver that
+ * granted 'requester' to everyone and left the approve and reject routes
+ * unreachable. An operator with no binding is authenticated and authorized for
+ * nothing (REQ-012 AC-2); BOOTSTRAP_ADMINS is the only way into an empty store.
+ *
+ * Group membership needs the worker's read-only directory lookup (REQ-029),
+ * which is not built, so only individual bindings resolve today. Caching is
+ * left off: it would trade revocation latency for read volume, and read volume
+ * is not this service's problem.
+ */
+const resolver = new BindingRoleResolver(store, { bootstrapAdmins: config.BOOTSTRAP_ADMINS });
 
-app.get('/api/me', (req, res) => {
-  // Roles are resolved from the role binding store in a later change. Returning
-  // the verified identity alone keeps the console honest in the meantime: it
-  // reads who it is from the server, never from a client held token.
-  res.status(200).json({ email: req.identity!.email, subject: req.identity!.subject, roles: [] });
+app.use('/api/requests', requestRoutes({ store, loadPolicy, dispatcher, resolver }));
+app.use(
+  '/api/role-bindings',
+  roleBindingRoutes({ store, resolver, onChanged: (subject) => resolver.invalidate(subject) }),
+);
+
+app.get('/api/me', async (req, res) => {
+  // The console reads who it is, and what it may do, from the server. It must
+  // never infer either from a client-held token, and hiding a control based on
+  // this response is presentation only: every action is authorized again
+  // server-side (REQ-012 AC-8).
+  const identity = req.identity!;
+  res.status(200).json({
+    email: identity.email,
+    subject: identity.subject,
+    roles: await resolver.rolesFor(identity),
+  });
 });
 
 // Unknown route under the authenticated surface.

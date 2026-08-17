@@ -4,8 +4,9 @@ import { z } from 'zod';
  * One validated configuration module. Nothing else in the service reads
  * process.env directly; call sites import `config` instead.
  *
- * Validation runs before any real use, so a missing IAP audience stops the
- * service rather than surfacing on the first request.
+ * The service exits at startup on invalid configuration rather than failing
+ * on the first request, because a missing IAP audience is a security
+ * misconfiguration and should never reach a running listener.
  */
 
 const AuthMode = z.enum(['iap', 'dev-insecure']);
@@ -24,6 +25,25 @@ const schema = z
     QUEUE_INVOKER_SA: z.string().email(),
 
     CREDENTIAL_KEY_SECRET: z.string().min(1),
+
+    /**
+     * Comma-separated emails that always hold the admin role.
+     *
+     * The role binding store cannot bootstrap itself: granting the first admin
+     * requires an admin, and a fresh deployment has none. Kept in configuration
+     * rather than in the store deliberately, so changing who holds it takes a
+     * deploy by whoever controls the infrastructure rather than an API call
+     * (REQ-012).
+     */
+    BOOTSTRAP_ADMINS: z
+      .string()
+      .default('')
+      .transform((raw) =>
+        raw
+          .split(',')
+          .map((email) => email.trim().toLowerCase())
+          .filter(Boolean),
+      ),
 
     AUTH_MODE: AuthMode.default('iap'),
     IAP_AUDIENCE: z.string().optional(),
@@ -44,7 +64,7 @@ const schema = z
     }
 
     // Refuse to start with assertion verification disabled outside local
-    // development. Asserted by config.test.ts as well as here.
+    // development. This is asserted by a test as well as here.
     if (cfg.AUTH_MODE === 'dev-insecure') {
       if (cfg.NODE_ENV !== 'development') {
         ctx.addIssue({
