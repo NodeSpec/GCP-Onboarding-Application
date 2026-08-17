@@ -1,7 +1,7 @@
 {
   "modelVersion": 1,
   "generatedBy": "nodespec",
-  "modelHash": "b572b7a22679c0558261e7ef229da415f5a0e3c96190b2f334dad5fbffd672f4",
+  "modelHash": "58856ff48272d0be99a6cd23d83a6f601a0263846cc28768abc83849cb202512",
   "nodes": [
     {
       "id": "1c81cf63-c51e-4b0e-b6ad-7d318332d2fe",
@@ -1026,6 +1026,12 @@
       "path": "services/worker/src/phases/create.ts",
       "kind": "source",
       "contentHash": "00000000168ea131"
+    },
+    {
+      "id": "c8f3a672-9d14-4b58-a0e7-2f6b1d8c4e93",
+      "nodeId": "db8e5409-dc6f-4052-887a-7ba1dd5fb717",
+      "path": "services/worker/src/notify/resend.emulator.test.ts",
+      "kind": "source"
     },
     {
       "id": "c99f6643-0ad0-4ccf-b1ed-1d13407c9927",
