@@ -1226,6 +1226,7 @@ Startup/initialization order based on edge directions and interaction patterns.
 | `services/worker/src/steps/handler.ts` | source | --- | draft |
 | `services/worker/src/index.ts` | source | --- | draft |
 | `services/worker/src/auth/taskAuth.test.ts` | test-plan | --- | draft |
+| `services/worker/src/workspace/passwordReset.test.ts` | source | --- | draft |
 | `services/worker/src/routes/tasks.ts` | source | --- | draft |
 | `services/worker/src/phases/create.ts` | source | --- | draft |
 | `services/worker/src/workspace/noDelegation.test.ts` | test-plan | --- | draft |

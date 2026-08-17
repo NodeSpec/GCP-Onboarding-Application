@@ -31,7 +31,6 @@ Ordered WORK ORDERS synthesized from the model — this node's deliverable kind,
   ↳ serves (unverified match): REQ-010 "When any audit event is written, the API shall persist a payload containing no password, no ciphertext, no secret value, and no raw JWT assertion, verified by a test that drives every audit-writing path and asserts on the persisted documents" — requirement not mapped to that node; verify or reassign before relying on it
   ↳ serves (unverified match): REQ-007 "Every load-balancer backend service in the deployment has IAP enabled — asserted against the committed Terraform, so a backend added without IAP fails the check" — requirement not mapped to that node; verify or reassign before relying on it
   ↳ serves (unverified match): REQ-007 "IAP is enabled on the operator backend service and access is granted only to the intended operator group in the OAuth/IAM configuration" — requirement not mapped to that node; verify or reassign before relying on it
-  ↳ serves (unverified match): REQ-017 "The one-time password is returned only to the authenticated operator who created the request, verified against the IAP identity, and a retrieval attempt by any other operator returns 403" — requirement not mapped to that node; verify or reassign before relying on it
 - [ ] **T3 — Implement the integration with Cloud Logging: audit sink (gcp-cloud-logging) per Contract "Audit Log Sink" (dependency).**
   Dependency contract — capture the reference/identifier wiring in this node's config artifacts; no payload schema expected.
   ↳ serves (unverified match): REQ-010 "Each audit event records actor identity, action, target user, before/after state, outcome, and timestamp" — requirement not mapped to that node; verify or reassign before relying on it
@@ -40,8 +39,6 @@ Ordered WORK ORDERS synthesized from the model — this node's deliverable kind,
   ↳ serves (unverified match): REQ-010 "The data access layer exposes no update or delete operation against the audit collection, verified by a test asserting the module's public surface and by a repository check for direct Firestore delete calls on that collection" — requirement not mapped to that node; verify or reassign before relying on it
   ↳ serves (unverified match): REQ-010 "When an operator requests the audit history for a lifecycle request, the API shall return every audit event recorded against that request in ascending timestamp order, with no event omitted" — requirement not mapped to that node; verify or reassign before relying on it
   ↳ serves (unverified match): REQ-031 "A refused attempt writes an audit event naming the operator, the targeted protected account, and the action attempted" — requirement not mapped to that node; verify or reassign before relying on it
-  ↳ serves (unverified match): REQ-017 "The decrypted plaintext appears only in the response body — never in a URL, a redirect target, or any log entry" — requirement not mapped to that node; verify or reassign before relying on it
-  ↳ serves (unverified match): REQ-017 "Every retrieval attempt — success, wrong operator, second attempt, expired — produces an audit event naming the operator identity" — requirement not mapped to that node; verify or reassign before relying on it
 - [ ] **T4 — Implement the integration with Secret Manager (gcp-secret-manager) per Contract "Secret Manager Access" (dependency).**
   Dependency contract — capture the reference/identifier wiring in this node's config artifacts; no payload schema expected.
 - [ ] **T5 — Implement the integration with Cloud Tasks: lifecycle-steps (gcp-cloud-tasks) per Contract "Step Task Enqueue" (rest).**
@@ -52,7 +49,6 @@ Ordered WORK ORDERS synthesized from the model — this node's deliverable kind,
   ↳ serves (unverified match): REQ-007 "The lifecycle-worker service admits exactly two caller identities, each confined to its own route class: the Cloud Tasks queue invoker on /tasks/*, and the lifecycle-api service account on /lookup/*. A token issued to either identity is rejected with 401 on the other's routes, and an unauthenticated request is rejected on both" — requirement not mapped to that node; verify or reassign before relying on it
 - [ ] **T6 — Implement the integration with Firestore: lifecycle state and audit (gcp-firestore) per Contract "Lifecycle State Store" (nosql).**
   Build to the contract schema EXACTLY (see Interface Contracts).
-  ↳ serves (unverified match): REQ-017 "Retrieval reads and clears the ciphertext inside a single Firestore transaction, so two concurrent retrievals yield exactly one success" — requirement not mapped to that node; verify or reassign before relying on it
 - [ ] **T7 — Implement the integration with Lifecycle Step Executor (nodejs) per Contract "Directory Lookup (read-only)" (rest).**
   Build to the contract schema EXACTLY (see Interface Contracts).
 - [ ] **T8 — Expose the interface External HTTPS Load Balancer consumes, per Contract "IAP-Protected HTTPS Ingress" (rest).**
@@ -70,13 +66,7 @@ Ordered WORK ORDERS synthesized from the model — this node's deliverable kind,
 - [ ] **T10 — Implement: "The deployed system exposes no unauthenticated route: an unauthenticated request to every path in the application's route table is rejected, enumerated as a test rather than spot-checked" (REQ-007).**
   No interface contract maps to this criterion — it is this node's internal responsibility.
   ↳ serves: REQ-007 "The deployed system exposes no unauthenticated route: an unauthenticated request to every path in the application's route table is rejected, enumerated as a test rather than spot-checked"
-- [ ] **T11 — Implement: "The one-time password can be retrieved exactly once; the ciphertext is destroyed on retrieval and a second attempt returns 410" (REQ-017).**
-  No interface contract maps to this criterion — it is this node's internal responsibility.
-  ↳ serves: REQ-017 "The one-time password can be retrieved exactly once; the ciphertext is destroyed on retrieval and a second attempt returns 410"
-- [ ] **T12 — Implement: "A retrieval after the credential record's TTL has expired returns 410 with the ciphertext already removed" (REQ-017).**
-  No interface contract maps to this criterion — it is this node's internal responsibility.
-  ↳ serves: REQ-017 "A retrieval after the credential record's TTL has expired returns 410 with the ciphertext already removed"
-- [ ] **T13 — Verify every acceptance criterion above and tick its box.**
+- [ ] **T11 — Verify every acceptance criterion above and tick its box.**
   Ordering doctrine — plans follow schemas (contract-first TDD): schemas → test plans → implement → verify. Resolve any open [PLACEHOLDER: schema] gap FIRST (get_build_readiness supplies draftInputs; submit the schema via propose_patches update_contract) — test-plan scenarios touching a schemaless contract stay one-line [blocked by schema: …] markers until the schema lands, then the plan refreshes itself.
   AUTOMATED criteria: call get_test_plan for EACH requirement this node serves, implement the plan's test cases, run them, and report every outcome via report_test_results — a passing result flips the criterion's met flag automatically and the response receipt shows which criteria flipped.
   MANUAL criteria (rows marked (manual) above): report_test_results REFUSES to bind them — prove each by ticking its criterion box in this task doc and having the user approve the resulting change card; that approval is the only thing that flips a manual criterion met.
@@ -264,18 +254,18 @@ Category: functional | Status: in-progress
 Owned by the Lifecycle API Service. Credential handoff is split-channel: the welcome letter carries no credential, and the generated one-time password is retrieved exactly once by the operator who created the request, through the IAP-protected console, then handed to the new hire out of band. Retrieval decrypts the stored ciphertext using the credential data-encryption key, returns the plaintext once, and destroys the ciphertext in the same transaction — so two concurrent retrievals yield exactly one success. Only the originating requester may retrieve it; any other operator, including an admin, is refused. This is the only path by which a credential leaves the system, and it terminates at an authenticated operator inside the perimeter — the person being onboarded never touches this application.
 
 **Acceptance criteria — your task boxes:**
-- [ ] The one-time password is returned only to the authenticated operator who created the request, verified against the IAP identity, and a retrieval attempt by any other operator returns 403
-  → covered by Task T2
-- [ ] The one-time password can be retrieved exactly once; the ciphertext is destroyed on retrieval and a second attempt returns 410
-  → covered by Task T11
-- [ ] Retrieval reads and clears the ciphertext inside a single Firestore transaction, so two concurrent retrievals yield exactly one success
-  → covered by Task T6
-- [ ] A retrieval after the credential record's TTL has expired returns 410 with the ciphertext already removed
-  → covered by Task T12
-- [ ] The decrypted plaintext appears only in the response body — never in a URL, a redirect target, or any log entry
-  → covered by Task T3
-- [ ] Every retrieval attempt — success, wrong operator, second attempt, expired — produces an audit event naming the operator identity
-  → covered by Task T3
+- [x] The one-time password is returned only to the authenticated operator who created the request, verified against the IAP identity, and a retrieval attempt by any other operator returns 403
+  → possible match: Contract "IAP Assertion Verification (JWK Set)" (rest) to Identity-Aware Proxy (unverified — requirement not mapped to that node)
+- [x] The one-time password can be retrieved exactly once; the ciphertext is destroyed on retrieval and a second attempt returns 410
+  → THIS NODE: internal logic
+- [x] Retrieval reads and clears the ciphertext inside a single Firestore transaction, so two concurrent retrievals yield exactly one success
+  → possible match: Contract "Lifecycle State Store" (nosql) to Firestore: lifecycle state and audit (unverified — requirement not mapped to that node)
+- [x] A retrieval after the credential record's TTL has expired returns 410 with the ciphertext already removed
+  → THIS NODE: internal logic
+- [x] The decrypted plaintext appears only in the response body — never in a URL, a redirect target, or any log entry
+  → possible match: Contract "Audit Log Sink" (dependency) to Cloud Logging: audit sink (unverified — requirement not mapped to that node)
+- [x] Every retrieval attempt — success, wrong operator, second attempt, expired — produces an audit event naming the operator identity
+  → possible match: Contract "Audit Log Sink" (dependency) to Cloud Logging: audit sink (unverified — requirement not mapped to that node)
 
 ## Interface Contracts
 

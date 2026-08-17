@@ -246,6 +246,25 @@ export class DirectoryClient {
     return res.data;
   }
 
+  /**
+   * Sets a fresh one-time password on an existing account (REQ-030 AC-4).
+   *
+   * changePasswordAtNextLogin is sent with it, always. A reset that left the
+   * flag alone would hand the operator a password the account holder could keep
+   * using indefinitely, which is a shared credential rather than a handoff.
+   *
+   * The password is a parameter and nothing else: it is not logged here, not
+   * returned, and the operation name carries no part of it.
+   */
+  async resetPassword(primaryEmail: string, password: string): Promise<void> {
+    await this.call('users.update.password', (api) =>
+      api.users.update({
+        userKey: primaryEmail,
+        requestBody: { password, changePasswordAtNextLogin: true },
+      }),
+    );
+  }
+
   async setSuspended(primaryEmail: string, suspended: boolean): Promise<void> {
     await this.call('users.update.suspended', (api) =>
       api.users.update({ userKey: primaryEmail, requestBody: { suspended } }),
