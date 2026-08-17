@@ -1,28 +1,14 @@
 import { randomBytes } from 'node:crypto';
 import { GoogleAuth } from 'google-auth-library';
-import { google, type admin_directory_v1 } from 'googleapis';
+import { google, type admin_datatransfer_v1, type admin_directory_v1 } from 'googleapis';
 import { logger } from '../logging.js';
-
-/**
- * The single construction site for Workspace credentials, and the single choke
- * point for retry and error classification. No phase handler builds its own
- * client and no phase handler implements its own retry.
- *
- * Authentication model, which is the part most likely to be changed by mistake:
- * the service account acts AS ITSELF, holding a Workspace administrator role
- * assigned directly to it in the Admin console. There is no `subject` parameter
- * anywhere below, no downloaded key file, and no Domain-Wide Delegation. If you
- * find yourself adding an impersonation subject to make something work, the
- * grant is wrong, not the code.
- *
- * Serves REQ-008 and REQ-013. Read-only methods additionally serve REQ-029.
- */
 
 export const DIRECTORY_SCOPES = [
   'https://www.googleapis.com/auth/admin.directory.user',
   'https://www.googleapis.com/auth/admin.directory.group.member',
   'https://www.googleapis.com/auth/admin.directory.group.readonly',
   'https://www.googleapis.com/auth/admin.directory.orgunit.readonly',
+  'https://www.googleapis.com/auth/admin.datatransfer',
 ] as const;
 
 export type ErrorClass = 'retryable' | 'terminal' | 'permission' | 'conflict' | 'not_found';
@@ -54,15 +40,6 @@ export class AdminRoleNotGrantedError extends WorkspaceError {
   }
 }
 
-/**
- * The requested primary email is already taken in the domain.
- *
- * A distinct type rather than a message, because this is the one create-phase
- * failure the operator causes and can fix themselves, and the alternative way
- * to tell it apart from every other terminal failure is parsing prose. The
- * executor maps it to a 'validation' step error carrying a stable
- * 'already_exists' code (REQ-003 AC-3).
- */
 export class UserAlreadyExistsError extends WorkspaceError {
   constructor(
     readonly primaryEmail: string,
@@ -80,15 +57,6 @@ export class UserAlreadyExistsError extends WorkspaceError {
   }
 }
 
-/**
- * The account a request targets does not exist.
- *
- * Distinct from the not_found that `call` raises for any 404, because this one
- * is a verdict about the REQUEST rather than about one API call: the operator
- * named an address that is not in the domain, and no retry or permission change
- * will alter that. The executor maps it to a 'validation' step error
- * (REQ-005 AC-8).
- */
 export class UserNotFoundError extends WorkspaceError {
   constructor(
     readonly primaryEmail: string,
@@ -148,7 +116,6 @@ export const DEFAULT_RETRY: RetryPolicy = { maxAttempts: 5, baseDelayMs: 500, ma
 
 const realSleep = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms));
 
-/** Full jitter: a uniform draw below an exponentially growing ceiling. */
 export function backoffMs(attempt: number, policy: RetryPolicy, random: () => number = Math.random): number {
   const ceiling = Math.min(policy.maxDelayMs, policy.baseDelayMs * 2 ** attempt);
   return random() * ceiling;
@@ -169,17 +136,11 @@ export interface UserSummary {
   suspended: boolean;
 }
 
-/**
- * Test seams. The Directory API and the retry clock are the two things that
- * make this class untestable offline: one needs credentials and a network, the
- * other needs real elapsed time. Substituting them lets the retry and
- * classification rules, which are the part worth verifying, run in
- * milliseconds. Both default to the production values.
- */
 export interface DirectoryClientOptions {
   customerId: string;
   retry?: RetryPolicy;
   api?: admin_directory_v1.Admin;
+  transferApi?: admin_datatransfer_v1.Admin;
   sleep?: (ms: number) => Promise<void>;
   random?: () => number;
 }
@@ -191,12 +152,13 @@ export class DirectoryClient {
   private readonly sleep: (ms: number) => Promise<void>;
   private readonly random: () => number;
   private api: admin_directory_v1.Admin | undefined;
+  private transferApi: admin_datatransfer_v1.Admin | undefined;
 
   constructor(options: DirectoryClientOptions) {
-    // Application Default Credentials from the Cloud Run metadata server.
-    // No keyFile, no credentials object, no subject.
-    this.auth = options.api ? undefined : new GoogleAuth({ scopes: [...DIRECTORY_SCOPES] });
+    this.auth =
+      options.api && options.transferApi ? undefined : new GoogleAuth({ scopes: [...DIRECTORY_SCOPES] });
     this.api = options.api;
+    this.transferApi = options.transferApi;
     this.retry = options.retry ?? DEFAULT_RETRY;
     this.customerId = options.customerId;
     this.sleep = options.sleep ?? realSleep;
@@ -205,7 +167,6 @@ export class DirectoryClient {
 
   private async client(): Promise<admin_directory_v1.Admin> {
     if (!this.api) {
-      // auth is only absent when an api was injected, which is the branch above.
       if (!this.auth) throw new Error('DirectoryClient has neither an injected api nor credentials');
       this.api = google.admin({ version: 'directory_v1', auth: this.auth });
     }
@@ -260,9 +221,6 @@ export class DirectoryClient {
     );
   }
 
-  // ---------------------------------------------------------------- users
-
-  /** Returns null on 404 so callers can ask "is this already true?". */
   async getUser(primaryEmail: string): Promise<admin_directory_v1.Schema$User | null> {
     try {
       const res = await this.call('users.get', (api) => api.users.get({ userKey: primaryEmail }));
@@ -298,20 +256,6 @@ export class DirectoryClient {
     return res.data;
   }
 
-  /**
-   * Merge-updates a user, leaving every field not named in the patch alone
-   * (REQ-005 AC-3).
-   *
-   * users.patch rather than users.update, and the difference is the criterion.
-   * Patch semantics are what let phase 3 change a job title without having to
-   * resend the whole user resource, which is the version of this that
-   * accidentally clears whatever the caller forgot to include.
-   *
-   * Note that Workspace treats `organizations` and `relations` as whole arrays
-   * even under patch: sending one entry replaces the list. Callers building an
-   * attribute patch have to merge those against live state themselves, which
-   * phase 3 does.
-   */
   async patchUser(
     primaryEmail: string,
     patch: admin_directory_v1.Schema$User,
@@ -322,16 +266,6 @@ export class DirectoryClient {
     return res.data;
   }
 
-  /**
-   * Sets a fresh one-time password on an existing account (REQ-030 AC-4).
-   *
-   * changePasswordAtNextLogin is sent with it, always. A reset that left the
-   * flag alone would hand the operator a password the account holder could keep
-   * using indefinitely, which is a shared credential rather than a handoff.
-   *
-   * The password is a parameter and nothing else: it is not logged here, not
-   * returned, and the operation name carries no part of it.
-   */
   async resetPassword(primaryEmail: string, password: string): Promise<void> {
     await this.call('users.update.password', (api) =>
       api.users.update({
@@ -347,7 +281,6 @@ export class DirectoryClient {
     );
   }
 
-  /** Idempotent: a user already absent resolves as satisfied (REQ-006). */
   async deleteUser(primaryEmail: string): Promise<{ deleted: boolean }> {
     try {
       await this.call('users.delete', (api) => api.users.delete({ userKey: primaryEmail }));
@@ -360,7 +293,6 @@ export class DirectoryClient {
     }
   }
 
-  /** Prefix search for the operator picker. Read only (REQ-029). */
   async searchUsers(query: string, limit = 25, pageToken?: string): Promise<{ users: UserSummary[]; nextPageToken?: string }> {
     const res = await this.call('users.list', (api) =>
       api.users.list({
@@ -383,18 +315,9 @@ export class DirectoryClient {
     return { users, ...(nextPageToken === undefined ? {} : { nextPageToken }) };
   }
 
-  /**
-   * Generates an initial password. Held in memory only long enough to be
-   * encrypted by the credential store; this client never persists it and never
-   * logs it (REQ-019).
-   */
   generateInitialPassword(length = 24): string {
-    // Base64url over random bytes: no ambiguous characters to mis-transcribe
-    // when an operator reads it aloud during handover.
     return randomBytes(length).toString('base64url').slice(0, length);
   }
-
-  // --------------------------------------------------------------- groups
 
   async hasMember(groupKey: string, memberEmail: string): Promise<boolean> {
     try {
@@ -403,7 +326,6 @@ export class DirectoryClient {
       );
       return res.data.isMember === true;
     } catch (err) {
-      // A missing group or member is an answer, not a failure.
       if (err instanceof WorkspaceError && err.errorClass === 'not_found') return false;
       throw err;
     }
@@ -415,13 +337,11 @@ export class DirectoryClient {
         api.members.insert({ groupKey, requestBody: { email: memberEmail, role: 'MEMBER' } }),
       );
     } catch (err) {
-      // Already a member. The intended state holds, which is success.
       if (err instanceof WorkspaceError && err.errorClass === 'conflict') return;
       throw err;
     }
   }
 
-  /** Idempotent: removing a membership that is absent is already satisfied (REQ-005). */
   async removeMember(groupKey: string, memberEmail: string): Promise<{ removed: boolean }> {
     try {
       await this.call('members.delete', (api) => api.members.delete({ groupKey, memberKey: memberEmail }));
@@ -450,8 +370,6 @@ export class DirectoryClient {
     }));
   }
 
-  // ------------------------------------------------------------ org units
-
   async listOrgUnits(): Promise<{ orgUnitPath: string; name: string }[]> {
     const res = await this.call('orgunits.list', (api) =>
       api.orgunits.list({ customerId: this.customerId, type: 'all' }),
@@ -462,9 +380,90 @@ export class DirectoryClient {
     }));
   }
 
-  // --------------------------------------------------------------- tokens
+  private async transferClient(): Promise<admin_datatransfer_v1.Admin> {
+    if (!this.transferApi) {
+      if (!this.auth) {
+        throw new Error('DirectoryClient has neither an injected transfer api nor credentials');
+      }
+      this.transferApi = google.admin({ version: 'datatransfer_v1', auth: this.auth });
+    }
+    return this.transferApi;
+  }
 
-  /** Revokes issued OAuth tokens during offboarding (REQ-006). */
+  async driveApplicationId(): Promise<string> {
+    const api = await this.transferClient();
+    const res = await this.call('datatransfer.applications.list', () =>
+      api.applications.list({ customerId: this.customerId }),
+    );
+
+    const drive = (res.data.applications ?? []).find((app) =>
+      (app.name ?? '').toLowerCase().includes('drive'),
+    );
+    if (!drive?.id) {
+      throw new WorkspaceError(
+        'No Drive and Docs application is available for data transfer in this tenant',
+        'terminal',
+        404,
+        'datatransfer.applications.list',
+      );
+    }
+    return drive.id;
+  }
+
+  async findDriveTransfer(
+    oldOwnerUserId: string,
+  ): Promise<{ id: string; status: string } | null> {
+    const api = await this.transferClient();
+    const res = await this.call('datatransfer.transfers.list', () =>
+      api.transfers.list({ customerId: this.customerId, oldOwnerUserId, maxResults: 10 }),
+    );
+
+    const transfers = res.data.dataTransfers ?? [];
+    const latest = transfers[0];
+    if (!latest?.id) return null;
+    return { id: latest.id, status: latest.overallTransferStatusCode ?? 'unknown' };
+  }
+
+  async startDriveTransfer(params: {
+    oldOwnerUserId: string;
+    newOwnerUserId: string;
+    applicationId: string;
+  }): Promise<{ id: string; status: string }> {
+    const api = await this.transferClient();
+    const res = await this.call('datatransfer.transfers.insert', () =>
+      api.transfers.insert({
+        requestBody: {
+          oldOwnerUserId: params.oldOwnerUserId,
+          newOwnerUserId: params.newOwnerUserId,
+          applicationDataTransfers: [
+            {
+              applicationId: params.applicationId,
+              applicationTransferParams: [{ key: 'PRIVACY_LEVEL', value: ['PRIVATE', 'SHARED'] }],
+            },
+          ],
+        },
+      }),
+    );
+
+    if (!res.data.id) {
+      throw new WorkspaceError(
+        'Workspace accepted the transfer but returned no id',
+        'retryable',
+        undefined,
+        'datatransfer.transfers.insert',
+      );
+    }
+    return { id: res.data.id, status: res.data.overallTransferStatusCode ?? 'inProgress' };
+  }
+
+  async driveTransferStatus(transferId: string): Promise<string> {
+    const api = await this.transferClient();
+    const res = await this.call('datatransfer.transfers.get', () =>
+      api.transfers.get({ dataTransferId: transferId }),
+    );
+    return res.data.overallTransferStatusCode ?? 'unknown';
+  }
+
   async revokeTokens(primaryEmail: string): Promise<void> {
     const res = await this.call('tokens.list', (api) => api.tokens.list({ userKey: primaryEmail }));
     for (const token of res.data.items ?? []) {
