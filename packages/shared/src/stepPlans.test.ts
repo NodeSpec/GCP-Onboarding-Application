@@ -54,10 +54,19 @@ describe('the create step plan', () => {
     }
   });
 
-  it.each(['notify', 'update', 'delete'] as const)('refuses the unimplemented %s phase', (phase) => {
+  it.each(['update', 'delete'] as const)('refuses the unimplemented %s phase', (phase) => {
     // An empty plan would persist a request with no steps, which sits in
     // pending forever looking like a stuck job rather than an unbuilt one.
     expect(() => stepPlanFor(phase, PAYLOAD)).toThrow(InvalidPhasePayload);
+  });
+
+  it('plans the notify phase as validate then send', () => {
+    // Sending is ONE step: splitting render from deliver would create a step
+    // that can succeed while the person still hears nothing (REQ-004).
+    expect(stepPlanFor('notify', PAYLOAD).map((s) => s.name)).toEqual([
+      'validate-notify-request',
+      'send-welcome-letter',
+    ]);
   });
 });
 

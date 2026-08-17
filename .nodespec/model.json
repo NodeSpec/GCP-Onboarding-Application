@@ -1,7 +1,7 @@
 {
   "modelVersion": 1,
   "generatedBy": "nodespec",
-  "modelHash": "0b8061683d7fe519853ef8b0a8e7514e9807e3ec7fb0521506c6c83e1ea2fdce",
+  "modelHash": "dc25fa06e00ee05a0b0908b75869d44b97c6d54811c9b43779dcab9ce88a0e2a",
   "nodes": [
     {
       "id": "1c81cf63-c51e-4b0e-b6ad-7d318332d2fe",
@@ -748,7 +748,8 @@
       "id": "4d5e0f27-6081-4b94-83a5-8c2f10417d63",
       "nodeId": "c424e85a-6584-4bb7-a48e-2175ebc6a41b",
       "path": "services/api/src/schemas.test.ts",
-      "kind": "test-plan"
+      "kind": "test-plan",
+      "contentHash": "000000000b3fa579"
     },
     {
       "id": "5957afb4-f5ed-479a-b53b-5890149cfcbb",
@@ -1164,7 +1165,8 @@
       "id": "f9b520e8-3a74-4c61-8d05-1e73b8c94a2f",
       "nodeId": "c424e85a-6584-4bb7-a48e-2175ebc6a41b",
       "path": "packages/shared/src/stepPlans.test.ts",
-      "kind": "test-plan"
+      "kind": "test-plan",
+      "contentHash": "000000000645cb6a"
     }
   ]
 }

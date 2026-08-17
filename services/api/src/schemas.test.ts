@@ -89,10 +89,46 @@ describe('the create payload schema', () => {
     if (result.ok) expect(result.value.givenName).toBe('Ada');
   });
 
-  it.each(['notify', 'update', 'delete'] as const)('refuses the unimplemented %s phase', (phase) => {
+  it.each(['update', 'delete'] as const)('refuses the unimplemented %s phase', (phase) => {
     const result = validatePayload(phase, VALID);
 
     expect(result.ok).toBe(false);
     if (!result.ok) expect(result.issues[0]!.message).toContain('not implemented');
+  });
+});
+
+describe('the notify payload schema (REQ-004)', () => {
+  const NOTIFY = {
+    primaryEmail: 'ada.lovelace@company.com',
+    givenName: 'Ada',
+    familyName: 'Lovelace',
+    notificationEmail: 'ada.personal@example.com',
+  };
+
+  it('admits a notify payload with an out-of-band address', () => {
+    expect(validatePayload('notify', NOTIFY).ok).toBe(true);
+  });
+
+  it('requires a notification address, since the letter needs somewhere to go', () => {
+    const { notificationEmail, ...withoutAddress } = NOTIFY;
+    void notificationEmail;
+
+    expect(validatePayload('notify', withoutAddress).ok).toBe(false);
+  });
+
+  it('refuses the new primary mailbox as the notification address', () => {
+    // A guaranteed dead end rather than an edge case: the mailbox cannot be
+    // read until the first sign-in that the letter is explaining (AC-2).
+    const result = validatePayload('notify', {
+      ...NOTIFY,
+      notificationEmail: NOTIFY.primaryEmail,
+    });
+
+    expect(result.ok).toBe(false);
+    if (!result.ok) expect(result.issues[0]!.path).toBe('notificationEmail');
+  });
+
+  it('refuses an unrecognised field rather than dropping it', () => {
+    expect(validatePayload('notify', { ...NOTIFY, regenerate: true }).ok).toBe(false);
   });
 });
