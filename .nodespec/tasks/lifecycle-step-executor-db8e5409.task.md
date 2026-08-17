@@ -1223,6 +1223,7 @@ Startup/initialization order based on edge directions and interaction patterns.
 | `services/worker/src/config.ts` | source | --- | draft |
 | `.nodespec/tests/req-013.tests.md` - Test plan for requirement: Idempotent, retry-safe Workspace mutations | test-plan | markdown | draft |
 | `services/worker/src/notify/singlePath.test.ts` | test-plan | --- | draft |
+| `services/worker/src/steps/approvalExpiry.emulator.test.ts` | source | --- | draft |
 | `services/worker/src/steps/handler.ts` | source | --- | draft |
 | `services/worker/src/index.ts` | source | --- | draft |
 | `services/worker/src/auth/taskAuth.test.ts` | test-plan | --- | draft |

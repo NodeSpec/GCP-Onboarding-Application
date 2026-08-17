@@ -1,7 +1,7 @@
 {
   "modelVersion": 1,
   "generatedBy": "nodespec",
-  "modelHash": "a7d44d88691ed68410e5863614f0f9b419e57150bd47b46b88ace2795b0e6622",
+  "modelHash": "20963f1c3e4e44d522178c96187c50639e94060b622c61e4ac0434afa4134a1a",
   "nodes": [
     {
       "id": "1c81cf63-c51e-4b0e-b6ad-7d318332d2fe",
@@ -868,6 +868,12 @@
       "kind": "test-plan"
     },
     {
+      "id": "8f3b6d20-1e74-4c95-b8a2-6d5e9f0c7a18",
+      "nodeId": "db8e5409-dc6f-4052-887a-7ba1dd5fb717",
+      "path": "services/worker/src/steps/approvalExpiry.emulator.test.ts",
+      "kind": "source"
+    },
+    {
       "id": "968b0da4-033c-442e-8156-3bd27cff349c",
       "nodeId": "1c81cf63-c51e-4b0e-b6ad-7d318332d2fe",
       "path": ".nodespec/tasks/google-workspace-admin-sdk-directory-1c81cf63.task.md",
@@ -968,7 +974,7 @@
       "nodeId": "db8e5409-dc6f-4052-887a-7ba1dd5fb717",
       "path": "services/worker/src/routes/tasks.ts",
       "kind": "source",
-      "contentHash": "000000006cb973c8"
+      "contentHash": "000000007f65a93f"
     },
     {
       "id": "c3f8a129-6174-4a09-bd53-49ec721fa068",

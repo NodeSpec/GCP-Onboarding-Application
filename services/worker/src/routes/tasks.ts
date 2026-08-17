@@ -41,6 +41,42 @@ export function taskRoutes(deps: TaskRouteDeps): Router {
   const router = Router();
 
   /**
+   * The approval expiry firing (REQ-002 AC-7). Scheduled the moment a step
+   * halts, delivered by Cloud Tasks at the expiry instant, and decided entirely
+   * inside the store's transaction: still pending means the request terminates
+   * in 'rejected' with reason 'approval_expired'; already decided means this is
+   * a no-op.
+   *
+   * Both outcomes are 200. A no-op firing is the task working as designed, and
+   * retrying it would only produce another no-op.
+   */
+  router.post('/expire-approval', async (req, res) => {
+    const parsed = notifyBody.safeParse(req.body);
+    if (!parsed.success) {
+      logger.error({ issues: parsed.error.issues }, 'malformed expire-approval task');
+      res.status(200).json({ status: 'rejected', reason: 'malformed task body' });
+      return;
+    }
+
+    try {
+      const outcome = await deps.store.expireApproval({
+        ...parsed.data,
+        actor: { kind: 'system', email: 'lifecycle-worker' },
+      });
+      res.status(200).json({
+        status: outcome.expired ? 'expired' : 'noop',
+        observedStep: outcome.observedStep,
+        observedRequest: outcome.observedRequest,
+      });
+    } catch (err) {
+      // A transient Firestore failure. The step is still awaiting, so a retry
+      // re-evaluates against live state and stays correct.
+      logger.error({ err, ...parsed.data }, 'approval expiry failed');
+      res.status(500).json({ status: 'retry' });
+    }
+  });
+
+  /**
    * The approver notice. Mounted here, on the worker, because the worker holds
    * the only SMTP credential; the API service enqueues onto this route rather
    * than growing a delivery path of its own (REQ-032).
