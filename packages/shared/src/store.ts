@@ -404,6 +404,77 @@ export class LifecycleStore {
     });
   }
 
+  /**
+   * Expires a pending approval when its scheduled task fires (REQ-002 AC-7).
+   *
+   * The decision about whether anything expires is made HERE, inside the
+   * transaction, against the step's current status, not at enqueue time and not
+   * in the route. The expiry task is scheduled the moment a step halts and then
+   * fires unconditionally hours later; by then the step has usually been
+   * decided, and the common case of this method is doing nothing. That is the
+   * design: a no-op task is free, but an expiry that raced a same-instant
+   * approval outside a transaction could reject a request a human had just
+   * released.
+   *
+   * An expiry is a rejection with nobody to name. The step fails with a typed
+   * error rather than acquiring a synthetic ApprovalRecord, because approval
+   * records name the human who decided and inventing a system "approver" would
+   * make the audit trail lie about a person existing.
+   */
+  async expireApproval(params: {
+    requestId: string;
+    stepId: string;
+    actor: AuditActor;
+  }): Promise<{ expired: boolean; observedStep: StepStatus | null; observedRequest: RequestStatus | null }> {
+    return this.db.runTransaction(async (tx) => {
+      const requestRef = this.requestRef(params.requestId);
+      const stepRef = this.stepRef(params.requestId, params.stepId);
+
+      const [requestSnap, stepSnap] = await Promise.all([tx.get(requestRef), tx.get(stepRef)]);
+      // A firing for a request that no longer exists is a no-op, not an error:
+      // the task outlived its subject, which retrying cannot change.
+      if (!requestSnap.exists || !stepSnap.exists) {
+        return { expired: false, observedStep: null, observedRequest: null };
+      }
+
+      const request = requestSnap.data() as LifecycleRequest;
+      const step = stepSnap.data() as LifecycleStep;
+
+      // Decided, cancelled, or never halted: the task fired after the fact.
+      // This is the normal outcome of most expiry tasks and is deliberately
+      // silent in the trail; auditing millions of "nothing happened" firings
+      // would bury the events the trail exists to surface.
+      if (step.status !== 'awaiting_approval' || isTerminalRequestStatus(request.status)) {
+        return { expired: false, observedStep: step.status, observedRequest: request.status };
+      }
+
+      assertStepTransition(params.stepId, step.status, 'failed');
+      assertRequestTransition(params.requestId, request.status, 'rejected');
+
+      tx.update(stepRef, {
+        status: 'failed',
+        error: {
+          class: 'terminal',
+          code: 'approval_expired',
+          message: 'No approver decided within the configured expiry window.',
+        },
+        completedAt: Timestamp.now(),
+      });
+      tx.update(requestRef, { status: 'rejected', updatedAt: Timestamp.now() });
+
+      this.appendAudit(tx, params.requestId, params.stepId, {
+        actor: params.actor,
+        action: 'approval.expired',
+        targetUser: request.targetUser,
+        outcome: 'failure',
+        before: { status: step.status, requestStatus: request.status },
+        after: { status: 'failed', requestStatus: 'rejected', reason: 'approval_expired' },
+      });
+
+      return { expired: true, observedStep: step.status, observedRequest: request.status };
+    });
+  }
+
   // ---------------------------------------------------------------------------
   // Admin capabilities (REQ-012 AC-5)
   // ---------------------------------------------------------------------------
