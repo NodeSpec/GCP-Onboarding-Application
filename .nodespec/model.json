@@ -1,7 +1,7 @@
 {
   "modelVersion": 1,
   "generatedBy": "nodespec",
-  "modelHash": "6fb0c9aa060a265eedf7ea957388e29bd672358abdab9715cad76f425b5b6170",
+  "modelHash": "72a100ad5bdc5fe143b512751b777a1c30f6f80d02ad2b485c50e8f125cca4c1",
   "nodes": [
     {
       "id": "1c81cf63-c51e-4b0e-b6ad-7d318332d2fe",
@@ -1075,6 +1075,12 @@
       "kind": "test-plan"
     },
     {
+      "id": "d4c7a915-3f28-4b61-9e50-7a2b8c1d6e39",
+      "nodeId": "db8e5409-dc6f-4052-887a-7ba1dd5fb717",
+      "path": "services/worker/src/workspace/passwordPolicy.test.ts",
+      "kind": "source"
+    },
+    {
       "id": "d63fb149-8e25-4c7a-b134-0a27c95df8e3",
       "nodeId": "c424e85a-6584-4bb7-a48e-2175ebc6a41b",
       "path": "packages/shared/src/requestFactory.test.ts",
@@ -1105,6 +1111,12 @@
       "nodeId": "db8e5409-dc6f-4052-887a-7ba1dd5fb717",
       "path": "services/worker/src/workspace/retry.test.ts",
       "kind": "test-plan"
+    },
+    {
+      "id": "e6f8b230-9a41-4d75-8c16-3b0e5d2f7a94",
+      "nodeId": "db8e5409-dc6f-4052-887a-7ba1dd5fb717",
+      "path": "services/worker/src/phases/credentialExposure.emulator.test.ts",
+      "kind": "source"
     },
     {
       "id": "e7a4c136-8b25-4d90-a3f7-52d1096be714",

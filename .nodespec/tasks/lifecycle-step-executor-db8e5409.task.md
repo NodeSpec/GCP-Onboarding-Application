@@ -46,14 +46,11 @@ Ordered WORK ORDERS synthesized from the model — this node's deliverable kind,
   ↳ serves (unverified match): REQ-005 "Submitting an update request computes a diff against the user's live Workspace state and persists it on the request before execution" — requirement not mapped to that node; verify or reassign before relying on it
   ↳ serves (unverified match): REQ-005 "Applying the update changes exactly the attributes and memberships in the diff and leaves all other user state untouched" — requirement not mapped to that node; verify or reassign before relying on it
   ↳ serves (unverified match): REQ-003 "The PLAINTEXT initial password never appears in any Firestore document, API response body, or log entry — only the ciphertext written by REQ-019 is persisted, and a test provisions a user then greps the emitted records for the issued value" — requirement not mapped to that node; verify or reassign before relying on it
-  ↳ serves (unverified match): REQ-019 "The credential record carries a Firestore TTL and is removed on expiry without operator action" — requirement not mapped to that node; verify or reassign before relying on it
-  ↳ serves (unverified match): REQ-019 "The generated plaintext password never appears in any Firestore document, any worker API response body, or any log entry, verified by a test that provisions a user and greps the emitted records" — requirement not mapped to that node; verify or reassign before relying on it
 - [ ] **T4 — Implement the integration with Secret Manager (gcp-secret-manager) per Contract "Secret Manager Access" (dependency).**
   Dependency contract — capture the reference/identifier wiring in this node's config artifacts; no payload schema expected.
   ↳ serves (unverified match): REQ-005 "Changing a user's role is expressed as group membership changes plus role-describing attributes — job title, department, manager and org unit path — and all of these are updatable through this phase" — requirement not mapped to that node; verify or reassign before relying on it
 - [ ] **T5 — Implement the integration with Cloud Logging: audit sink (gcp-cloud-logging) per Contract "Audit Log Sink" (dependency).**
   Dependency contract — capture the reference/identifier wiring in this node's config artifacts; no payload schema expected.
-  ↳ serves (unverified match): REQ-019 "The generated password meets the configured generation policy and the user is created with changePasswordAtNextLogin=true" — requirement not mapped to that node; verify or reassign before relying on it
 - [ ] **T6 — Implement the integration with Email Delivery Service per Contract "Welcome Letter Delivery" (rest).**
   Build to the contract schema EXACTLY (see Interface Contracts).
 - [ ] **T7 — Implement the integration with Google Workspace (Admin SDK Directory) per Contract "Google Admin SDK Directory API" (rest).**
@@ -363,16 +360,16 @@ Category: non-functional | Status: in-progress
 Owned by the Lifecycle Step Executor. The worker generates the initial one-time password during Phase 1, holds it in memory for the shortest possible window, and persists it only as ciphertext encrypted under the credential data-encryption key from Secret Manager, alongside the key version used. Encryption is the correct primitive here rather than hashing: the operator must recover the actual value at retrieval (REQ-017), and a hash cannot be reversed — hashing is right for verifying a presented value, wrong for recovering a stored one. The credential record carries a Firestore TTL so an unretrieved password expires on its own. The plaintext never appears in a Firestore document, an API response from the worker, or any log entry.
 
 **Acceptance criteria — your task boxes:**
-- [ ] The generated password meets the configured generation policy and the user is created with changePasswordAtNextLogin=true
-  → covered by Task T5
+- [x] The generated password meets the configured generation policy and the user is created with changePasswordAtNextLogin=true
+  → possible match: Contract "Audit Log Sink" (dependency) to Cloud Logging: audit sink (unverified — requirement not mapped to that node)
 - [x] The one-time password is persisted only as ciphertext under the Secret Manager credential encryption key, never as plaintext and never as a hash, and a test asserts the stored field decrypts to the issued value
   → possible match: Contract "Lifecycle State Store" (nosql) to Firestore: lifecycle state and audit (unverified — requirement not mapped to that node)
 - [x] The persisted record carries the key version used, so a rotated key can still decrypt in-flight ciphertext or the drain procedure applies
   → THIS NODE: internal logic
-- [ ] The credential record carries a Firestore TTL and is removed on expiry without operator action
-  → covered by Task T3
-- [ ] The generated plaintext password never appears in any Firestore document, any worker API response body, or any log entry, verified by a test that provisions a user and greps the emitted records
-  → covered by Task T3
+- [x] The credential record carries a Firestore TTL and is removed on expiry without operator action
+  → possible match: Contract "Lifecycle State Store" (nosql) to Firestore: lifecycle state and audit (unverified — requirement not mapped to that node)
+- [x] The generated plaintext password never appears in any Firestore document, any worker API response body, or any log entry, verified by a test that provisions a user and greps the emitted records
+  → possible match: Contract "Lifecycle State Store" (nosql) to Firestore: lifecycle state and audit (unverified — requirement not mapped to that node)
 - [x] The plaintext is discarded from worker memory once the ciphertext is committed
   → THIS NODE: internal logic
 
@@ -1236,7 +1233,9 @@ Startup/initialization order based on edge directions and interaction patterns.
 | `services/worker/src/notify/notify.emulator.test.ts` | test-plan | --- | draft |
 | `services/worker/src/credentials/credentialStore.test.ts` | test-plan | --- | draft |
 | `services/worker/src/steps/executor.emulator.test.ts` | test-plan | --- | draft |
+| `services/worker/src/workspace/passwordPolicy.test.ts` | source | --- | draft |
 | `services/worker/src/workspace/retry.test.ts` | test-plan | --- | draft |
+| `services/worker/src/phases/credentialExposure.emulator.test.ts` | source | --- | draft |
 | `services/worker/src/logging.ts` | source | --- | draft |
 | `services/worker/src/notify/templates.ts` | source | --- | draft |
 | `services/worker/src/steps/executor.ts` | source | --- | draft |
