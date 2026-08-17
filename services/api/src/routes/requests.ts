@@ -7,6 +7,7 @@ import {
   normalisePolicy,
   stepPlanFor,
   type ApprovalPolicy,
+  type CredentialStore,
   type LifecycleStore,
   type TaskDispatcher,
 } from '@lifecycle/shared';
@@ -35,6 +36,12 @@ export interface RequestRouteDeps {
   /** Enqueues onto the lifecycle-steps queue. Shared with the worker. */
   dispatcher: TaskDispatcher;
   resolver?: RoleResolver;
+  /**
+   * Decrypts the one-time password for handover. Optional: a deployment without
+   * it simply has no retrieval route, which is a great deal safer than mounting
+   * one that cannot decrypt and answers every caller with a server error.
+   */
+  credentials?: CredentialStore;
 }
 
 export function requestRoutes(deps: RequestRouteDeps): Router {
@@ -196,6 +203,60 @@ export function requestRoutes(deps: RequestRouteDeps): Router {
         }
         throw err;
       }
+    });
+  }
+
+  /**
+   * Hands the one-time password to the operator who asked for the account, once
+   * (REQ-017), and refuses once a regeneration has replaced it (REQ-030 AC-5).
+   *
+   * Mounted before the '/:requestId' route below. Express matches in mount
+   * order and the two paths do not collide, but keeping the more specific one
+   * first means a later edit to either cannot quietly shadow this.
+   *
+   * The plaintext appears in the response body and nowhere else: not in the
+   * path, not in a redirect, and not in any log line here.
+   */
+  if (deps.credentials) {
+    const credentials = deps.credentials;
+
+    router.get('/:requestId/credential', requireRole('requester', authz), async (req, res) => {
+      const identity = requireIdentity(req);
+      const requestId = req.params.requestId!;
+
+      const request = await deps.store.getRequest(requestId);
+      if (!request) {
+        res.status(404).json({ error: 'not_found' });
+        return;
+      }
+
+      // Only the originating requester, checked against the IAP-verified
+      // identity. An admin is refused too: this is the one path by which a
+      // credential leaves the system, and widening it to a role rather than a
+      // person would make "who could have read it" unanswerable (REQ-017 AC-1).
+      if (request.requestedBy !== identity.email.toLowerCase()) {
+        res.status(403).json({ error: 'not_the_requester' });
+        return;
+      }
+
+      // A resend reuses the credential the create request produced, so the
+      // handoff document is not always keyed by the request being asked about.
+      const handoffId = await deps.store.resolveCredentialRequestId(requestId);
+      const claimed = await credentials.retrieveOnce(handoffId);
+
+      if (!claimed) {
+        // Gone: never stored, already retrieved, expired, or superseded by a
+        // regeneration. One status for all four. Telling the caller which would
+        // let someone who should not be here learn the account's history.
+        res.status(410).json({ error: 'credential_unavailable' });
+        return;
+      }
+
+      res.status(200).json({
+        requestId,
+        primaryEmail: claimed.primaryEmail,
+        oneTimePassword: claimed.password,
+      });
     });
   }
 
