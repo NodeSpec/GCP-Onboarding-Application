@@ -32,7 +32,18 @@ const STEP_TRANSITIONS: Record<StepStatus, readonly StepStatus[]> = {
   // a request-level move, so the step itself stays put.
   awaiting_approval: ['ready', 'failed'],
   ready: ['running'],
-  running: ['succeeded', 'failed', 'skipped'],
+  // Beyond the three outcomes, two moves exist for durability.
+  //
+  // 'ready' is the HAND-BACK: a retryable failure returns the step to the queue
+  // rather than failing it. Without this a transient Workspace error left the
+  // step 'failed', and since claiming requires 'ready', no redelivery could ever
+  // pick it up again: every transient error was permanently fatal.
+  //
+  // 'running' is the STALE-LEASE RECLAIM, for an instance killed mid-step. It is
+  // additionally gated on the lease having expired, checked inside the
+  // transaction by LifecycleStore.claimStep, so a concurrent duplicate delivery
+  // still cannot steal a live claim (REQ-016 AC-1).
+  running: ['succeeded', 'failed', 'skipped', 'ready', 'running'],
   // An admin resume puts a failed step back in the queue.
   failed: ['ready'],
   succeeded: [],
