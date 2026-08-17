@@ -92,10 +92,20 @@ export function requestRoutes(deps: RequestRouteDeps): Router {
       throw err;
     }
 
+    // Started only after the create has committed. A failure here leaves an
+    // admitted request in 'draft' that an operator can retry or cancel, which
+    // is far better than a half-created request or a dispatched step whose
+    // request never landed.
+    const started = await deps.store.startFirstStep(documents.request.requestId, {
+      kind: 'human',
+      email: identity.email,
+    });
+
     res.status(201).json({
       requestId: documents.request.requestId,
       phase: documents.request.phase,
-      status: documents.request.status,
+      status: started.outcome === 'awaiting_approval' ? 'awaiting_approval' : 'running',
+      firstStep: { stepId: started.step.stepId, status: started.step.status },
       targetUser: documents.request.targetUser,
       steps: documents.steps.map((s) => ({ stepId: s.stepId, name: s.name, status: s.status })),
     });

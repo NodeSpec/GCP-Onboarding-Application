@@ -3,6 +3,7 @@ import { randomUUID } from 'node:crypto';
 import {
   COLLECTIONS,
   NON_TERMINAL_REQUEST_STATUSES,
+  type ApproverNotificationRecord,
   type AuditActor,
   type AuditEvent,
   type LifecycleRequest,
@@ -151,6 +152,81 @@ export class LifecycleStore {
     });
 
     return documents;
+  }
+
+  /**
+   * Starts a newly admitted request: releases its first step, or halts it for
+   * approval, according to the policy snapshotted at creation.
+   *
+   * ON "ENQUEUED IN THE SAME TRANSACTION" (REQ-001 AC-7, REQ-016 AC-7).
+   * A Cloud Tasks enqueue is a call to a different system and CANNOT be part of
+   * a Firestore transaction. Taking the criterion literally is impossible. What
+   * it is actually asking for is that a halt can never be committed without the
+   * notification being committed to, and that is achievable: the notification
+   * record is written in the same transaction as the halt, so the two land
+   * together or not at all. The record is the outbox entry; REQ-032 sends from
+   * it and stamps sentAt. If the send is lost, the outstanding record is what
+   * lets a sweeper find it, which a fire-and-forget enqueue after commit would
+   * not.
+   *
+   * Returns what the caller should enqueue AFTER the transaction commits.
+   * Enqueueing inside would risk a task for a transaction that then aborted.
+   */
+  async startFirstStep(
+    requestId: string,
+    actor: AuditActor,
+  ): Promise<{ outcome: 'dispatched' | 'awaiting_approval'; step: LifecycleStep }> {
+    return this.db.runTransaction(async (tx) => {
+      const requestRef = this.requestRef(requestId);
+      const requestSnap = await tx.get(requestRef);
+      if (!requestSnap.exists) throw new Error(`Request ${requestId} not found`);
+      const request = requestSnap.data() as LifecycleRequest;
+
+      const firstSnap = await tx.get(
+        requestRef.collection(COLLECTIONS.steps).orderBy('ordinal', 'asc').limit(1),
+      );
+      const firstDoc = firstSnap.docs[0];
+      if (!firstDoc) throw new Error(`Request ${requestId} has no steps`);
+      const step = firstDoc.data() as LifecycleStep;
+
+      assertRequestTransition(requestId, request.status, 'running');
+
+      if (step.requiresApproval) {
+        assertStepTransition(step.stepId, step.status, 'awaiting_approval');
+
+        const notification: ApproverNotificationRecord = {
+          sentAt: null,
+          recipients: [],
+          deliveryId: null,
+          error: null,
+        };
+
+        tx.update(firstDoc.ref, { status: 'awaiting_approval', approverNotification: notification });
+        tx.update(requestRef, { status: 'awaiting_approval', updatedAt: Timestamp.now() });
+        this.appendAudit(tx, requestId, step.stepId, {
+          actor,
+          action: 'step.awaiting_approval',
+          targetUser: request.targetUser,
+          before: { status: step.status },
+          after: { status: 'awaiting_approval', notificationScheduled: true },
+        });
+
+        return { outcome: 'awaiting_approval' as const, step: { ...step, status: 'awaiting_approval' as const } };
+      }
+
+      assertStepTransition(step.stepId, step.status, 'ready');
+      tx.update(firstDoc.ref, { status: 'ready' });
+      tx.update(requestRef, { status: 'running', updatedAt: Timestamp.now() });
+      this.appendAudit(tx, requestId, step.stepId, {
+        actor,
+        action: 'step.dispatched',
+        targetUser: request.targetUser,
+        before: { status: step.status },
+        after: { status: 'ready' },
+      });
+
+      return { outcome: 'dispatched' as const, step: { ...step, status: 'ready' as const } };
+    });
   }
 
   /**
