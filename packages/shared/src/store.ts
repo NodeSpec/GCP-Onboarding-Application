@@ -2,6 +2,7 @@ import { Firestore, Timestamp, type Transaction } from '@google-cloud/firestore'
 import { randomUUID } from 'node:crypto';
 import {
   COLLECTIONS,
+  NON_TERMINAL_REQUEST_STATUSES,
   type AuditActor,
   type AuditEvent,
   type LifecycleRequest,
@@ -9,6 +10,7 @@ import {
   type RequestStatus,
   type StepStatus,
 } from './model.js';
+import type { NewRequestDocuments } from './requestFactory.js';
 import { assertRequestTransition, assertStepTransition } from './transitions.js';
 
 /**
@@ -30,6 +32,25 @@ import { assertRequestTransition, assertStepTransition } from './transitions.js'
  *    policy (REQ-018), not from this file. Do not add a delete helper because
  *    a test fixture wants one.
  */
+
+/**
+ * A target user already has a request in flight. Callers map this to 409.
+ * Carries the blocking request so an operator is told what to wait for rather
+ * than just being refused.
+ */
+export class ConflictingRequestError extends Error {
+  constructor(
+    readonly targetUser: string,
+    readonly existingRequestId: string,
+    readonly existingStatus: RequestStatus,
+  ) {
+    super(
+      `${targetUser} already has a non-terminal request (${existingRequestId}, ${existingStatus}). ` +
+        'Wait for it to finish or cancel it before submitting another.',
+    );
+    this.name = 'ConflictingRequestError';
+  }
+}
 
 export interface AuditInput {
   actor: AuditActor;
@@ -73,6 +94,63 @@ export class LifecycleStore {
       .orderBy('timestamp', 'asc')
       .get();
     return snap.docs.map((doc) => doc.data() as AuditEvent);
+  }
+
+  /**
+   * Admits a new lifecycle request: the request document, one step document per
+   * plan entry, and the admission audit event, in ONE transaction.
+   *
+   * The concurrency guard is a query issued INSIDE that transaction, before any
+   * write. Checking beforehand would leave a window in which two operators both
+   * see no conflict and both create a request against the same account, which
+   * is the exact race REQ-001 AC-2 exists to close. Firestore aborts and
+   * retries the transaction when the queried set changes under it, so the loser
+   * re-reads and sees the winner's request.
+   *
+   * Nothing is dispatched here. The request lands in 'draft' with every step
+   * 'pending'; starting the first step is the caller's next move, so a failure
+   * to dispatch cannot leave a half-created request behind.
+   *
+   * Serves REQ-001.
+   */
+  async createRequest(
+    documents: NewRequestDocuments,
+    actor: AuditActor,
+  ): Promise<NewRequestDocuments> {
+    const { request, steps } = documents;
+
+    await this.db.runTransaction(async (tx) => {
+      // READ FIRST. Firestore requires every read in a transaction to precede
+      // every write, and this read is also the guard, so the ordering is not
+      // incidental.
+      const conflicting = await tx.get(
+        this.db
+          .collection(COLLECTIONS.requests)
+          .where('targetUser', '==', request.targetUser)
+          .where('status', 'in', NON_TERMINAL_REQUEST_STATUSES)
+          .limit(1),
+      );
+
+      if (!conflicting.empty) {
+        const existing = conflicting.docs[0]!.data() as LifecycleRequest;
+        throw new ConflictingRequestError(request.targetUser, existing.requestId, existing.status);
+      }
+
+      tx.create(this.requestRef(request.requestId), request);
+      for (const step of steps) {
+        tx.create(this.stepRef(request.requestId, step.stepId), step);
+      }
+
+      this.appendAudit(tx, request.requestId, null, {
+        actor,
+        action: 'request.created',
+        targetUser: request.targetUser,
+        before: null,
+        after: { phase: request.phase, status: request.status, stepCount: steps.length },
+      });
+    });
+
+    return documents;
   }
 
   /**
