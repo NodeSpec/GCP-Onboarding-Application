@@ -99,18 +99,26 @@ async function notifyRequest(payload = NOTIFY_PAYLOAD) {
   return { requestId: documents.request.requestId, steps: documents.steps };
 }
 
-/** Drives the notify request to the point where the send step is claimable. */
+/**
+ * Drives the notify request to the point where the send step is claimable.
+ *
+ * The send step is found BY NAME, not by index. The plan gained a credential
+ * step between validation and sending when resend was built (REQ-030), and an
+ * index here would have quietly started driving the wrong step.
+ */
 async function readyToSend(payload = NOTIFY_PAYLOAD) {
   const { requestId, steps } = await notifyRequest(payload);
   await executeStep(deps(), { requestId, stepId: steps[0]!.stepId, attempt: 1 });
+
+  const sendStepId = steps.find((s) => s.name === 'send-welcome-letter')!.stepId;
   await store.transitionStep({
     requestId,
-    stepId: steps[1]!.stepId,
+    stepId: sendStepId,
     expectedFrom: 'pending',
     to: 'ready',
     audit: { actor: ACTOR, action: 'step.ready' },
   });
-  return { requestId, sendStepId: steps[1]!.stepId, steps };
+  return { requestId, sendStepId, steps };
 }
 
 /** A create request halted on its first step, for the approver notice. */

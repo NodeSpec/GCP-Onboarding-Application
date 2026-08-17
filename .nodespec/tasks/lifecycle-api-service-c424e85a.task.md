@@ -27,17 +27,10 @@ Ordered WORK ORDERS synthesized from the model — this node's deliverable kind,
   Start from the catalog's suggested structure: `src/index.ts`, `src/routes/index.ts`, `package.json`, `tsconfig.json`.
 - [ ] **T2 — Implement the integration with Identity-Aware Proxy (gcp-identity-aware-proxy) per Contract "IAP Assertion Verification (JWK Set)" (rest).**
   Build to the contract schema EXACTLY (see Interface Contracts).
-  ↳ serves (unverified match): REQ-010 "When a request is refused with 401 by assertion verification, or with 403 by the self-approval guard or a role check, the API shall write an audit event carrying the refusal reason, the requested path, and the source IP, recording actor identity only where verification succeeded" — requirement not mapped to that node; verify or reassign before relying on it
-  ↳ serves (unverified match): REQ-010 "When any audit event is written, the API shall persist a payload containing no password, no ciphertext, no secret value, and no raw JWT assertion, verified by a test that drives every audit-writing path and asserts on the persisted documents" — requirement not mapped to that node; verify or reassign before relying on it
   ↳ serves (unverified match): REQ-007 "Every load-balancer backend service in the deployment has IAP enabled — asserted against the committed Terraform, so a backend added without IAP fails the check" — requirement not mapped to that node; verify or reassign before relying on it
   ↳ serves (unverified match): REQ-007 "IAP is enabled on the operator backend service and access is granted only to the intended operator group in the OAuth/IAM configuration" — requirement not mapped to that node; verify or reassign before relying on it
 - [ ] **T3 — Implement the integration with Cloud Logging: audit sink (gcp-cloud-logging) per Contract "Audit Log Sink" (dependency).**
   Dependency contract — capture the reference/identifier wiring in this node's config artifacts; no payload schema expected.
-  ↳ serves (unverified match): REQ-010 "Each audit event records actor identity, action, target user, before/after state, outcome, and timestamp" — requirement not mapped to that node; verify or reassign before relying on it
-  ↳ serves (unverified match): REQ-010 "When an operator performs an approve, reject, cancel, resume, credential retrieval, or role-binding change, the API shall write the audit event and the state change it describes in a single Firestore transaction, verified by a test that forces the transaction to fail and observes neither the state change nor the audit event" — requirement not mapped to that node; verify or reassign before relying on it
-  ↳ serves (unverified match): REQ-010 "When an automated step writes an audit event, the API shall record the actor as the system principal and shall also record the originating human requester of the parent request, so no machine action is left unattributable" — requirement not mapped to that node; verify or reassign before relying on it
-  ↳ serves (unverified match): REQ-010 "The data access layer exposes no update or delete operation against the audit collection, verified by a test asserting the module's public surface and by a repository check for direct Firestore delete calls on that collection" — requirement not mapped to that node; verify or reassign before relying on it
-  ↳ serves (unverified match): REQ-010 "When an operator requests the audit history for a lifecycle request, the API shall return every audit event recorded against that request in ascending timestamp order, with no event omitted" — requirement not mapped to that node; verify or reassign before relying on it
   ↳ serves (unverified match): REQ-031 "A refused attempt writes an audit event naming the operator, the targeted protected account, and the action attempted" — requirement not mapped to that node; verify or reassign before relying on it
 - [ ] **T4 — Implement the integration with Secret Manager (gcp-secret-manager) per Contract "Secret Manager Access" (dependency).**
   Dependency contract — capture the reference/identifier wiring in this node's config artifacts; no payload schema expected.
@@ -166,22 +159,22 @@ Append-only in Firestore is enforced by the data access layer, which exposes no 
 The redaction filter lives here too: secrets, passwords, ciphertext, and raw JWT assertions never reach any log sink.
 
 **Acceptance criteria — your task boxes:**
-- [ ] Each audit event records actor identity, action, target user, before/after state, outcome, and timestamp
-  → covered by Task T3
-- [ ] When an operator performs an approve, reject, cancel, resume, credential retrieval, or role-binding change, the API shall write the audit event and the state change it describes in a single Firestore transaction, verified by a test that forces the transaction to fail and observes neither the state change nor the audit event
-  → covered by Task T3
-- [ ] When a request is refused with 401 by assertion verification, or with 403 by the self-approval guard or a role check, the API shall write an audit event carrying the refusal reason, the requested path, and the source IP, recording actor identity only where verification succeeded
-  → covered by Task T2
-- [ ] When an automated step writes an audit event, the API shall record the actor as the system principal and shall also record the originating human requester of the parent request, so no machine action is left unattributable
-  → covered by Task T3
-- [ ] The data access layer exposes no update or delete operation against the audit collection, verified by a test asserting the module's public surface and by a repository check for direct Firestore delete calls on that collection
-  → covered by Task T3
+- [x] Each audit event records actor identity, action, target user, before/after state, outcome, and timestamp
+  → possible match: Contract "Audit Log Sink" (dependency) to Cloud Logging: audit sink (unverified — requirement not mapped to that node)
+- [x] When an operator performs an approve, reject, cancel, resume, credential retrieval, or role-binding change, the API shall write the audit event and the state change it describes in a single Firestore transaction, verified by a test that forces the transaction to fail and observes neither the state change nor the audit event
+  → possible match: Contract "Audit Log Sink" (dependency) to Cloud Logging: audit sink (unverified — requirement not mapped to that node)
+- [x] When a request is refused with 401 by assertion verification, or with 403 by the self-approval guard or a role check, the API shall write an audit event carrying the refusal reason, the requested path, and the source IP, recording actor identity only where verification succeeded
+  → possible match: Contract "IAP Assertion Verification (JWK Set)" (rest) to Identity-Aware Proxy (unverified — requirement not mapped to that node)
+- [x] When an automated step writes an audit event, the API shall record the actor as the system principal and shall also record the originating human requester of the parent request, so no machine action is left unattributable
+  → possible match: Contract "Audit Log Sink" (dependency) to Cloud Logging: audit sink (unverified — requirement not mapped to that node)
+- [x] The data access layer exposes no update or delete operation against the audit collection, verified by a test asserting the module's public surface and by a repository check for direct Firestore delete calls on that collection
+  → possible match: Contract "Audit Log Sink" (dependency) to Cloud Logging: audit sink (unverified — requirement not mapped to that node)
 - [x] A structured-logging redaction filter strips password, ciphertext, key, secret, token and assertion fields from every sink, verified by a test that logs a payload containing each and asserts on the emitted record
   → possible match: Contract "IAP Assertion Verification (JWK Set)" (rest) to Identity-Aware Proxy (unverified — requirement not mapped to that node)
-- [ ] When any audit event is written, the API shall persist a payload containing no password, no ciphertext, no secret value, and no raw JWT assertion, verified by a test that drives every audit-writing path and asserts on the persisted documents
-  → covered by Task T2
-- [ ] When an operator requests the audit history for a lifecycle request, the API shall return every audit event recorded against that request in ascending timestamp order, with no event omitted
-  → covered by Task T3
+- [x] When any audit event is written, the API shall persist a payload containing no password, no ciphertext, no secret value, and no raw JWT assertion, verified by a test that drives every audit-writing path and asserts on the persisted documents
+  → possible match: Contract "IAP Assertion Verification (JWK Set)" (rest) to Identity-Aware Proxy (unverified — requirement not mapped to that node)
+- [x] When an operator requests the audit history for a lifecycle request, the API shall return every audit event recorded against that request in ascending timestamp order, with no event omitted
+  → possible match: Contract "Audit Log Sink" (dependency) to Cloud Logging: audit sink (unverified — requirement not mapped to that node)
 
 ### REQ-031: Protected accounts excluded from lifecycle targeting
 Category: technical | Status: in-progress
