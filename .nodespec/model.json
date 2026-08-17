@@ -1,7 +1,7 @@
 {
   "modelVersion": 1,
   "generatedBy": "nodespec",
-  "modelHash": "2cd571b2fbda7513f44824a4b9535ed1118b2d4b3f2813a05eac4268e7c36436",
+  "modelHash": "b9bc125d9de02c4410a49849bef595ed1d118fa83245d906d8a484939aff5f10",
   "nodes": [
     {
       "id": "1c81cf63-c51e-4b0e-b6ad-7d318332d2fe",
@@ -640,12 +640,6 @@
       "kind": "test-plan"
     },
     {
-      "id": "33c3d3c7-c703-41f6-b6ad-ca41043b463b",
-      "nodeId": "c424e85a-6584-4bb7-a48e-2175ebc6a41b",
-      "path": "packages/shared/package.json",
-      "kind": "config"
-    },
-    {
       "id": "34377226-914f-402f-8e00-45e9c6dc9dfa",
       "nodeId": "c424e85a-6584-4bb7-a48e-2175ebc6a41b",
       "path": "packages/shared/src/store.ts",
@@ -675,12 +669,6 @@
       "nodeId": "db8e5409-dc6f-4052-887a-7ba1dd5fb717",
       "path": ".nodespec/tests/req-019.tests.md",
       "kind": "test-plan"
-    },
-    {
-      "id": "5e1c7a04-9b3f-42d8-8a16-7c0d9e4b2f31",
-      "nodeId": "565b92bd-2c2c-4a82-be62-b691decdbadf",
-      "path": "package.json",
-      "kind": "config"
     },
     {
       "id": "5fd17eaa-fbe2-43fa-83a2-ae296012fb27",
@@ -764,6 +752,12 @@
       "contentHash": "0000000023b9e1d2"
     },
     {
+      "id": "a1e6b90c-4f52-4d87-9b31-27ca5f0e8d46",
+      "nodeId": "c424e85a-6584-4bb7-a48e-2175ebc6a41b",
+      "path": "packages/shared/tsconfig.json",
+      "kind": "config"
+    },
+    {
       "id": "a2e864ce-457a-42a8-b945-b5895739e1f8",
       "nodeId": "db8e5409-dc6f-4052-887a-7ba1dd5fb717",
       "path": "services/worker/src/credentials/credentialStore.ts",
@@ -789,6 +783,12 @@
       "kind": "source"
     },
     {
+      "id": "b2d7c018-5063-4e98-ac42-38db610f9e57",
+      "nodeId": "c424e85a-6584-4bb7-a48e-2175ebc6a41b",
+      "path": "packages/shared/package.json",
+      "kind": "config"
+    },
+    {
       "id": "b7c41e93-5a2d-4f18-9e60-3d8a1c72f4b5",
       "nodeId": "db8e5409-dc6f-4052-887a-7ba1dd5fb717",
       "path": "services/worker/src/auth/taskAuth.test.ts",
@@ -805,6 +805,12 @@
       "nodeId": "db8e5409-dc6f-4052-887a-7ba1dd5fb717",
       "path": "services/worker/src/routes/tasks.ts",
       "kind": "source"
+    },
+    {
+      "id": "c3f8a129-6174-4a09-bd53-49ec721fa068",
+      "nodeId": "565b92bd-2c2c-4a82-be62-b691decdbadf",
+      "path": "package.json",
+      "kind": "config"
     },
     {
       "id": "c58244ee-bd8f-4e31-a567-bbd2c278f651",
