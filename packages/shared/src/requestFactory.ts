@@ -66,6 +66,7 @@ export function buildNewRequest(input: NewRequestInput): NewRequestDocuments {
       approval: null,
       approverNotification: null,
       notification: null,
+      credential: null,
       startedAt: null,
       completedAt: null,
     };

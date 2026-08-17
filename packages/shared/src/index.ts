@@ -6,3 +6,4 @@ export * from './stepPlans.js';
 export * from './policy.js';
 export * from './requestFactory.js';
 export * from './dispatcher.js';
+export * from './credentials.js';

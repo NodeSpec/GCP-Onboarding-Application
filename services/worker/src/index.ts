@@ -1,9 +1,8 @@
 import { Firestore } from '@google-cloud/firestore';
 import express from 'express';
-import { LifecycleStore } from '@lifecycle/shared';
+import { CredentialStore, LifecycleStore, SecretManagerKeyProvider } from '@lifecycle/shared';
 import { requireCaller } from './auth/taskAuth.js';
 import { config } from './config.js';
-import { CredentialStore } from './credentials/credentialStore.js';
 import { logger } from './logging.js';
 import { taskRoutes } from './routes/tasks.js';
 import { advance } from './steps/advance.js';
@@ -39,7 +38,7 @@ const db = new Firestore({
 });
 
 const store = new LifecycleStore(db);
-const credentials = new CredentialStore(db);
+const credentials = new CredentialStore(db, new SecretManagerKeyProvider(config.CREDENTIAL_KEY_SECRET));
 const directory = new DirectoryClient({ customerId: config.WORKSPACE_CUSTOMER_ID });
 const dispatcher = createDispatcher();
 

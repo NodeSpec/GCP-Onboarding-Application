@@ -1,5 +1,12 @@
 import { Firestore } from '@google-cloud/firestore';
-import { LifecycleStore, normalisePolicy, policyPath, type ApprovalPolicy } from '@lifecycle/shared';
+import {
+  CredentialStore,
+  LifecycleStore,
+  SecretManagerKeyProvider,
+  normalisePolicy,
+  policyPath,
+  type ApprovalPolicy,
+} from '@lifecycle/shared';
 import express from 'express';
 import pinoHttp from 'pino-http';
 import { config } from './config.js';
@@ -58,6 +65,13 @@ const db = new Firestore({
 });
 const store = new LifecycleStore(db);
 
+// Retrieval is the only path by which a credential leaves the system, and it
+// terminates at an authenticated operator inside the perimeter (REQ-017).
+const credentials = new CredentialStore(
+  db,
+  new SecretManagerKeyProvider(config.CREDENTIAL_KEY_SECRET),
+);
+
 /**
  * Reads the live approval policy. Called per submission rather than cached, so
  * an admin's edit takes effect on the next request without a redeploy; each
@@ -83,7 +97,7 @@ const dispatcher = createDispatcher();
  */
 const resolver = new BindingRoleResolver(store, { bootstrapAdmins: config.BOOTSTRAP_ADMINS });
 
-app.use('/api/requests', requestRoutes({ store, loadPolicy, dispatcher, resolver }));
+app.use('/api/requests', requestRoutes({ store, loadPolicy, dispatcher, resolver, credentials }));
 app.use(
   '/api/role-bindings',
   roleBindingRoutes({ store, resolver, onChanged: (subject) => resolver.invalidate(subject) }),
