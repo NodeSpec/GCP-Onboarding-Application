@@ -29,15 +29,6 @@ Ordered WORK ORDERS synthesized from the model — this node's deliverable kind,
   Build to the contract schema EXACTLY (see Interface Contracts).
   ↳ serves (unverified match): REQ-029 "A /lookup/* request bearing an OIDC token issued to the Cloud Tasks queue invoker identity is rejected with 401, and a /tasks/* request bearing the API service identity is likewise rejected with 401" — requirement not mapped to that node; verify or reassign before relying on it
   ↳ serves (unverified match): REQ-029 "Lookup results are not treated as authoritative: the executing step still performs its own pre-mutation state read, verified by a test where live state changes between lookup and execution and the step observes the newer state" — requirement not mapped to that node; verify or reassign before relying on it
-  ↳ serves (unverified match): REQ-006 "The offboarding step plan executes in order: suspend, revoke sessions/tokens, remove group memberships, optional data transfer, delete" — requirement not mapped to that node; verify or reassign before relying on it
-  ↳ serves (unverified match): REQ-006 "Suspension takes effect before any destructive step runs, and a request halted after suspension leaves the account suspended but intact" — requirement not mapped to that node; verify or reassign before relying on it
-  ↳ serves (unverified match): REQ-006 "The delete step defaults to requiresApproval=true and cannot be configured below two-party approval" — requirement not mapped to that node; verify or reassign before relying on it
-  ↳ serves (unverified match): REQ-006 "Cancelling during the hold period appends a compensating 'unsuspend' step and dispatches it, rather than terminating the request directly" — requirement not mapped to that node; verify or reassign before relying on it
-  ↳ serves (unverified match): REQ-006 "The request reaches 'cancelled' only after the unsuspend step succeeds and the account is observably active again in Workspace" — requirement not mapped to that node; verify or reassign before relying on it
-  ↳ serves (unverified match): REQ-006 "A cancellation whose unsuspend step fails leaves the request in 'failed' with the account still suspended and the error recorded — never in 'cancelled'" — requirement not mapped to that node; verify or reassign before relying on it
-  ↳ serves (unverified match): REQ-006 "A delete step targeting a user already absent from the domain resolves as satisfied (idempotent) rather than failing" — requirement not mapped to that node; verify or reassign before relying on it
-  ↳ serves (unverified match): REQ-006 "When a Drive data-transfer successor is specified, the transfer is initiated and confirmed complete before the delete step is dispatched" — requirement not mapped to that node; verify or reassign before relying on it
-  ↳ serves (unverified match): REQ-006 "Every offboarding step, including the compensating unsuspend, records the affected user, actor, and outcome to the audit log" — requirement not mapped to that node; verify or reassign before relying on it
 - [ ] **T3 — Implement the integration with Firestore: lifecycle state and audit (gcp-firestore) per Contract "Lifecycle State Store" (nosql).**
   Build to the contract schema EXACTLY (see Interface Contracts).
 - [ ] **T4 — Implement the integration with Secret Manager (gcp-secret-manager) per Contract "Secret Manager Access" (dependency).**
@@ -299,24 +290,24 @@ Cancellation is not merely a status change. The account is already suspended in 
 The deletion step is idempotent — a user already absent from the domain resolves the step as satisfied rather than failing.
 
 **Acceptance criteria — your task boxes:**
-- [ ] The offboarding step plan executes in order: suspend, revoke sessions/tokens, remove group memberships, optional data transfer, delete
-  → covered by Task T2
-- [ ] Suspension takes effect before any destructive step runs, and a request halted after suspension leaves the account suspended but intact
-  → covered by Task T2
-- [ ] The delete step defaults to requiresApproval=true and cannot be configured below two-party approval
-  → covered by Task T2
-- [ ] Cancelling during the hold period appends a compensating 'unsuspend' step and dispatches it, rather than terminating the request directly
-  → covered by Task T2
-- [ ] The request reaches 'cancelled' only after the unsuspend step succeeds and the account is observably active again in Workspace
-  → covered by Task T2
-- [ ] A cancellation whose unsuspend step fails leaves the request in 'failed' with the account still suspended and the error recorded — never in 'cancelled'
-  → covered by Task T2
-- [ ] A delete step targeting a user already absent from the domain resolves as satisfied (idempotent) rather than failing
-  → covered by Task T2
-- [ ] When a Drive data-transfer successor is specified, the transfer is initiated and confirmed complete before the delete step is dispatched
-  → covered by Task T2
-- [ ] Every offboarding step, including the compensating unsuspend, records the affected user, actor, and outcome to the audit log
-  → covered by Task T2
+- [x] The offboarding step plan executes in order: suspend, revoke sessions/tokens, remove group memberships, optional data transfer, delete
+  → possible match: Contract "Step Task Enqueue" (rest) to Cloud Tasks: lifecycle-steps (unverified — requirement not mapped to that node)
+- [x] Suspension takes effect before any destructive step runs, and a request halted after suspension leaves the account suspended but intact
+  → possible match: Contract "Step Task Enqueue" (rest) to Cloud Tasks: lifecycle-steps (unverified — requirement not mapped to that node)
+- [x] The delete step defaults to requiresApproval=true and cannot be configured below two-party approval
+  → possible match: Contract "Step Task Enqueue" (rest) to Cloud Tasks: lifecycle-steps (unverified — requirement not mapped to that node)
+- [x] Cancelling during the hold period appends a compensating 'unsuspend' step and dispatches it, rather than terminating the request directly
+  → possible match: Contract "Step Task Enqueue" (rest) to Cloud Tasks: lifecycle-steps (unverified — requirement not mapped to that node)
+- [x] The request reaches 'cancelled' only after the unsuspend step succeeds and the account is observably active again in Workspace
+  → possible match: Contract "Step Task Enqueue" (rest) to Cloud Tasks: lifecycle-steps (unverified — requirement not mapped to that node)
+- [x] A cancellation whose unsuspend step fails leaves the request in 'failed' with the account still suspended and the error recorded — never in 'cancelled'
+  → possible match: Contract "Step Task Enqueue" (rest) to Cloud Tasks: lifecycle-steps (unverified — requirement not mapped to that node)
+- [x] A delete step targeting a user already absent from the domain resolves as satisfied (idempotent) rather than failing
+  → possible match: Contract "Step Task Enqueue" (rest) to Cloud Tasks: lifecycle-steps (unverified — requirement not mapped to that node)
+- [x] When a Drive data-transfer successor is specified, the transfer is initiated and confirmed complete before the delete step is dispatched
+  → possible match: Contract "Step Task Enqueue" (rest) to Cloud Tasks: lifecycle-steps (unverified — requirement not mapped to that node)
+- [x] Every offboarding step, including the compensating unsuspend, records the affected user, actor, and outcome to the audit log
+  → possible match: Contract "Step Task Enqueue" (rest) to Cloud Tasks: lifecycle-steps (unverified — requirement not mapped to that node)
 
 ### REQ-013: Idempotent, retry-safe Workspace mutations
 Category: non-functional | Status: in-progress

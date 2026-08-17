@@ -1,4 +1,5 @@
 import {
+  COMPENSATING_STEP,
   ConflictingRequestError,
   InvalidPhasePayload,
   SelfApprovalError,
@@ -16,7 +17,7 @@ import { Router } from 'express';
 import { requireRole, type AuthzOptions, type RoleResolver } from '../authz.js';
 import { logger } from '../logging.js';
 import { requireIdentity } from '../middleware/iapAuth.js';
-import { decisionSchema, submitRequestSchema, validatePayload } from '../schemas.js';
+import { cancelSchema, decisionSchema, submitRequestSchema, validatePayload } from '../schemas.js';
 
 /**
  * The operator request surface.
@@ -231,6 +232,111 @@ export function requestRoutes(deps: RequestRouteDeps): Router {
       }
     });
   }
+
+  /**
+   * Cancels a request (REQ-006 AC-4, REQ-012 AC-5).
+   *
+   * Two outcomes, and which one applies is decided by what the system has
+   * already DONE rather than by which phase the request is:
+   *
+   * - Nothing to undo, so the request terminates directly and every step it had
+   *   not started is skipped.
+   * - An offboarding that already suspended the account. Suspension is a
+   *   Workspace mutation and only the executor performs those, so cancelling
+   *   becomes work: a compensating step is appended and dispatched, and the
+   *   request stays in flight until it succeeds. Answering 200 'cancelled' here
+   *   would tell an operator the account was restored at the moment the restore
+   *   was merely queued.
+   *
+   * The compensating branch is taken only when THIS request performed the
+   * suspension, which is what a 'succeeded' suspend step means. A 'skipped' one
+   * means the account was already suspended when the offboarding started, by
+   * something else, for reasons this system knows nothing about; unsuspending
+   * it would not be a compensation, it would be an unrelated change made on the
+   * way past.
+   */
+  router.post('/:requestId/cancel', requireRole('requester', authz), async (req, res) => {
+    const identity = requireIdentity(req);
+    const requestId = req.params.requestId!;
+
+    const parsed = cancelSchema.safeParse(req.body);
+    if (!parsed.success) {
+      res.status(400).json({
+        error: 'invalid_cancellation',
+        issues: parsed.error.issues.map((i) => ({
+          path: i.path.join('.') || '(root)',
+          message: i.message,
+        })),
+      });
+      return;
+    }
+
+    const request = await deps.store.getRequest(requestId);
+    if (!request) {
+      res.status(404).json({ error: 'not_found' });
+      return;
+    }
+
+    const actor = { kind: 'human' as const, email: identity.email };
+    const steps = await deps.store.listSteps(requestId);
+    const suspension = steps.find((step) => step.name === 'suspend-user');
+    const weSuspended = suspension?.status === 'succeeded';
+
+    if (!weSuspended) {
+      const outcome = await deps.store.cancelRequest({
+        requestId,
+        actor,
+        reason: parsed.data.reason,
+      });
+
+      if (!outcome.cancelled) {
+        res.status(409).json({ error: 'already_terminal', observed: outcome.observed });
+        return;
+      }
+
+      res.status(200).json({
+        requestId,
+        status: 'cancelled',
+        stepsStopped: outcome.skippedSteps,
+      });
+      return;
+    }
+
+    const compensation = await deps.store.appendCompensatingStep({
+      requestId,
+      stepName: COMPENSATING_STEP,
+      actor,
+      reason: parsed.data.reason,
+    });
+
+    if (!compensation.step) {
+      res.status(409).json({ error: 'already_terminal', observed: compensation.observed });
+      return;
+    }
+
+    // Enqueued after the commit, as everywhere else. A repeat is collapsed by
+    // Cloud Tasks on the step's idempotency key, and the append itself is
+    // idempotent, so a retried cancellation redispatches the same step rather
+    // than adding a second one.
+    const dispatch = await tryEnqueue(() =>
+      deps.dispatcher.enqueueStep({
+        requestId,
+        stepId: compensation.step!.stepId,
+        idempotencyKey: compensation.step!.idempotencyKey,
+      }),
+    );
+
+    // 202, not 200. The cancellation has been accepted and the account has NOT
+    // come back yet; the request reports 'cancelled' only once the compensating
+    // step succeeds (AC-5).
+    res.status(202).json({
+      requestId,
+      status: 'compensating',
+      compensatingStep: { stepId: compensation.step.stepId, name: compensation.step.name },
+      appended: compensation.appended,
+      dispatch,
+    });
+  });
 
   /**
    * Hands the one-time password to the operator who asked for the account, once
