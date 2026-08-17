@@ -5,6 +5,7 @@ import pinoHttp from 'pino-http';
 import { config } from './config.js';
 import { logger } from './logging.js';
 import { createIapAuth } from './middleware/iapAuth.js';
+import { adminRoutes } from './routes/admin.js';
 import { requestRoutes } from './routes/requests.js';
 import { roleBindingRoutes } from './routes/roleBindings.js';
 import { BindingRoleResolver } from './roles.js';
@@ -87,6 +88,7 @@ app.use(
   '/api/role-bindings',
   roleBindingRoutes({ store, resolver, onChanged: (subject) => resolver.invalidate(subject) }),
 );
+app.use('/api/admin', adminRoutes({ store, dispatcher, resolver }));
 
 app.get('/api/me', async (req, res) => {
   // The console reads who it is, and what it may do, from the server. It must
