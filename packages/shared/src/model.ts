@@ -153,3 +153,12 @@ export const TERMINAL_REQUEST_STATUSES: readonly RequestStatus[] = [
 export function isTerminalRequestStatus(status: RequestStatus): boolean {
   return TERMINAL_REQUEST_STATUSES.includes(status);
 }
+
+/**
+ * The statuses that make a request "in flight". Derived from the terminal list
+ * rather than written out, so adding a status to RequestStatus cannot silently
+ * leave it out of the concurrency guard (REQ-001 AC-2).
+ */
+export const NON_TERMINAL_REQUEST_STATUSES: readonly RequestStatus[] = (
+  ['draft', 'running', 'awaiting_approval', 'held', 'succeeded', 'failed', 'rejected', 'cancelled'] as const
+).filter((s) => !TERMINAL_REQUEST_STATUSES.includes(s));
