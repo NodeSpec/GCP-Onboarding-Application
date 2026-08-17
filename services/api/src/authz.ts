@@ -6,19 +6,14 @@ import { requireIdentity, type OperatorIdentity } from './middleware/iapAuth.js'
  * Route authorisation: every route declares the role it needs, and the check
  * runs before the handler (REQ-012 AC-1).
  *
- * THE RESOLVER IS A SEAM, NOT THE IMPLEMENTATION. REQ-012 specifies a role
- * binding store keyed on the verified email, supporting individual and
- * group-based bindings, with binding changes audited. None of that exists yet.
- * What exists is the enforcement point: routes declare a role, the check runs
- * ahead of the handler, and refusals are 403.
+ * This file is the ENFORCEMENT POINT. Where the roles come from is the
+ * resolver's business: BindingRoleResolver in roles.ts reads them from the role
+ * binding store, which is what actually satisfies REQ-012.
  *
- * The provisional resolver below grants every verified operator the requester
- * role and nothing else, so approver-only and admin-only routes are refused for
- * everyone. That is deliberately the restrictive direction: while the binding
- * store is missing, the system withholds privilege rather than assuming it.
- *
- * REQ-012 is NOT satisfied by this file. Its criteria stay unmet until the
- * binding store lands and replaces the provisional resolver.
+ * The default resolver here grants NOTHING. A route mounted without one is
+ * refused for everyone rather than admitted by accident, which is the only safe
+ * direction for a default in an authorisation module: forgetting to wire the
+ * resolver should close the door, not open it.
  */
 
 export interface RoleResolver {
@@ -26,12 +21,15 @@ export interface RoleResolver {
 }
 
 /**
- * Stand-in until the role binding store exists. Named to make its status
- * obvious at every call site rather than reading like a finished component.
+ * The fallback when no resolver is supplied: no roles, so every guarded route
+ * refuses. Deliberately not a permissive default, and deliberately not the
+ * earlier stand-in that granted 'requester' to everyone: that one made the
+ * approve and reject routes unreachable while quietly admitting anyone to the
+ * submission route.
  */
-export const provisionalRequesterOnlyResolver: RoleResolver = {
+export const denyAllResolver: RoleResolver = {
   async rolesFor(): Promise<OperatorRole[]> {
-    return ['requester'];
+    return [];
   },
 };
 
@@ -57,7 +55,7 @@ export interface AuthzOptions {
  * a test loudly instead of running a route unauthenticated.
  */
 export function requireRole(required: OperatorRole, options: AuthzOptions = {}): RequestHandler {
-  const resolver = options.resolver ?? provisionalRequesterOnlyResolver;
+  const resolver = options.resolver ?? denyAllResolver;
 
   return async function authz(req: Request, res: Response, next: NextFunction): Promise<void> {
     const identity = requireIdentity(req);

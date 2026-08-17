@@ -1,7 +1,7 @@
 {
   "modelVersion": 1,
   "generatedBy": "nodespec",
-  "modelHash": "c1887d65aea5c6f6df34e298cb3f098df65bb63a02333fa4899525669c5de9ac",
+  "modelHash": "3b7adc7f92e35da0ab21b4272e9c389583bbe2f916ed817915f4456cb1f4f1ee",
   "nodes": [
     {
       "id": "1c81cf63-c51e-4b0e-b6ad-7d318332d2fe",
@@ -652,7 +652,8 @@
       "id": "2b3c8d05-4e69-4f72-8183-6a0d9e2f5b41",
       "nodeId": "c424e85a-6584-4bb7-a48e-2175ebc6a41b",
       "path": "services/api/src/authz.ts",
-      "kind": "source"
+      "kind": "source",
+      "contentHash": "000000004d3dd53f"
     },
     {
       "id": "330aa1e9-7fa7-490f-a1ba-a447bf2502d8",
@@ -723,6 +724,12 @@
       "nodeId": "db8e5409-dc6f-4052-887a-7ba1dd5fb717",
       "path": "services/worker/src/steps/advance.emulator.test.ts",
       "kind": "test-plan"
+    },
+    {
+      "id": "5c4f6356-361c-4029-9f54-dcc55813dffc",
+      "nodeId": "c424e85a-6584-4bb7-a48e-2175ebc6a41b",
+      "path": "services/api/src/roles.ts",
+      "kind": "source"
     },
     {
       "id": "5f26207f-5dbf-4b77-aee0-50d6f6600b67",
