@@ -13,7 +13,7 @@ import {
   type TaskDispatcher,
 } from '@lifecycle/shared';
 import { Router } from 'express';
-import { requireRole, type RoleResolver } from '../authz.js';
+import { requireRole, type AuthzOptions, type RoleResolver } from '../authz.js';
 import { logger } from '../logging.js';
 import { requireIdentity } from '../middleware/iapAuth.js';
 import { decisionSchema, submitRequestSchema, validatePayload } from '../schemas.js';
@@ -37,6 +37,8 @@ export interface RequestRouteDeps {
   /** Enqueues onto the lifecycle-steps queue. Shared with the worker. */
   dispatcher: TaskDispatcher;
   resolver?: RoleResolver;
+  /** Records a role refusal, with the path and source IP (REQ-010 AC-3). */
+  onDenied?: AuthzOptions['onDenied'];
   /**
    * Decrypts the one-time password for handover. Optional: a deployment without
    * it simply has no retrieval route, which is a great deal safer than mounting
@@ -47,7 +49,10 @@ export interface RequestRouteDeps {
 
 export function requestRoutes(deps: RequestRouteDeps): Router {
   const router = Router();
-  const authz = { ...(deps.resolver === undefined ? {} : { resolver: deps.resolver }) };
+  const authz: AuthzOptions = {
+    ...(deps.resolver === undefined ? {} : { resolver: deps.resolver }),
+    ...(deps.onDenied === undefined ? {} : { onDenied: deps.onDenied }),
+  };
 
   router.post('/', requireRole('requester', authz), async (req, res) => {
     const identity = requireIdentity(req);
@@ -202,6 +207,19 @@ export function requestRoutes(deps: RequestRouteDeps): Router {
         });
       } catch (err) {
         if (err instanceof SelfApprovalError) {
+          // The third refusal AC-3 names, alongside the 401 and the role check.
+          // Audited here rather than in the store because the store throws to
+          // abort its transaction, and an audit written inside a transaction
+          // that is about to roll back would be rolled back with it.
+          await deps.store.recordDenied({
+            requestId: req.params.requestId!,
+            stepId: req.params.stepId!,
+            actor: { kind: 'human', email: identity.email },
+            action: 'approval.self_refused',
+            reason: 'the requester may not approve their own request',
+            path: req.originalUrl,
+            sourceIp: req.ip ?? 'unknown',
+          });
           res.status(403).json({ error: 'self_approval_refused', message: err.message });
           return;
         }
