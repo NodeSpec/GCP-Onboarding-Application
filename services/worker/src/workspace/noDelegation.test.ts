@@ -254,7 +254,12 @@ describe('AC-6: the Directory client is the single construction site', () => {
   });
 
   it('leaves phase handlers with no Workspace client construction of their own', () => {
-    const phaseFiles = codeFiles.filter((f) => f.path.includes(join('services', 'worker', 'src', 'phases')));
+    // Handlers only. A phase test may legitimately import a googleapis type to
+    // describe the shapes it fakes; it is not a code path that reaches
+    // Workspace.
+    const phaseFiles = codeFiles.filter(
+      (f) => f.path.includes(join('services', 'worker', 'src', 'phases')) && !f.path.endsWith('.test.ts'),
+    );
     expect(phaseFiles.length).toBeGreaterThan(0);
     expect(offendingFiles(phaseFiles, /new GoogleAuth\(|google\.admin\(|googleapis/)).toEqual([]);
   });
