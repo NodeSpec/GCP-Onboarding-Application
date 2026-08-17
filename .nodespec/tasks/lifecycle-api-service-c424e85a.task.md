@@ -1538,6 +1538,7 @@ Startup/initialization order based on edge directions and interaction patterns.
 | `services/api/src/routes/requests.ts` | source | --- | draft |
 | `services/api/package.json` | config | --- | draft |
 | `services/api/src/middleware/iapAuth.ts` | source | --- | draft |
+| `.nodespec/tests/req-001.tests.md` - Test plan for requirement: Lifecycle request creation and step-plan persistence | test-plan | markdown | draft |
 | `services/api/tsconfig.json` | config | --- | draft |
 | `packages/shared/tsconfig.json` | config | --- | draft |
 | `packages/shared/src/index.ts` | source | --- | draft |
