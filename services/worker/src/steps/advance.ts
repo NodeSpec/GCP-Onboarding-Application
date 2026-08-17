@@ -9,10 +9,16 @@ import type { TaskDispatcher } from '../tasks/dispatcher.js';
  *
  * The halt is the interesting case. A step that pauses for approval must have
  * its notification scheduled, or the request sits waiting for someone who was
- * never told, and REQ-002's expiry then rejects it for the wrong reason. So the
- * status change and the notification enqueue happen in the same transaction:
- * a step cannot be committed as awaiting_approval without its notice being
- * scheduled (REQ-032).
+ * never told, and REQ-002's expiry then rejects it for the wrong reason.
+ *
+ * A Cloud Tasks enqueue CANNOT join a Firestore transaction, so what happens
+ * transactionally is the notification RECORD: it is written in the same
+ * transaction as the status change, so a step cannot be committed as
+ * awaiting_approval without its notification record. The record is the outbox
+ * entry and the enqueue is the drain, which is why everything after the halt is
+ * written to be safe to repeat: a redelivery that finds the halt already
+ * applied still runs the enqueues rather than returning early, and every one of
+ * them is idempotent (REQ-016 AC-7, REQ-032).
  *
  * Serves REQ-016 and REQ-032.
  */
@@ -24,13 +30,26 @@ export interface AdvanceDeps {
   dispatcher: TaskDispatcher;
 }
 
-function nextPending(steps: LifecycleStep[], completedStepId: string): LifecycleStep | null {
+/** Statuses that mean a step is done with and the plan may move past it. */
+const FINISHED: readonly LifecycleStep['status'][] = ['succeeded', 'skipped'];
+
+/**
+ * The next step the plan is waiting on, whatever state it is in.
+ *
+ * Deliberately NOT "the next step still pending". Scanning for a pending step
+ * skips over one that is halted in 'awaiting_approval', so a redelivered task
+ * would walk straight past the halt and dispatch the step after it, executing
+ * work the approver never released. Only a finished step may be stepped over;
+ * anything else is the step the plan is at, and the caller decides what that
+ * status means.
+ */
+function nextUnfinished(steps: LifecycleStep[], completedStepId: string): LifecycleStep | null {
   const ordered = [...steps].sort((a, b) => a.ordinal - b.ordinal);
   const index = ordered.findIndex((step) => step.stepId === completedStepId);
   if (index === -1) return null;
 
   for (const candidate of ordered.slice(index + 1)) {
-    if (candidate.status === 'pending') return candidate;
+    if (!FINISHED.includes(candidate.status)) return candidate;
   }
   return null;
 }
@@ -46,9 +65,9 @@ export async function advance(
   if (!request) return;
 
   const steps = await store.listSteps(requestId);
-  const next = nextPending(steps, completedStepId);
+  const next = nextUnfinished(steps, completedStepId);
 
-  // No pending step left: the plan is done.
+  // Nothing left unfinished: the plan is done.
   if (!next) {
     await store.transitionRequest({
       requestId,
@@ -66,6 +85,55 @@ export async function advance(
 
   const policy = request.policySnapshot[next.name];
   const requiresApproval = policy?.requiresApproval === true;
+  const expiryHours = policy?.expiryHours;
+
+  /**
+   * Everything that follows a halt: move the request, notify, schedule the
+   * expiry. Separated out because it runs on BOTH the delivery that performs
+   * the halt and any redelivery that finds the halt already in place. Each part
+   * is idempotent, so running it twice is harmless and never running it at all
+   * is the failure worth guarding against.
+   */
+  const followHalt = async (step: LifecycleStep) => {
+    await store.transitionRequest({
+      requestId,
+      expectedFrom: ['running', 'draft'],
+      to: 'awaiting_approval',
+      audit: {
+        actor: { ...SYSTEM_ACTOR, onBehalfOf: request.requestedBy },
+        action: 'request.awaiting_approval',
+        targetUser: request.targetUser,
+      },
+    });
+
+    await dispatcher.enqueueApproverNotification({ requestId, stepId: step.stepId });
+
+    // Scheduled unconditionally: the expiry task is a no-op if the step has
+    // been decided by the time it fires.
+    if (expiryHours && expiryHours > 0) {
+      await dispatcher.enqueueApprovalExpiry({
+        requestId,
+        stepId: step.stepId,
+        fireAt: Timestamp.fromMillis(Date.now() + expiryHours * 3_600_000),
+      });
+    }
+
+    logger.info({ requestId, stepId: step.stepId, expiryHours }, 'step halted for approval');
+  };
+
+  // The step is already halted, which means an earlier delivery performed the
+  // halt and then died, or its enqueue failed. The notification record is still
+  // outstanding, so drain it rather than returning: a halt nobody was told about
+  // stalls the request until the expiry rejects it for the wrong reason.
+  if (next.status === 'awaiting_approval') {
+    await followHalt(next);
+    return;
+  }
+
+  // Anything other than pending at this point belongs to another delivery:
+  // 'ready' or 'running' means someone else is driving it, and a terminal
+  // failure is handled where the failure happened.
+  if (next.status !== 'pending') return;
 
   if (!requiresApproval) {
     const moved = await store.transitionStep({
@@ -91,9 +159,9 @@ export async function advance(
     return;
   }
 
-  // Halting for approval. The notification enqueue is deliberately inside the
-  // same transaction as the status change: see the note at the top of the file.
-  const expiryHours = policy?.expiryHours;
+  // Halting for approval. The notification RECORD is written in the same
+  // transaction as the status change; the enqueue is the drain of that record
+  // and happens after. See the note at the top of the file.
   const halted = await store.transitionStep({
     requestId,
     stepId: next.stepId,
@@ -110,30 +178,9 @@ export async function advance(
     },
   });
 
+  // Lost the race to another delivery, and not to a halt: that delivery owns
+  // whatever happens next.
   if (!halted.applied) return;
 
-  await store.transitionRequest({
-    requestId,
-    expectedFrom: ['running', 'draft'],
-    to: 'awaiting_approval',
-    audit: {
-      actor: { ...SYSTEM_ACTOR, onBehalfOf: request.requestedBy },
-      action: 'request.awaiting_approval',
-      targetUser: request.targetUser,
-    },
-  });
-
-  await dispatcher.enqueueApproverNotification({ requestId, stepId: next.stepId });
-
-  // Schedule the expiry sweep. It is a no-op if the step has been decided by
-  // the time it fires, so it is safe to schedule unconditionally.
-  if (expiryHours && expiryHours > 0) {
-    await dispatcher.enqueueApprovalExpiry({
-      requestId,
-      stepId: next.stepId,
-      fireAt: Timestamp.fromMillis(Date.now() + expiryHours * 3_600_000),
-    });
-  }
-
-  logger.info({ requestId, stepId: next.stepId, expiryHours }, 'step halted for approval');
+  await followHalt(next);
 }
