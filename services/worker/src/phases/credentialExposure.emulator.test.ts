@@ -20,7 +20,9 @@ import { advance } from '../steps/advance.js';
 import './create.js';
 
 /**
- * TC-REQ-019-1 (the created-account half), TC-REQ-019-4 and TC-REQ-019-5.
+ * TC-REQ-019-1 (the created-account half), TC-REQ-019-4, TC-REQ-019-5, and
+ * TC-REQ-003-7, which is the same absence claim widened to the operator-facing
+ * read path.
  *
  * AC-5 is a claim about ABSENCE across three surfaces at once: no Firestore
  * document, no worker response body, no log entry may carry the plaintext. So
@@ -294,6 +296,73 @@ describe('AC-4: the credential record carries the TTL field', () => {
     expect(record.expiresAt).toBeInstanceOf(Timestamp);
     expect(record.expiresAt.toMillis()).toBeGreaterThanOrEqual(before + 72 * 3_600_000);
     expect(record.expiresAt.toMillis()).toBeLessThanOrEqual(Date.now() + 72 * 3_600_000);
+  });
+
+  it('is REQ-003 AC-7 as well: nothing an operator can read back carries the plaintext', async () => {
+    // The surface REQ-019's grep above cannot see. The worker's own responses
+    // are machine-to-machine and short-lived; what an operator actually reads
+    // is GET /api/requests/:id, which serialises the request, its steps with
+    // their outputs, and the audit trail. A password that leaked into a step
+    // output would be invisible to every assertion above and visible in the
+    // console.
+    //
+    // The payload is rebuilt here from the three store reads the route itself
+    // performs, rather than imported: the API service is a separate package
+    // and a cross-package import would put its sources inside this one's
+    // compilation. The keys are pinned below so the reconstruction cannot
+    // drift away from the route without the pin failing.
+    const { requestId } = await provision();
+    const password = directory.issuedPassword!;
+
+    const [request, steps, audit] = await Promise.all([
+      store.getRequest(requestId),
+      store.listSteps(requestId),
+      store.listAudit(requestId),
+    ]);
+    const readPayload = { request, steps, audit };
+
+    expect(Object.keys(readPayload).sort()).toEqual(['audit', 'request', 'steps']);
+    expect(steps.length).toBeGreaterThan(0);
+    expect(JSON.stringify(readPayload)).not.toContain(password);
+  });
+
+  it('keeps the plaintext out of every step output, which is where it would surface', async () => {
+    // Named separately because the create-user handler is the one place that
+    // holds the plaintext and also returns a value. Returning it, or folding
+    // it into a diagnostic field, is a one-word mistake that the whole-payload
+    // grep would catch but not explain.
+    const { requestId } = await provision();
+    const password = directory.issuedPassword!;
+
+    const steps = await store.listSteps(requestId);
+    const createUser = steps.find((s) => s.name === 'create-user')!;
+
+    expect(createUser.output).not.toBeNull();
+    expect(JSON.stringify(createUser.output)).not.toContain(password);
+    // What it does return: the Workspace id, and nothing else about the account.
+    expect(Object.keys(createUser.output!)).toEqual(['userId']);
+
+    for (const step of steps) {
+      expect(JSON.stringify(step.output ?? {})).not.toContain(password);
+      expect(JSON.stringify(step.error ?? {})).not.toContain(password);
+    }
+  });
+
+  it('leaves retrieval as the single sanctioned exit for the plaintext', async () => {
+    // The counterpart to every absence assertion here. The password is not
+    // merely hidden, it is reachable in exactly one way, once (REQ-017), and
+    // that route is the only response body in the system permitted to carry
+    // it. Proving the exit exists is what makes the absences meaningful
+    // rather than a system that lost the password.
+    const { requestId } = await provision();
+    const password = directory.issuedPassword!;
+
+    expect(await credentials.retrieveOnce(requestId)).toEqual({
+      primaryEmail: TARGET,
+      password,
+    });
+    // And it closes behind itself.
+    expect(await credentials.retrieveOnce(requestId)).toBeNull();
   });
 
   it('expires without operator action even before the TTL deletion lands', async () => {

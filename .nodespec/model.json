@@ -1,7 +1,7 @@
 {
   "modelVersion": 1,
   "generatedBy": "nodespec",
-  "modelHash": "34f1d75bed866b5852b2ca8674020b5025b2c5a830aceb2f5be4e77baf274750",
+  "modelHash": "aaf823867161df41075add82b93a045486590b10c8ddd90d2a98b11641efc831",
   "nodes": [
     {
       "id": "1c81cf63-c51e-4b0e-b6ad-7d318332d2fe",
@@ -1202,7 +1202,8 @@
       "id": "e6f8b230-9a41-4d75-8c16-3b0e5d2f7a94",
       "nodeId": "db8e5409-dc6f-4052-887a-7ba1dd5fb717",
       "path": "services/worker/src/phases/credentialExposure.emulator.test.ts",
-      "kind": "source"
+      "kind": "source",
+      "contentHash": "000000006e7f2368"
     },
     {
       "id": "e7a4c136-8b25-4d90-a3f7-52d1096be714",
