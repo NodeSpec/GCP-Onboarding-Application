@@ -1,7 +1,7 @@
 {
   "modelVersion": 1,
   "generatedBy": "nodespec",
-  "modelHash": "942ec3f6dfe76236d77244f850217271c4025fa2a571c4247ab94c6b0b511e45",
+  "modelHash": "396ad4b2f93012c0991b26b379d7f56303355533345af06d66fcfeee835c1610",
   "nodes": [
     {
       "id": "1c81cf63-c51e-4b0e-b6ad-7d318332d2fe",
@@ -827,6 +827,12 @@
       "nodeId": "c424e85a-6584-4bb7-a48e-2175ebc6a41b",
       "path": ".nodespec/tests/req-001.tests.md",
       "kind": "test-plan"
+    },
+    {
+      "id": "6d2f9b14-7a58-4c03-9e61-8b4d0f3c5a72",
+      "nodeId": "db8e5409-dc6f-4052-887a-7ba1dd5fb717",
+      "path": "services/worker/src/workspace/noAdminRoles.test.ts",
+      "kind": "source"
     },
     {
       "id": "6ef6583b-4078-48df-a707-beab36fe91eb",
