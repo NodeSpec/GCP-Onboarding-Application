@@ -1,7 +1,7 @@
 {
   "specVersion": 1,
   "generatedBy": "nodespec",
-  "specHash": "0bc26501a3162550eb9b7706105abdb74419d159cd110946370f6198ad11b349",
+  "specHash": "f516cd57b08210178fd53c356dc9b57e3846c1ced859040ff39300722b966ba6",
   "vision": "Company wants an application that supports the full user lifecycle in four phases:\n\n1. User creation, including assignment of attributes and groups\n2. Notifying the user of their new account with a welcome letter and initial password setting instructions\n3. Updating a user's roles/attributes over time\n4. Account deletion\n\nScope and constraints as stated by the customer:\n\n- The application should only worry about one IDP for now — Google Workspace.\n- All of the steps in account creation must be stateful and have optional two-party approval features.\n- The application should run serverless — Cloud Run on GCP.\n- Because it uses Google Workspace, the app must include instructions on how to configure a GCP service account to have admin permissions in Workspace WITHOUT using Domain-Wide Delegation.\n- The serverless application must be protected by IAP, and must include code to verify the IAP JWT header so the security controls cannot be bypassed by reaching the service directly.\n\nThe product is an internal, operator-facing lifecycle console: an IAP-protected web UI plus an API where a requester drafts a lifecycle action, an optional second approver signs off, and a durable state machine executes the Workspace changes step by step — every step resumable, auditable, and idempotent, so a partially-completed onboarding is never left in an unknown state.",
   "constraints": [],
   "preferences": {},
@@ -18,9 +18,9 @@
         "The submitted payload is validated against the phase schema and rejected with 400 before any document is persisted",
         "The full step history of a request (status, attempts, timestamps, actor, error) is retrievable through a single API call for operator inspection",
         "The first step of a newly created request is either dispatched or halted in 'awaiting_approval' according to the policy snapshotted onto the request",
-        "When the first step is halted in 'awaiting_approval', an approver-notification task is enqueued in the same transaction as the halt, so a halt can never be committed without the notification being scheduled (REQ-032 performs the send)"
+        "When the first step is halted in 'awaiting_approval', the approver-notification record is written in the same Firestore transaction as the halt, so a halt can never be committed without its notification record; the notification task is then enqueued from that record after the transaction commits, and an enqueue that fails leaves the record outstanding for a sweeper rather than losing the halt (REQ-032 performs the send)"
       ],
-      "contentHash": "629ac3df59a42b56f2ed9069b61197d0c43162c53b4e8558e0fdb0599c7238b7"
+      "contentHash": "f9a906f57b927c077d47daeccf2f93fc9bf9b5c758f416346b9b6e2dfdf915e0"
     },
     {
       "requirementId": "REQ-002",
@@ -276,10 +276,10 @@
         "Every step status transition writes its audit event in the same Firestore transaction as the transition, verified by a test that fails the transaction and observes neither the transition nor the audit event",
         "A step that exhausts its retry budget lands in status 'failed' with the terminal error recorded, the parent request moves to 'failed', and no subsequent step is dispatched",
         "On successful completion the executor dispatches the next step, or halts it in 'awaiting_approval' when the snapshotted policy requires approval",
-        "When the executor halts a step in 'awaiting_approval', an approver-notification task is enqueued in the same transaction as the halt, so a halt can never be committed without the notification being scheduled (REQ-032 performs the send)",
+        "When the executor halts a step in 'awaiting_approval', the approver-notification record is written in the same Firestore transaction as the halt, so a halt can never be committed without its notification record; the notification task is then enqueued from that record after the transaction commits, and an enqueue that fails leaves the record outstanding for a sweeper rather than losing the halt (REQ-032 performs the send)",
         "The /tasks/execute-step route accepts a step task only when it carries a valid OIDC token issued to the Cloud Tasks queue invoker service account, and rejects unauthenticated requests, tokens issued to any other service account, and specifically tokens issued to the lifecycle-api identity that is admitted on the lookup routes"
       ],
-      "contentHash": "512223b66bc6d8b0d8541f488c1fbecb45c35a1462af9aa496a7f74b2e4b6231"
+      "contentHash": "9641ea7fa85436e5b25b43049fd2bccfc322d66921f1a8952b3bf7c0217e18ed"
     },
     {
       "requirementId": "REQ-017",

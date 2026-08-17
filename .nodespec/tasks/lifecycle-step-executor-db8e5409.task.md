@@ -56,8 +56,6 @@ Ordered WORK ORDERS synthesized from the model — this node's deliverable kind,
   ↳ serves (unverified match): REQ-016 "Delivering the same step task twice results in exactly one execution: the second delivery observes a non-'ready' status inside the transaction and returns without side effects" — requirement not mapped to that node; verify or reassign before relying on it
   ↳ serves (unverified match): REQ-016 "Every step status transition writes its audit event in the same Firestore transaction as the transition, verified by a test that fails the transaction and observes neither the transition nor the audit event" — requirement not mapped to that node; verify or reassign before relying on it
   ↳ serves (unverified match): REQ-016 "A step that exhausts its retry budget lands in status 'failed' with the terminal error recorded, the parent request moves to 'failed', and no subsequent step is dispatched" — requirement not mapped to that node; verify or reassign before relying on it
-  ↳ serves (unverified match): REQ-016 "On successful completion the executor dispatches the next step, or halts it in 'awaiting_approval' when the snapshotted policy requires approval" — requirement not mapped to that node; verify or reassign before relying on it
-  ↳ serves (unverified match): REQ-016 "When the executor halts a step in 'awaiting_approval', an approver-notification task is enqueued in the same transaction as the halt, so a halt can never be committed without the notification being scheduled (REQ-032 performs the send)" — requirement not mapped to that node; verify or reassign before relying on it
 - [ ] **T3 — Implement the integration with Firestore: lifecycle state and audit (gcp-firestore) per Contract "Lifecycle State Store" (nosql).**
   Build to the contract schema EXACTLY (see Interface Contracts).
   ↳ serves (unverified match): REQ-005 "Submitting an update request computes a diff against the user's live Workspace state and persists it on the request before execution" — requirement not mapped to that node; verify or reassign before relying on it
@@ -436,10 +434,10 @@ Owned by the Lifecycle Step Executor. Steps admitted by REQ-001 are executed one
   → covered by Task T2
 - [ ] A step that exhausts its retry budget lands in status 'failed' with the terminal error recorded, the parent request moves to 'failed', and no subsequent step is dispatched
   → covered by Task T2
-- [ ] On successful completion the executor dispatches the next step, or halts it in 'awaiting_approval' when the snapshotted policy requires approval
-  → covered by Task T2
-- [ ] When the executor halts a step in 'awaiting_approval', an approver-notification task is enqueued in the same transaction as the halt, so a halt can never be committed without the notification being scheduled (REQ-032 performs the send)
-  → covered by Task T2
+- [x] On successful completion the executor dispatches the next step, or halts it in 'awaiting_approval' when the snapshotted policy requires approval
+  → possible match: Contract "Step Task Enqueue" (rest) to Cloud Tasks: lifecycle-steps (unverified — requirement not mapped to that node)
+- [x] When the executor halts a step in 'awaiting_approval', the approver-notification record is written in the same Firestore transaction as the halt, so a halt can never be committed without its notification record; the notification task is then enqueued from that record after the transaction commits, and an enqueue that fails leaves the record outstanding for a sweeper rather than losing the halt (REQ-032 performs the send)
+  → possible match: Contract "Step Task Enqueue" (rest) to Cloud Tasks: lifecycle-steps (unverified — requirement not mapped to that node)
 - [x] The /tasks/execute-step route accepts a step task only when it carries a valid OIDC token issued to the Cloud Tasks queue invoker service account, and rejects unauthenticated requests, tokens issued to any other service account, and specifically tokens issued to the lifecycle-api identity that is admitted on the lookup routes
   → possible match: Contract "Step Task Enqueue" (rest) to Cloud Tasks: lifecycle-steps (unverified — requirement not mapped to that node)
 
@@ -1259,6 +1257,7 @@ Startup/initialization order based on edge directions and interaction patterns.
 | `services/worker/src/tasks/dispatcher.ts` | source | --- | draft |
 | `.nodespec/tests/req-003.tests.md` - Test plan for requirement: Phase 1 — User creation with attributes and group assignment | test-plan | markdown | draft |
 | `.nodespec/tests/req-019.tests.md` - Test plan for requirement: Credential generation and encryption at rest | test-plan | markdown | draft |
+| `services/worker/src/steps/advance.emulator.test.ts` | test-plan | --- | draft |
 | `services/worker/src/auth/taskAuth.ts` | source | --- | draft |
 | `services/worker/src/config.ts` | source | --- | draft |
 | `.nodespec/tests/req-013.tests.md` - Test plan for requirement: Idempotent, retry-safe Workspace mutations | test-plan | markdown | draft |

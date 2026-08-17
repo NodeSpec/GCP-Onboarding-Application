@@ -48,7 +48,6 @@ Ordered WORK ORDERS synthesized from the model — this node's deliverable kind,
   Dependency contract — capture the reference/identifier wiring in this node's config artifacts; no payload schema expected.
 - [ ] **T5 — Implement the integration with Cloud Tasks: lifecycle-steps (gcp-cloud-tasks) per Contract "Step Task Enqueue" (rest).**
   Build to the contract schema EXACTLY (see Interface Contracts).
-  ↳ serves (unverified match): REQ-001 "When the first step is halted in 'awaiting_approval', an approver-notification task is enqueued in the same transaction as the halt, so a halt can never be committed without the notification being scheduled (REQ-032 performs the send)" — requirement not mapped to that node; verify or reassign before relying on it
   ↳ serves (unverified match): REQ-002 "When a step enters 'awaiting_approval' with an expiry configured, a Cloud Task is scheduled for the expiry instant; if the approval is still pending when that task fires the request terminates in 'rejected' with reason 'approval_expired', and if the step was already decided the task is a no-op" — requirement not mapped to that node; verify or reassign before relying on it
   ↳ serves (unverified match): REQ-002 "With requiresApproval=false for every step, a request runs end to end with no human interaction beyond submission" — requirement not mapped to that node; verify or reassign before relying on it
   ↳ serves (unverified match): REQ-031 "A create, update or delete request targeting an address on the protected-account list is refused at admission with 409 and a typed ProtectedAccount error, and no request or step document is persisted" — requirement not mapped to that node; verify or reassign before relying on it
@@ -139,8 +138,8 @@ Owned by the Lifecycle API Service. Every lifecycle action (create, notify, upda
   → possible match: Contract "Step Task Enqueue" (rest) to Cloud Tasks: lifecycle-steps (unverified — requirement not mapped to that node)
 - [x] The first step of a newly created request is either dispatched or halted in 'awaiting_approval' according to the policy snapshotted onto the request
   → possible match: Contract "Step Task Enqueue" (rest) to Cloud Tasks: lifecycle-steps (unverified — requirement not mapped to that node)
-- [ ] When the first step is halted in 'awaiting_approval', an approver-notification task is enqueued in the same transaction as the halt, so a halt can never be committed without the notification being scheduled (REQ-032 performs the send)
-  → covered by Task T5
+- [x] When the first step is halted in 'awaiting_approval', the approver-notification record is written in the same Firestore transaction as the halt, so a halt can never be committed without its notification record; the notification task is then enqueued from that record after the transaction commits, and an enqueue that fails leaves the record outstanding for a sweeper rather than losing the halt (REQ-032 performs the send)
+  → possible match: Contract "Step Task Enqueue" (rest) to Cloud Tasks: lifecycle-steps (unverified — requirement not mapped to that node)
 
 ### REQ-012: Operator role model derived from verified identity
 Category: functional | Status: in-progress
