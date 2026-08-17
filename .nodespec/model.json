@@ -1,7 +1,7 @@
 {
   "modelVersion": 1,
   "generatedBy": "nodespec",
-  "modelHash": "b9bc125d9de02c4410a49849bef595ed1d118fa83245d906d8a484939aff5f10",
+  "modelHash": "cbfca81e1309d6098d2db8f4c0e77dfb34184301af6f1818e8fb757a154fdc4e",
   "nodes": [
     {
       "id": "1c81cf63-c51e-4b0e-b6ad-7d318332d2fe",
@@ -587,7 +587,8 @@
       "id": "0bcdd3bc-c4fd-4554-b616-b6ee6ec5a3b8",
       "nodeId": "c424e85a-6584-4bb7-a48e-2175ebc6a41b",
       "path": "packages/shared/src/logging.ts",
-      "kind": "source"
+      "kind": "source",
+      "contentHash": "0000000078aa44c8"
     },
     {
       "id": "16fb9631-638b-4acf-9a2c-29ed21dcbaa5",

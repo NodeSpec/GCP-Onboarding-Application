@@ -82,7 +82,10 @@ export function redact(value: unknown, seen = new WeakSet<object>()): unknown {
 export function createLogger(options: { level?: string; name?: string } = {}): Logger {
   return pino({
     level: options.level ?? process.env.LOG_LEVEL ?? 'info',
-    name: options.name,
+    // Spread rather than assign: under exactOptionalPropertyTypes an explicit
+    // `name: undefined` is not the same as an absent name, and pino's options
+    // type rejects the former.
+    ...(options.name === undefined ? {} : { name: options.name }),
     // Cloud Logging reads "severity", not pino's numeric "level".
     messageKey: 'message',
     formatters: {
