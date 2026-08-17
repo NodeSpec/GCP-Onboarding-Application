@@ -1,7 +1,7 @@
 {
   "modelVersion": 1,
   "generatedBy": "nodespec",
-  "modelHash": "2e1b8f3413e2f9ef0b99492d5d8ea86cec0b86fd4bdb48eb6e3ba2a83782c21f",
+  "modelHash": "531d8f6dc6d6d72a26d1d74bc10e265d627325924f441208f7087b4de90420d8",
   "nodes": [
     {
       "id": "1c81cf63-c51e-4b0e-b6ad-7d318332d2fe",
@@ -816,6 +816,12 @@
       "kind": "config"
     },
     {
+      "id": "b94d3062-ae58-4f17-8329-7d85fab0e6f4",
+      "nodeId": "565b92bd-2c2c-4a82-be62-b691decdbadf",
+      "path": "vitest.emulator.config.ts",
+      "kind": "config"
+    },
+    {
       "id": "c05e7f3a-4b81-4d26-9e73-8a1f60d2b95c",
       "nodeId": "c424e85a-6584-4bb7-a48e-2175ebc6a41b",
       "path": "packages/shared/src/store.emulator.test.ts",
@@ -831,7 +837,8 @@
       "id": "c3f8a129-6174-4a09-bd53-49ec721fa068",
       "nodeId": "565b92bd-2c2c-4a82-be62-b691decdbadf",
       "path": "package.json",
-      "kind": "config"
+      "kind": "config",
+      "contentHash": "0000000053c72832"
     },
     {
       "id": "c52ea038-7d14-4b69-a023-9f16b8d4e7c2",
