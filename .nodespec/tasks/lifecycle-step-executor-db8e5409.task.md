@@ -33,8 +33,6 @@ Ordered WORK ORDERS synthesized from the model — this node's deliverable kind,
   ↳ serves (unverified match): REQ-030 "The regeneration step is subject to the approval policy like any other step, so a tenant can require two-party approval before an operator resets a person's password" — requirement not mapped to that node; verify or reassign before relying on it
   ↳ serves (unverified match): REQ-005 "A requested change that already matches live state is recorded as step status 'skipped' and issues no Workspace call" — requirement not mapped to that node; verify or reassign before relying on it
   ↳ serves (unverified match): REQ-005 "If one group change fails, the other group changes that succeeded are retained and the failing change is reported on its own step" — requirement not mapped to that node; verify or reassign before relying on it
-  ↳ serves (unverified match): REQ-003 "If one group assignment fails, the successfully assigned groups are retained, the failing group is reported in the step error, and the request does not report success" — requirement not mapped to that node; verify or reassign before relying on it
-  ↳ serves (unverified match): REQ-003 "The verification step reads the user and memberships back from Workspace and fails the request if the observed state does not match the intended state" — requirement not mapped to that node; verify or reassign before relying on it
   ↳ serves (unverified match): REQ-032 "A step entering 'awaiting_approval' results in exactly one notification per eligible approver, verified for both a first step halted by the API and a later step halted by the worker" — requirement not mapped to that node; verify or reassign before relying on it
   ↳ serves (unverified match): REQ-032 "Retrying or redelivering the notification task does not send a second message — the send is keyed on requestId plus stepId and the recorded outcome short-circuits a repeat" — requirement not mapped to that node; verify or reassign before relying on it
   ↳ serves (unverified match): REQ-032 "When a step requires approval but no eligible approver exists, the notification step fails loudly with a typed NoEligibleApprover error and the condition is surfaced to admins — it never resolves as a successful send to nobody" — requirement not mapped to that node; verify or reassign before relying on it
@@ -55,7 +53,6 @@ Ordered WORK ORDERS synthesized from the model — this node's deliverable kind,
   ↳ serves (unverified match): REQ-006 "Every offboarding step, including the compensating unsuspend, records the affected user, actor, and outcome to the audit log" — requirement not mapped to that node; verify or reassign before relying on it
   ↳ serves (unverified match): REQ-013 "Replaying any step of any phase against a Workspace state where the intended change already holds produces no additional mutation and resolves the step as satisfied" — requirement not mapped to that node; verify or reassign before relying on it
   ↳ serves (unverified match): REQ-013 "Each step's idempotency key is stable across attempts and distinct across requests and steps" — requirement not mapped to that node; verify or reassign before relying on it
-  ↳ serves (unverified match): REQ-013 "A 400 or 403 fails the step immediately and does not consume further retry attempts" — requirement not mapped to that node; verify or reassign before relying on it
   ↳ serves (unverified match): REQ-013 "Concurrent duplicate task deliveries for the same step result in exactly one Workspace mutation" — requirement not mapped to that node; verify or reassign before relying on it
   ↳ serves (unverified match): REQ-016 "A request whose executing instance is terminated mid-step resumes from the last committed step status on the next task delivery, with no step executed twice and no step skipped" — requirement not mapped to that node; verify or reassign before relying on it
   ↳ serves (unverified match): REQ-016 "Delivering the same step task twice results in exactly one execution: the second delivery observes a non-'ready' status inside the transaction and returns without side effects" — requirement not mapped to that node; verify or reassign before relying on it
@@ -68,8 +65,6 @@ Ordered WORK ORDERS synthesized from the model — this node's deliverable kind,
   ↳ serves (unverified match): REQ-005 "Submitting an update request computes a diff against the user's live Workspace state and persists it on the request before execution" — requirement not mapped to that node; verify or reassign before relying on it
   ↳ serves (unverified match): REQ-005 "Applying the update changes exactly the attributes and memberships in the diff and leaves all other user state untouched" — requirement not mapped to that node; verify or reassign before relying on it
   ↳ serves (unverified match): REQ-003 "The PLAINTEXT initial password never appears in any Firestore document, API response body, or log entry — only the ciphertext written by REQ-019 is persisted, and a test provisions a user then greps the emitted records for the issued value" — requirement not mapped to that node; verify or reassign before relying on it
-  ↳ serves (unverified match): REQ-013 "A mutation that times out client-side but succeeded server-side is detected by the pre-mutation state read on the next attempt and not applied twice" — requirement not mapped to that node; verify or reassign before relying on it
-  ↳ serves (unverified match): REQ-019 "The one-time password is persisted only as ciphertext under the Secret Manager credential encryption key, never as plaintext and never as a hash, and a test asserts the stored field decrypts to the issued value" — requirement not mapped to that node; verify or reassign before relying on it
   ↳ serves (unverified match): REQ-019 "The credential record carries a Firestore TTL and is removed on expiry without operator action" — requirement not mapped to that node; verify or reassign before relying on it
   ↳ serves (unverified match): REQ-019 "The generated plaintext password never appears in any Firestore document, any worker API response body, or any log entry, verified by a test that provisions a user and greps the emitted records" — requirement not mapped to that node; verify or reassign before relying on it
 - [ ] **T4 — Implement the integration with Secret Manager (gcp-secret-manager) per Contract "Secret Manager Access" (dependency).**
@@ -80,7 +75,6 @@ Ordered WORK ORDERS synthesized from the model — this node's deliverable kind,
   Dependency contract — capture the reference/identifier wiring in this node's config artifacts; no payload schema expected.
   ↳ serves (unverified match): REQ-030 "A resend requested with regenerate=true sets a fresh one-time password via users.update with changePasswordAtNextLogin=true, writes new ciphertext with a new TTL, and invalidates the prior credential record" — requirement not mapped to that node; verify or reassign before relying on it
   ↳ serves (unverified match): REQ-030 "Regeneration writes an audit event typed as a credential rotation, naming the operator and the target user, and never recording either password value" — requirement not mapped to that node; verify or reassign before relying on it
-  ↳ serves (unverified match): REQ-003 "The user is created with changePasswordAtNextLogin=true and a password meeting the configured generation policy" — requirement not mapped to that node; verify or reassign before relying on it
   ↳ serves (unverified match): REQ-019 "The generated password meets the configured generation policy and the user is created with changePasswordAtNextLogin=true" — requirement not mapped to that node; verify or reassign before relying on it
 - [ ] **T6 — Implement the integration with Email Delivery Service per Contract "Welcome Letter Delivery" (rest).**
   Build to the contract schema EXACTLY (see Interface Contracts).
@@ -93,7 +87,6 @@ Ordered WORK ORDERS synthesized from the model — this node's deliverable kind,
   ↳ serves (unverified match): REQ-029 "Every lookup route is read-only — a test enumerates the lookup router and asserts no Directory write operation is bound to any of them" — requirement not mapped to that node; verify or reassign before relying on it
   ↳ serves (unverified match): REQ-029 "Lookup calls pass through the same shared Workspace client as mutations, inheriting its retry and error classification — verified by the absence of any separate Directory client in the lookup path" — requirement not mapped to that node; verify or reassign before relying on it
   ↳ serves (unverified match): REQ-005 "Workspace ADMIN role assignment is unreachable through any phase — a repository check finds no roleAssignments API call and no admin.directory.rolemanagement scope anywhere in the codebase or IaC" — requirement not mapped to that node; verify or reassign before relying on it
-  ↳ serves (unverified match): REQ-013 "A 429 or 5xx from the Directory API is retried with exponential backoff and jitter, honoring Retry-After when present" — requirement not mapped to that node; verify or reassign before relying on it
 - [ ] **T8 — Expose the interface Cloud Tasks: lifecycle-steps consumes, per Contract "Step Execution Dispatch" (rest).**
   Record the endpoint/identifiers Cloud Tasks: lifecycle-steps needs in this node's config artifacts — coordinate with Cloud Tasks: lifecycle-steps.
   Build to the contract schema EXACTLY (see Interface Contracts).
@@ -132,34 +125,25 @@ Ordered WORK ORDERS synthesized from the model — this node's deliverable kind,
 - [ ] **T19 — Implement: "An update request targeting a non-existent or suspended-and-deleted user fails validation before any mutation" (REQ-005).**
   No interface contract maps to this criterion — it is this node's internal responsibility.
   ↳ serves: REQ-005 "An update request targeting a non-existent or suspended-and-deleted user fails validation before any mutation"
-- [ ] **T20 — Implement: "Submitting a valid creation request produces a Workspace user whose primary email, given/family name, and org unit path match the request payload" (REQ-003).**
-  No interface contract maps to this criterion — it is this node's internal responsibility.
-  ↳ serves: REQ-003 "Submitting a valid creation request produces a Workspace user whose primary email, given/family name, and org unit path match the request payload"
-- [ ] **T21 — Implement: "Every group listed in the request appears in the created user's membership list after the phase completes" (REQ-003).**
-  No interface contract maps to this criterion — it is this node's internal responsibility.
-  ↳ serves: REQ-003 "Every group listed in the request appears in the created user's membership list after the phase completes"
-- [ ] **T22 — Implement: "A creation request for a primary email that already exists in the domain fails validation before any mutation is attempted and the request terminates in 'failed' with a typed AlreadyExists error" (REQ-003).**
+- [ ] **T20 — Implement: "A creation request for a primary email that already exists in the domain fails validation before any mutation is attempted and the request terminates in 'failed' with a typed AlreadyExists error" (REQ-003).**
   No interface contract maps to this criterion — it is this node's internal responsibility.
   ↳ serves: REQ-003 "A creation request for a primary email that already exists in the domain fails validation before any mutation is attempted and the request terminates in 'failed' with a typed AlreadyExists error"
-- [ ] **T23 — Implement: "The requester never receives an approval notification for their own request, matching REQ-002's self-approval prohibition" (REQ-032).**
+- [ ] **T21 — Implement: "The requester never receives an approval notification for their own request, matching REQ-002's self-approval prohibition" (REQ-032).**
   No interface contract maps to this criterion — it is this node's internal responsibility.
   ↳ serves: REQ-032 "The requester never receives an approval notification for their own request, matching REQ-002's self-approval prohibition"
-- [ ] **T24 — Implement: "Recipients are resolved from role bindings against the request's SNAPSHOTTED policy, so a policy change after creation does not alter who is asked to approve an in-flight request" (REQ-032).**
+- [ ] **T22 — Implement: "Recipients are resolved from role bindings against the request's SNAPSHOTTED policy, so a policy change after creation does not alter who is asked to approve an in-flight request" (REQ-032).**
   No interface contract maps to this criterion — it is this node's internal responsibility.
   ↳ serves: REQ-032 "Recipients are resolved from role bindings against the request's SNAPSHOTTED policy, so a policy change after creation does not alter who is asked to approve an in-flight request"
-- [ ] **T25 — Implement: "The message contains request id, phase, target user, requester, the approval deadline when one is configured, and a console link — and contains no computed diff, no attribute values, no credential and no token, verified by rendering with a fully populated context and asserting none of it appears" (REQ-032).**
+- [ ] **T23 — Implement: "The message contains request id, phase, target user, requester, the approval deadline when one is configured, and a console link — and contains no computed diff, no attribute values, no credential and no token, verified by rendering with a fully populated context and asserting none of it appears" (REQ-032).**
   No interface contract maps to this criterion — it is this node's internal responsibility.
   ↳ serves: REQ-032 "The message contains request id, phase, target user, requester, the approval deadline when one is configured, and a console link — and contains no computed diff, no attribute values, no credential and no token, verified by rendering with a fully populated context and asserting none of it appears"
-- [ ] **T26 — Implement: "The console link resolves to the request detail behind IAP, so an approver who is not signed in is authenticated at the perimeter before seeing anything" (REQ-032).**
+- [ ] **T24 — Implement: "The console link resolves to the request detail behind IAP, so an approver who is not signed in is authenticated at the perimeter before seeing anything" (REQ-032).**
   No interface contract maps to this criterion — it is this node's internal responsibility.
   ↳ serves: REQ-032 "The console link resolves to the request detail behind IAP, so an approver who is not signed in is authenticated at the perimeter before seeing anything"
-- [ ] **T27 — Implement: "The persisted record carries the key version used, so a rotated key can still decrypt in-flight ciphertext or the drain procedure applies" (REQ-019).**
+- [ ] **T25 — Implement: "The persisted record carries the key version used, so a rotated key can still decrypt in-flight ciphertext or the drain procedure applies" (REQ-019).**
   No interface contract maps to this criterion — it is this node's internal responsibility.
   ↳ serves: REQ-019 "The persisted record carries the key version used, so a rotated key can still decrypt in-flight ciphertext or the drain procedure applies"
-- [ ] **T28 — Implement: "The plaintext is discarded from worker memory once the ciphertext is committed" (REQ-019).**
-  No interface contract maps to this criterion — it is this node's internal responsibility.
-  ↳ serves: REQ-019 "The plaintext is discarded from worker memory once the ciphertext is committed"
-- [ ] **T29 — Verify every acceptance criterion above and tick its box.**
+- [ ] **T26 — Verify every acceptance criterion above and tick its box.**
   Ordering doctrine — plans follow schemas (contract-first TDD): schemas → test plans → implement → verify. Resolve any open [PLACEHOLDER: schema] gap FIRST (get_build_readiness supplies draftInputs; submit the schema via propose_patches update_contract) — test-plan scenarios touching a schemaless contract stay one-line [blocked by schema: …] markers until the schema lands, then the plan refreshes itself.
   AUTOMATED criteria: call get_test_plan for EACH requirement this node serves, implement the plan's test cases, run them, and report every outcome via report_test_results — a passing result flips the criterion's met flag automatically and the response receipt shows which criteria flipped.
   MANUAL criteria (rows marked (manual) above): report_test_results REFUSES to bind them — prove each by ticking its criterion box in this task doc and having the user approve the resulting change card; that approval is the only thing that flips a manual criterion met.
@@ -283,18 +267,18 @@ The onboarding phase creates a Google Workspace user and brings it to a fully-at
 Generation and protection of the one-time password belong to REQ-019: it is persisted as ciphertext under the credential data-encryption key with a Firestore TTL, so that the requesting operator can retrieve it exactly once (REQ-017). This phase's obligation is narrower — the plaintext must never appear in a Firestore document, an API response, or a log entry, and must be discarded from memory once REQ-019's ciphertext is committed.
 
 **Acceptance criteria — your task boxes:**
-- [ ] Submitting a valid creation request produces a Workspace user whose primary email, given/family name, and org unit path match the request payload
-  → covered by Task T20
-- [ ] Every group listed in the request appears in the created user's membership list after the phase completes
-  → covered by Task T21
+- [x] Submitting a valid creation request produces a Workspace user whose primary email, given/family name, and org unit path match the request payload
+  → THIS NODE: internal logic
+- [x] Every group listed in the request appears in the created user's membership list after the phase completes
+  → THIS NODE: internal logic
 - [ ] A creation request for a primary email that already exists in the domain fails validation before any mutation is attempted and the request terminates in 'failed' with a typed AlreadyExists error
-  → covered by Task T22
-- [ ] The user is created with changePasswordAtNextLogin=true and a password meeting the configured generation policy
-  → covered by Task T5
-- [ ] If one group assignment fails, the successfully assigned groups are retained, the failing group is reported in the step error, and the request does not report success
-  → covered by Task T2
-- [ ] The verification step reads the user and memberships back from Workspace and fails the request if the observed state does not match the intended state
-  → covered by Task T2
+  → covered by Task T20
+- [x] The user is created with changePasswordAtNextLogin=true and a password meeting the configured generation policy
+  → possible match: Contract "Audit Log Sink" (dependency) to Cloud Logging: audit sink (unverified — requirement not mapped to that node)
+- [x] If one group assignment fails, the successfully assigned groups are retained, the failing group is reported in the step error, and the request does not report success
+  → possible match: Contract "Step Task Enqueue" (rest) to Cloud Tasks: lifecycle-steps (unverified — requirement not mapped to that node)
+- [x] The verification step reads the user and memberships back from Workspace and fails the request if the observed state does not match the intended state
+  → possible match: Contract "Step Task Enqueue" (rest) to Cloud Tasks: lifecycle-steps (unverified — requirement not mapped to that node)
 - [ ] The PLAINTEXT initial password never appears in any Firestore document, API response body, or log entry — only the ciphertext written by REQ-019 is persisted, and a test provisions a user then greps the emitted records for the issued value
   → covered by Task T3
 
@@ -314,15 +298,15 @@ A notification failure must not fail the request. The step is still legitimately
 - [ ] A step entering 'awaiting_approval' results in exactly one notification per eligible approver, verified for both a first step halted by the API and a later step halted by the worker
   → covered by Task T2
 - [ ] The requester never receives an approval notification for their own request, matching REQ-002's self-approval prohibition
-  → covered by Task T23
+  → covered by Task T21
 - [ ] Recipients are resolved from role bindings against the request's SNAPSHOTTED policy, so a policy change after creation does not alter who is asked to approve an in-flight request
-  → covered by Task T24
+  → covered by Task T22
 - [ ] Retrying or redelivering the notification task does not send a second message — the send is keyed on requestId plus stepId and the recorded outcome short-circuits a repeat
   → covered by Task T2
 - [ ] The message contains request id, phase, target user, requester, the approval deadline when one is configured, and a console link — and contains no computed diff, no attribute values, no credential and no token, verified by rendering with a fully populated context and asserting none of it appears
-  → covered by Task T25
+  → covered by Task T23
 - [ ] The console link resolves to the request detail behind IAP, so an approver who is not signed in is authenticated at the perimeter before seeing anything
-  → covered by Task T26
+  → covered by Task T24
 - [ ] When a step requires approval but no eligible approver exists, the notification step fails loudly with a typed NoEligibleApprover error and the condition is surfaced to admins — it never resolves as a successful send to nobody
   → covered by Task T2
 - [ ] A notification delivery failure is recorded on the step and retried, and leaves the request in 'awaiting_approval' rather than moving it to 'failed' — the approval is still pending, only the telling failed
@@ -413,12 +397,12 @@ Because Cloud Tasks delivers at least once and Workspace calls can time out afte
   → covered by Task T2
 - [ ] Each step's idempotency key is stable across attempts and distinct across requests and steps
   → covered by Task T2
-- [ ] A 429 or 5xx from the Directory API is retried with exponential backoff and jitter, honoring Retry-After when present
-  → covered by Task T7
-- [ ] A 400 or 403 fails the step immediately and does not consume further retry attempts
-  → covered by Task T2
-- [ ] A mutation that times out client-side but succeeded server-side is detected by the pre-mutation state read on the next attempt and not applied twice
-  → covered by Task T3
+- [x] A 429 or 5xx from the Directory API is retried with exponential backoff and jitter, honoring Retry-After when present
+  → possible match: Contract "Google Admin SDK Directory API" (rest) to Google Workspace (Admin SDK Directory) (unverified — requirement not mapped to that node)
+- [x] A 400 or 403 fails the step immediately and does not consume further retry attempts
+  → possible match: Contract "Step Task Enqueue" (rest) to Cloud Tasks: lifecycle-steps (unverified — requirement not mapped to that node)
+- [x] A mutation that times out client-side but succeeded server-side is detected by the pre-mutation state read on the next attempt and not applied twice
+  → possible match: Contract "Lifecycle State Store" (nosql) to Firestore: lifecycle state and audit (unverified — requirement not mapped to that node)
 - [x] All retry and classification behavior lives in the shared Workspace client, verified by the absence of retry logic in any phase handler
   → possible match: Contract "Audit Log Sink" (dependency) to Cloud Logging: audit sink (unverified — requirement not mapped to that node)
 - [ ] Concurrent duplicate task deliveries for the same step result in exactly one Workspace mutation
@@ -431,16 +415,16 @@ Owned by the Lifecycle Step Executor. The worker generates the initial one-time 
 **Acceptance criteria — your task boxes:**
 - [ ] The generated password meets the configured generation policy and the user is created with changePasswordAtNextLogin=true
   → covered by Task T5
-- [ ] The one-time password is persisted only as ciphertext under the Secret Manager credential encryption key, never as plaintext and never as a hash, and a test asserts the stored field decrypts to the issued value
-  → covered by Task T3
+- [x] The one-time password is persisted only as ciphertext under the Secret Manager credential encryption key, never as plaintext and never as a hash, and a test asserts the stored field decrypts to the issued value
+  → possible match: Contract "Lifecycle State Store" (nosql) to Firestore: lifecycle state and audit (unverified — requirement not mapped to that node)
 - [ ] The persisted record carries the key version used, so a rotated key can still decrypt in-flight ciphertext or the drain procedure applies
-  → covered by Task T27
+  → covered by Task T25
 - [ ] The credential record carries a Firestore TTL and is removed on expiry without operator action
   → covered by Task T3
 - [ ] The generated plaintext password never appears in any Firestore document, any worker API response body, or any log entry, verified by a test that provisions a user and greps the emitted records
   → covered by Task T3
-- [ ] The plaintext is discarded from worker memory once the ciphertext is committed
-  → covered by Task T28
+- [x] The plaintext is discarded from worker memory once the ciphertext is committed
+  → THIS NODE: internal logic
 
 ### REQ-016: Durable step execution, resumability and transition integrity
 Category: functional | Status: in-progress
@@ -1292,5 +1276,6 @@ Startup/initialization order based on edge directions and interaction patterns.
 | `services/worker/src/workspace/noDelegation.test.ts` | test-plan | --- | draft |
 | `services/worker/src/steps/advance.ts` | source | --- | draft |
 | `services/worker/src/workspace/directoryClient.ts` | source | --- | draft |
+| `services/worker/src/workspace/retry.test.ts` | test-plan | --- | draft |
 | `services/worker/src/logging.ts` | source | --- | draft |
 | `services/worker/src/steps/executor.ts` | source | --- | draft |
