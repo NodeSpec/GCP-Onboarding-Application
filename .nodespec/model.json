@@ -1,7 +1,7 @@
 {
   "modelVersion": 1,
   "generatedBy": "nodespec",
-  "modelHash": "bb81f24f6e1995fb9498deb9871e5454ee8adb4981da9786fe5c195341236b9c",
+  "modelHash": "00136b488445e651aa245f7d66f475eb48a18d8bf928773bcd59654009e7e4f3",
   "nodes": [
     {
       "id": "1c81cf63-c51e-4b0e-b6ad-7d318332d2fe",
@@ -687,7 +687,8 @@
       "id": "6239f69c-600e-4e07-8c27-0c7cb446e4aa",
       "nodeId": "db8e5409-dc6f-4052-887a-7ba1dd5fb717",
       "path": "services/worker/src/auth/taskAuth.ts",
-      "kind": "source"
+      "kind": "source",
+      "contentHash": "000000000ce7992e"
     },
     {
       "id": "67085527-dde4-4397-8591-9ca00e928eb1",
