@@ -2,7 +2,13 @@ import { randomBytes } from 'node:crypto';
 import { Timestamp } from '@google-cloud/firestore';
 import { COLLECTIONS, type CredentialHandoff } from '@lifecycle/shared';
 import { beforeEach, describe, expect, it } from 'vitest';
-import { CredentialStore, type KeyProvider, type ResolvedKey, unpack } from './credentialStore.js';
+import {
+  CredentialStore,
+  CredentialUnrecoverableError,
+  type KeyProvider,
+  type ResolvedKey,
+  unpack,
+} from './credentialStore.js';
 
 /**
  * TC-REQ-019-2, TC-REQ-019-3 and TC-REQ-019-6.
@@ -19,9 +25,29 @@ import { CredentialStore, type KeyProvider, type ResolvedKey, unpack } from './c
 
 const PASSWORD = 'Correct-Horse-Battery-Staple-42!';
 
-/** A fixed key, so a failure is never a flaky key generation. */
+/**
+ * A provider holding one or more key versions, newest last. Models Secret
+ * Manager's default behaviour: prior versions stay accessible until they are
+ * explicitly destroyed. Asking for a version it does not hold throws, which is
+ * what a destroyed version looks like.
+ */
+function rotatingProvider(versions: [string, Buffer][]): KeyProvider {
+  const held = new Map(versions.map(([version, key]) => [version, { key, version }]));
+  const [latestVersion, latestKey] = versions[versions.length - 1]!;
+
+  return {
+    resolve: async (): Promise<ResolvedKey> => ({ key: latestKey, version: latestVersion }),
+    resolveVersion: async (version: string): Promise<ResolvedKey> => {
+      const found = held.get(version);
+      if (!found) throw new Error(`Secret version ${version} is not accessible`);
+      return found;
+    },
+  };
+}
+
+/** A fixed single-version key, so a failure is never a flaky key generation. */
 function keyProvider(version = 'projects/1/secrets/credkey/versions/1', key = randomBytes(32)): KeyProvider {
-  return { resolve: async (): Promise<ResolvedKey> => ({ key, version }) };
+  return rotatingProvider([[version, key]]);
 }
 
 /** Minimal Firestore stand-in: one collection of documents, plus transactions. */
@@ -166,29 +192,50 @@ describe('AC-3: the record carries the key version it was written under', () => 
     expect(recordFor('req-1').keyVersion).toBe('projects/1/secrets/credkey/versions/7');
   });
 
-  /**
-   * GAP. The criterion asks that a rotated key still decrypt in-flight
-   * ciphertext, or that a drain procedure apply. Neither holds today:
-   * retrieveOnce resolves the CURRENT key and ignores the keyVersion it wrote,
-   * so a rotation while a handoff is outstanding makes that password
-   * unrecoverable, and no drain procedure exists in the code.
-   *
-   * Written as it.fails so the gap is pinned rather than described: this test
-   * starts failing the moment retrieveOnce becomes version-aware, which is the
-   * signal to delete this comment and turn it into a normal test.
-   */
-  it.fails('GAP: ciphertext written under a previous key version survives a rotation', async () => {
+  it('decrypts ciphertext written under a previous key version after a rotation', async () => {
     const v1 = randomBytes(32);
-    const writer = new CredentialStore(fake as never, keyProvider('versions/1', v1));
+    const writer = new CredentialStore(fake as never, rotatingProvider([['versions/1', v1]]));
     await writer.stash({ requestId: 'req-1', primaryEmail: 'ada@company.com', password: PASSWORD, ttlHours: 72 });
 
-    // The key rotates while the handoff is still outstanding.
-    const afterRotation = new CredentialStore(fake as never, keyProvider('versions/2', randomBytes(32)));
+    // Routine rotation: v2 becomes current, v1 is retained as Secret Manager
+    // retains it. The record's keyVersion is what makes this recoverable.
+    const afterRotation = new CredentialStore(
+      fake as never,
+      rotatingProvider([['versions/1', v1], ['versions/2', randomBytes(32)]]),
+    );
 
     await expect(afterRotation.retrieveOnce('req-1')).resolves.toEqual({
       primaryEmail: 'ada@company.com',
       password: PASSWORD,
     });
+  });
+
+  it('reports a destroyed key version as unrecoverable, not as corruption', async () => {
+    const writer = new CredentialStore(fake as never, rotatingProvider([['versions/1', randomBytes(32)]]));
+    await writer.stash({ requestId: 'req-1', primaryEmail: 'ada@company.com', password: PASSWORD, ttlHours: 72 });
+
+    // Emergency rotation destroys the old version. Unreadable ciphertext is the
+    // intended outcome; what matters is that it is diagnosable.
+    const afterDestroy = new CredentialStore(fake as never, rotatingProvider([['versions/2', randomBytes(32)]]));
+
+    const err = await afterDestroy.retrieveOnce('req-1').catch((e: Error) => e);
+    expect(err).toBeInstanceOf(CredentialUnrecoverableError);
+    expect((err as Error).message).toContain('Regenerate');
+  });
+
+  it('leaves the ciphertext intact when the key cannot be resolved', async () => {
+    const writer = new CredentialStore(fake as never, rotatingProvider([['versions/1', randomBytes(32)]]));
+    await writer.stash({ requestId: 'req-1', primaryEmail: 'ada@company.com', password: PASSWORD, ttlHours: 72 });
+    const before = recordFor('req-1').oneTimePasswordCiphertext;
+
+    const afterDestroy = new CredentialStore(fake as never, rotatingProvider([['versions/2', randomBytes(32)]]));
+    await afterDestroy.retrieveOnce('req-1').catch(() => undefined);
+
+    // The claim destroys the ciphertext, so resolving the key AFTER it would
+    // turn a recoverable failure into permanent loss. Key resolution happens
+    // first, and a failure leaves the record untouched and still claimable.
+    expect(recordFor('req-1').oneTimePasswordCiphertext).toBe(before);
+    expect(recordFor('req-1').retrievedAt).toBeNull();
   });
 });
 
