@@ -3,6 +3,8 @@ import { randomUUID } from 'node:crypto';
 import {
   COLLECTIONS,
   NON_TERMINAL_REQUEST_STATUSES,
+  isTerminalRequestStatus,
+  type ApprovalPolicy,
   type ApprovalRecord,
   type ApproverNotificationRecord,
   type AuditActor,
@@ -14,6 +16,7 @@ import {
   type RoleBinding,
   type StepStatus,
 } from './model.js';
+import { normalisePolicy, policyPath } from './policy.js';
 import type { NewRequestDocuments } from './requestFactory.js';
 import { assertRequestTransition, assertStepTransition } from './transitions.js';
 
@@ -124,6 +127,25 @@ export class LifecycleStore {
       .where('requestId', '==', requestId)
       .orderBy('timestamp', 'asc')
       .get();
+    return snap.docs.map((doc) => doc.data() as AuditEvent);
+  }
+
+  /**
+   * The whole audit trail, newest first, for the admin view (REQ-012 AC-5).
+   *
+   * Bounded by `limit` rather than returning everything: this collection grows
+   * without limit and an unbounded read would eventually be the slowest, most
+   * expensive query in the system. `before` pages backwards through it.
+   */
+  async listAllAudit(options: { limit?: number; before?: Timestamp } = {}): Promise<AuditEvent[]> {
+    let query = this.db
+      .collection(COLLECTIONS.audit)
+      .orderBy('timestamp', 'desc')
+      .limit(Math.min(options.limit ?? 100, 500));
+
+    if (options.before) query = query.startAfter(options.before);
+
+    const snap = await query.get();
     return snap.docs.map((doc) => doc.data() as AuditEvent);
   }
 
@@ -341,6 +363,155 @@ export class LifecycleStore {
   }
 
   // ---------------------------------------------------------------------------
+  // Admin capabilities (REQ-012 AC-5)
+  // ---------------------------------------------------------------------------
+
+  async getApprovalPolicy(): Promise<ApprovalPolicy> {
+    const snap = await this.db.doc(policyPath()).get();
+    return normalisePolicy(snap.exists ? snap.data() : undefined);
+  }
+
+  /**
+   * Replaces the approval policy, recording the whole document before and after.
+   *
+   * The policy decides which steps need a second pair of eyes, so an edit is a
+   * change to a security control and the trail has to show what it was as well
+   * as what it became. Requests already in flight are unaffected: they carry a
+   * snapshot taken at creation (REQ-002 AC-6), which is why this method does not
+   * touch them.
+   */
+  async setApprovalPolicy(params: {
+    policy: ApprovalPolicy;
+    actor: AuditActor;
+  }): Promise<{ before: ApprovalPolicy; after: ApprovalPolicy }> {
+    const after = normalisePolicy(params.policy);
+
+    return this.db.runTransaction(async (tx) => {
+      const ref = this.db.doc(policyPath());
+      const snap = await tx.get(ref);
+      const before = normalisePolicy(snap.exists ? snap.data() : undefined);
+
+      tx.set(ref, after);
+
+      this.appendAudit(tx, null, null, {
+        actor: params.actor,
+        action: 'approvalPolicy.updated',
+        before: { policy: before },
+        after: { policy: after },
+      });
+
+      return { before, after };
+    });
+  }
+
+  /**
+   * Cancels a request and skips everything it had not yet done.
+   *
+   * Pending steps are moved to 'skipped' in the SAME transaction as the
+   * cancellation. Leaving them 'pending' would mean a task already in the queue
+   * could still find work to do on a cancelled request, which is precisely what
+   * an operator hitting cancel is trying to prevent. A step already running is
+   * left alone: it is mid-flight against Workspace and cannot be recalled, so
+   * the honest thing is to let it finish and stop there.
+   */
+  async cancelRequest(params: {
+    requestId: string;
+    actor: AuditActor;
+    reason: string;
+  }): Promise<{ cancelled: boolean; observed: RequestStatus; skippedSteps: number }> {
+    return this.db.runTransaction(async (tx) => {
+      const requestRef = this.requestRef(params.requestId);
+      const requestSnap = await tx.get(requestRef);
+      if (!requestSnap.exists) throw new Error(`Request ${params.requestId} not found`);
+      const request = requestSnap.data() as LifecycleRequest;
+
+      const stepsSnap = await tx.get(requestRef.collection(COLLECTIONS.steps));
+
+      if (isTerminalRequestStatus(request.status)) {
+        return { cancelled: false, observed: request.status, skippedSteps: 0 };
+      }
+
+      assertRequestTransition(params.requestId, request.status, 'cancelled');
+
+      let skipped = 0;
+      for (const doc of stepsSnap.docs) {
+        const step = doc.data() as LifecycleStep;
+        if (step.status !== 'pending' && step.status !== 'awaiting_approval') continue;
+        // 'awaiting_approval' has no legal move to 'skipped'; a cancelled
+        // approval is a failure of that step, not a silent pass.
+        const to = step.status === 'pending' ? 'skipped' : 'failed';
+        assertStepTransition(step.stepId, step.status, to);
+        tx.update(doc.ref, { status: to, completedAt: Timestamp.now() });
+        skipped += 1;
+      }
+
+      tx.update(requestRef, { status: 'cancelled', updatedAt: Timestamp.now() });
+
+      this.appendAudit(tx, params.requestId, null, {
+        actor: params.actor,
+        action: 'request.cancelled',
+        targetUser: request.targetUser,
+        before: { status: request.status },
+        after: { status: 'cancelled', reason: params.reason, stepsStopped: skipped },
+      });
+
+      return { cancelled: true, observed: request.status, skippedSteps: skipped };
+    });
+  }
+
+  /**
+   * Puts a failed request back to work at its failed step.
+   *
+   * Returns the step to enqueue so the caller can dispatch AFTER the commit, on
+   * the same reasoning as startFirstStep: a task for a transaction that then
+   * aborted is worse than a resume that has to be retried.
+   */
+  async resumeRequest(params: {
+    requestId: string;
+    actor: AuditActor;
+  }): Promise<{ resumed: boolean; observed: RequestStatus; step: LifecycleStep | null }> {
+    return this.db.runTransaction(async (tx) => {
+      const requestRef = this.requestRef(params.requestId);
+      const requestSnap = await tx.get(requestRef);
+      if (!requestSnap.exists) throw new Error(`Request ${params.requestId} not found`);
+      const request = requestSnap.data() as LifecycleRequest;
+
+      const stepsSnap = await tx.get(requestRef.collection(COLLECTIONS.steps).orderBy('ordinal', 'asc'));
+
+      if (request.status !== 'failed') {
+        return { resumed: false, observed: request.status, step: null };
+      }
+
+      const failedDoc = stepsSnap.docs.find((d) => (d.data() as LifecycleStep).status === 'failed');
+      if (!failedDoc) {
+        // The request failed without a failed step, so there is nothing to
+        // retry. Refusing is better than guessing which step to restart.
+        return { resumed: false, observed: request.status, step: null };
+      }
+
+      const step = failedDoc.data() as LifecycleStep;
+      assertStepTransition(step.stepId, step.status, 'ready');
+      assertRequestTransition(params.requestId, request.status, 'running');
+
+      // The error is cleared, the attempt counter is NOT. A resume is another
+      // attempt, and hiding that would make a step that has failed five times
+      // look untouched.
+      tx.update(failedDoc.ref, { status: 'ready', error: null, completedAt: null });
+      tx.update(requestRef, { status: 'running', updatedAt: Timestamp.now() });
+
+      this.appendAudit(tx, params.requestId, step.stepId, {
+        actor: params.actor,
+        action: 'request.resumed',
+        targetUser: request.targetUser,
+        before: { status: 'failed', stepStatus: 'failed', attempts: step.attempts },
+        after: { status: 'running', stepStatus: 'ready' },
+      });
+
+      return { resumed: true, observed: request.status, step: { ...step, status: 'ready' as const } };
+    });
+  }
+
+  // ---------------------------------------------------------------------------
   // Role bindings (REQ-012)
   //
   // These live on this class rather than in a store of their own precisely
@@ -464,6 +635,72 @@ export class LifecycleStore {
   }
 
   /**
+   * Claims a step for execution, in ONE transaction (REQ-016 AC-1, AC-2).
+   *
+   * Two deliveries of the same task race here, and exactly one may win. The
+   * normal case is 'ready' -> 'running'; the loser re-reads inside the
+   * transaction, sees 'running', and is told so rather than executing.
+   *
+   * The second case is why this is not just transitionStep. An instance killed
+   * mid-step leaves its step 'running' with nobody working on it, and nothing
+   * would ever move it again: the step is not 'ready', so no redelivery could
+   * claim it, and the request would sit wedged forever. So a 'running' step
+   * whose lease has expired is RECLAIMABLE. The lease is startedAt plus
+   * leaseSeconds, compared inside the transaction, which is what stops a
+   * concurrent delivery stealing a claim that is merely slow rather than dead.
+   *
+   * Pick leaseSeconds well above the longest a step can legitimately take; a
+   * lease that expires under a slow-but-live step is how you get a step running
+   * twice at once.
+   */
+  async claimStep(params: {
+    requestId: string;
+    stepId: string;
+    attempt: number;
+    leaseSeconds: number;
+    audit: AuditInput;
+  }): Promise<{ claimed: boolean; observed: StepStatus; reclaimed: boolean }> {
+    return this.db.runTransaction(async (tx) => {
+      const ref = this.stepRef(params.requestId, params.stepId);
+      const snap = await tx.get(ref);
+      if (!snap.exists) {
+        throw new Error(`Step ${params.stepId} not found on request ${params.requestId}`);
+      }
+
+      const current = snap.data() as LifecycleStep;
+
+      if (current.status !== 'ready' && current.status !== 'running') {
+        return { claimed: false, observed: current.status, reclaimed: false };
+      }
+
+      let reclaimed = false;
+      if (current.status === 'running') {
+        const startedAt = current.startedAt?.toMillis() ?? 0;
+        const expired = Date.now() - startedAt >= params.leaseSeconds * 1000;
+        // Someone else holds a live claim. Not an error: the work is in hand.
+        if (!expired) return { claimed: false, observed: current.status, reclaimed: false };
+        reclaimed = true;
+      }
+
+      assertStepTransition(params.stepId, current.status, 'running');
+
+      tx.update(ref, {
+        status: 'running',
+        attempts: params.attempt,
+        startedAt: Timestamp.now(),
+      });
+
+      this.appendAudit(tx, params.requestId, params.stepId, {
+        ...params.audit,
+        before: { status: current.status },
+        after: { status: 'running', attempt: params.attempt, reclaimed },
+      });
+
+      return { claimed: true, observed: current.status, reclaimed };
+    });
+  }
+
+  /**
    * Move a step, guarded, with its audit event, in one transaction.
    *
    * `expectedFrom` is the concurrency control. The current status is re-read
@@ -508,10 +745,15 @@ export class LifecycleStore {
           : {}),
       });
 
+      // MERGED, not replaced. The observed status is authoritative and always
+      // wins, but a caller's own context is kept: the executor attaches the
+      // error, the attempt and whether the retry budget ran out, and overwriting
+      // `after` here discarded all of it, so the trail recorded that a step
+      // failed while losing every detail of why.
       this.appendAudit(tx, params.requestId, params.stepId, {
         ...params.audit,
-        before: { status: current.status },
-        after: { status: params.to },
+        before: { ...params.audit.before, status: current.status },
+        after: { ...params.audit.after, status: params.to },
       });
 
       return { applied: true, observed: current.status };
@@ -544,10 +786,12 @@ export class LifecycleStore {
 
       tx.update(ref, { ...params.patch, status: params.to, updatedAt: Timestamp.now() });
 
+      // Merged for the same reason as transitionStep: the status is
+      // authoritative, the caller's context survives alongside it.
       this.appendAudit(tx, params.requestId, null, {
         ...params.audit,
-        before: { status: current.status },
-        after: { status: params.to },
+        before: { ...params.audit.before, status: current.status },
+        after: { ...params.audit.after, status: params.to },
       });
 
       return { applied: true, observed: current.status };
