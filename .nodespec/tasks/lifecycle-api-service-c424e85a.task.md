@@ -1522,6 +1522,7 @@ Startup/initialization order based on edge directions and interaction patterns.
 | `services/api/src/middleware/iapAuth.test.ts` | test-plan | --- | draft |
 | `.nodespec/tests/req-007.tests.md` - Test plan for requirement: IAP protection with server-side JWT assertion verification | test-plan | markdown | draft |
 | `packages/shared/src/logging.ts` | source | --- | draft |
+| `packages/shared/src/dispatcher.ts` | source | --- | draft |
 | `.nodespec/tests/req-010.tests.md` - Test plan for requirement: Audit event model, operator-action auditing and log redaction | test-plan | markdown | draft |
 | `services/api/src/schemas.ts` | source | --- | draft |
 | `services/api/src/index.ts` | source | --- | draft |
