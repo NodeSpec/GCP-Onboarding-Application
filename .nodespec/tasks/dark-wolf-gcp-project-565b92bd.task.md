@@ -272,3 +272,13 @@ resource "google_project" "main" {
 - External HTTPS Load Balancer [gcp-cloud-load-balancing] (load-balancer)
 - Cloud Run: lifecycle-worker [gcp-cloud-run] (docker-container)
 - Secret Manager [gcp-secret-manager] (secret-manager)
+
+## Existing Implementation
+
+| File | Kind | Language | Status |
+|------|------|----------|--------|
+| `docs/testing.md` | doc | --- | draft |
+| `vitest.config.ts` | config | --- | draft |
+| `package.json` | config | --- | draft |
+| `.gitignore` | config | --- | draft |
+| `README.md` | doc | --- | draft |

@@ -1,7 +1,7 @@
 {
   "modelVersion": 1,
   "generatedBy": "nodespec",
-  "modelHash": "507dba9c132579c7bc43084b696441512f4fc7d07882fc080b39a0eb9d17e974",
+  "modelHash": "541e9f6473f2490a0d2e61a4a68378a25a11125ebd0c45d6746e36f9b27b450d",
   "nodes": [
     {
       "id": "1c81cf63-c51e-4b0e-b6ad-7d318332d2fe",
@@ -859,7 +859,7 @@
       "nodeId": "c424e85a-6584-4bb7-a48e-2175ebc6a41b",
       "path": ".nodespec/tasks/lifecycle-api-service-c424e85a.task.md",
       "kind": "task",
-      "contentHash": "000000001e78f6ba"
+      "contentHash": "0000000064ba3c14"
     },
     {
       "id": "d3a17f60-9e24-4b83-a175-6c02f8194e39",
@@ -886,7 +886,7 @@
       "nodeId": "db8e5409-dc6f-4052-887a-7ba1dd5fb717",
       "path": ".nodespec/tasks/lifecycle-step-executor-db8e5409.task.md",
       "kind": "task",
-      "contentHash": "0000000013c34211"
+      "contentHash": "00000000002f4f75"
     },
     {
       "id": "e4b8d215-7c93-4a06-b52f-8e1d94c30a67",
@@ -905,7 +905,7 @@
       "nodeId": "565b92bd-2c2c-4a82-be62-b691decdbadf",
       "path": ".nodespec/tasks/dark-wolf-gcp-project-565b92bd.task.md",
       "kind": "task",
-      "contentHash": "000000002f05157e"
+      "contentHash": "000000001a0f5273"
     },
     {
       "id": "eb01c689-4c8f-4510-985a-69242309c3e0",

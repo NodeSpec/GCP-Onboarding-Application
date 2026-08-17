@@ -1543,14 +1543,17 @@ Startup/initialization order based on edge directions and interaction patterns.
 | `.nodespec/tests/req-010.tests.md` - Test plan for requirement: Audit event model, operator-action auditing and log redaction | test-plan | markdown | draft |
 | `services/api/src/index.ts` | source | --- | draft |
 | `packages/shared/src/transitions.test.ts` | test-plan | --- | draft |
-| `packages/shared/package.json` | config | --- | draft |
 | `packages/shared/src/store.ts` | source | --- | draft |
 | `services/api/package.json` | config | --- | draft |
 | `services/api/src/middleware/iapAuth.ts` | source | --- | draft |
 | `services/api/tsconfig.json` | config | --- | draft |
+| `packages/shared/tsconfig.json` | config | --- | draft |
 | `packages/shared/src/index.ts` | source | --- | draft |
 | `services/api/src/logging.ts` | source | --- | draft |
+| `packages/shared/package.json` | config | --- | draft |
 | `packages/shared/src/logging.test.ts` | test-plan | --- | draft |
 | `services/api/src/config.test.ts` | test-plan | --- | draft |
+| `packages/shared/src/stepPlans.ts` | source | --- | draft |
 | `packages/shared/src/transitions.ts` | source | --- | draft |
 | `services/api/src/config.ts` | source | --- | draft |
+| `packages/shared/src/stepPlans.test.ts` | test-plan | --- | draft |
