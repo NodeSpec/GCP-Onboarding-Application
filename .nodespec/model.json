@@ -1,7 +1,7 @@
 {
   "modelVersion": 1,
   "generatedBy": "nodespec",
-  "modelHash": "20963f1c3e4e44d522178c96187c50639e94060b622c61e4ac0434afa4134a1a",
+  "modelHash": "6fb0c9aa060a265eedf7ea957388e29bd672358abdab9715cad76f425b5b6170",
   "nodes": [
     {
       "id": "1c81cf63-c51e-4b0e-b6ad-7d318332d2fe",
@@ -757,6 +757,12 @@
       "nodeId": "db8e5409-dc6f-4052-887a-7ba1dd5fb717",
       "path": "services/worker/src/steps/advance.emulator.test.ts",
       "kind": "test-plan"
+    },
+    {
+      "id": "5a8e2f41-7c93-4b60-a2d5-9e1f0c8b6d47",
+      "nodeId": "c424e85a-6584-4bb7-a48e-2175ebc6a41b",
+      "path": "packages/shared/src/credentials.test.ts",
+      "kind": "source"
     },
     {
       "id": "5c4f6356-361c-4029-9f54-dcc55813dffc",

@@ -1505,6 +1505,7 @@ Startup/initialization order based on edge directions and interaction patterns.
 | `services/api/src/tasks/dispatcher.ts` | source | --- | draft |
 | `services/api/src/routes/requests.ts` | source | --- | draft |
 | `services/api/src/schemas.test.ts` | test-plan | --- | draft |
+| `packages/shared/src/credentials.test.ts` | source | --- | draft |
 | `services/api/src/roles.ts` | source | --- | draft |
 | `packages/shared/src/dispatcher.test.ts` | test-plan | --- | draft |
 | `services/api/package.json` | config | --- | draft |
