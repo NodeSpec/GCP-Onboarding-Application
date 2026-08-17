@@ -1,5 +1,11 @@
 import { Timestamp } from '@google-cloud/firestore';
-import { isTerminalRequestStatus, type LifecycleStep, type LifecycleStore } from '@lifecycle/shared';
+import {
+  COMPENSATING_STEP,
+  isTerminalRequestStatus,
+  resolveStepPolicy,
+  type LifecycleStep,
+  type LifecycleStore,
+} from '@lifecycle/shared';
 import { logger } from '../logging.js';
 import type { TaskDispatcher } from '../tasks/dispatcher.js';
 
@@ -79,23 +85,38 @@ export async function advance(
 
   // Nothing left unfinished: the plan is done.
   if (!next) {
+    // A plan that ends in a SUCCEEDED compensating step was cancelled, not
+    // completed. The distinction is the whole point of compensating
+    // cancellation: the request did not do what it set out to do, it undid the
+    // part it had already done, and calling that 'succeeded' would tell an
+    // operator the offboarding went through (REQ-006 AC-5).
+    const compensated = steps.some(
+      (step) => step.name === COMPENSATING_STEP && step.status === 'succeeded',
+    );
+
     await store.transitionRequest({
       requestId,
       expectedFrom: ['running', 'awaiting_approval', 'held'],
-      to: 'succeeded',
+      to: compensated ? 'cancelled' : 'succeeded',
       audit: {
         actor: { ...SYSTEM_ACTOR, onBehalfOf: request.requestedBy },
-        action: 'request.succeeded',
+        action: compensated ? 'request.cancelled' : 'request.succeeded',
         targetUser: request.targetUser,
+        ...(compensated ? { after: { compensatedBy: COMPENSATING_STEP } } : {}),
       },
     });
-    logger.info({ requestId }, 'request complete');
+    logger.info({ requestId, compensated }, compensated ? 'request cancelled' : 'request complete');
     return;
   }
 
-  const policy = request.policySnapshot[next.name];
-  const requiresApproval = policy?.requiresApproval === true;
-  const expiryHours = policy?.expiryHours;
+  // Resolved through the shared helper rather than read off the snapshot
+  // directly. Some approvals are a floor rather than a default: deleting a user
+  // requires two-party approval whatever the snapshot says, and a raw lookup
+  // here would dispatch it unhalted while the persisted step said otherwise
+  // (REQ-006 AC-3).
+  const policy = resolveStepPolicy(request.policySnapshot, next.name);
+  const requiresApproval = policy.requiresApproval;
+  const expiryHours = policy.expiryHours;
 
   /**
    * Everything that follows a halt: move the request, notify, schedule the
@@ -181,7 +202,7 @@ export async function advance(
       actor: { ...SYSTEM_ACTOR, onBehalfOf: request.requestedBy },
       action: 'step.awaiting_approval',
       targetUser: request.targetUser,
-      after: { step: next.name, approverRole: policy?.approverRole ?? 'approver', expiryHours: expiryHours ?? null },
+      after: { step: next.name, approverRole: policy.approverRole, expiryHours: expiryHours ?? null },
     },
     patch: {
       approverNotification: { sentAt: null, recipients: [], deliveryId: null, error: null },

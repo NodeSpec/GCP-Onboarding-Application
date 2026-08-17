@@ -19,6 +19,7 @@ import { DirectoryClient } from './workspace/directoryClient.js';
 import './phases/create.js';
 import './phases/notify.js';
 import './phases/update.js';
+import './phases/delete.js';
 
 /**
  * Worker entry point.

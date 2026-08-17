@@ -1500,6 +1500,7 @@ Startup/initialization order based on edge directions and interaction patterns.
 | `services/api/src/schemas.test.ts` | test-plan | --- | draft |
 | `packages/shared/src/credentials.test.ts` | source | --- | draft |
 | `services/api/src/roles.ts` | source | --- | draft |
+| `packages/shared/src/policy.ts` | source | --- | draft |
 | `packages/shared/src/dispatcher.test.ts` | test-plan | --- | draft |
 | `services/api/package.json` | config | --- | draft |
 | `services/api/src/middleware/iapAuth.ts` | source | --- | draft |
@@ -1514,7 +1515,6 @@ Startup/initialization order based on edge directions and interaction patterns.
 | `packages/shared/src/index.ts` | source | --- | draft |
 | `services/api/src/logging.ts` | source | --- | draft |
 | `packages/shared/package.json` | config | --- | draft |
-| `packages/shared/src/policy.ts` | source | --- | draft |
 | `packages/shared/src/store.emulator.test.ts` | test-plan | --- | draft |
 | `services/api/src/routes/authorization.emulator.test.ts` | test-plan | --- | draft |
 | `services/api/src/routes/admin.ts` | source | --- | draft |

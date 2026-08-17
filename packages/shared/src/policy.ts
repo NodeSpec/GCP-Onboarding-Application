@@ -31,7 +31,11 @@ export const DEFAULT_POLICY: ApprovalPolicy = {
     'apply-attributes': { requiresApproval: true, approverRole: 'approver' },
   },
   delete: {
-    'suspend-user': { requiresApproval: true, approverRole: 'admin' },
+    // Suspension is deliberately NOT gated. It is the immediate access cut and
+    // the one step in this phase that can be undone, so putting an approval in
+    // front of it would leave a leaver signed in until an approver happened to
+    // be awake, which is the exact risk offboarding exists to close. The
+    // approval belongs on the step nobody can take back.
     'delete-user': { requiresApproval: true, approverRole: 'admin' },
   },
 };
@@ -40,15 +44,43 @@ export const DEFAULT_POLICY: ApprovalPolicy = {
 export const NO_APPROVAL: StepPolicy = { requiresApproval: false, approverRole: 'approver' };
 
 /**
+ * Steps whose approval requirement is a FLOOR rather than a default
+ * (REQ-006 AC-3).
+ *
+ * Everything else in this file is configuration an admin can turn off. Deleting
+ * a Workspace user is the one action in this system with no undo: the mailbox,
+ * the Drive contents and the identity are gone, and no compensating step brings
+ * them back. So the approval on it is not policy, it is a property of the
+ * operation, and it is enforced where policy is READ rather than only where it
+ * is written. Enforcing it on write alone would leave a document edited by any
+ * other path able to disable it, and a two-party control one edit can remove is
+ * not a control.
+ */
+export const MANDATORY_APPROVAL_STEPS: ReadonlySet<string> = new Set(['delete-user']);
+
+/**
  * The policy for one step, read from a snapshot rather than from live policy.
  * Takes the phase slice, not the whole document, because that is what is
  * persisted on the request.
+ *
+ * An irreversible step comes back requiring approval whatever the snapshot
+ * says, including when the snapshot says nothing at all.
  */
 export function resolveStepPolicy(
   snapshot: ApprovalPolicy[Phase] | undefined,
   stepName: string,
 ): StepPolicy {
-  return snapshot?.[stepName] ?? NO_APPROVAL;
+  const configured = snapshot?.[stepName] ?? NO_APPROVAL;
+  if (!MANDATORY_APPROVAL_STEPS.has(stepName)) return configured;
+
+  return {
+    ...configured,
+    requiresApproval: true,
+    // An unconfigured irreversible step defaults to the higher role. Falling
+    // through to NO_APPROVAL's 'approver' would quietly widen who may authorise
+    // the one action nobody can take back.
+    approverRole: snapshot?.[stepName]?.approverRole ?? 'admin',
+  };
 }
 
 /** True when any step in the plan will halt for approval. */
