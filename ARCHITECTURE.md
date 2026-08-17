@@ -74,7 +74,7 @@ Use these as the primary brief when implementing or modifying a component.
 - **Lifecycle API Service**: [`.nodespec/tasks/lifecycle-api-service-c424e85a.task.md`](./.nodespec/tasks/lifecycle-api-service-c424e85a.task.md)
 - **Cloud Logging: audit sink**: [`.nodespec/tasks/cloud-logging-audit-sink-6da6f1e9.task.md`](./.nodespec/tasks/cloud-logging-audit-sink-6da6f1e9.task.md)
 - **Lifecycle Step Executor**: [`.nodespec/tasks/lifecycle-step-executor-db8e5409.task.md`](./.nodespec/tasks/lifecycle-step-executor-db8e5409.task.md)
-- **Company GCP Project**: [`.nodespec/tasks/dark-wolf-gcp-project-565b92bd.task.md`](./.nodespec/tasks/dark-wolf-gcp-project-565b92bd.task.md)
+- **Company GCP Project**: [`.nodespec/tasks/company-gcp-project-565b92bd.task.md`](./.nodespec/tasks/company-gcp-project-565b92bd.task.md)
 - **Cloud Run: lifecycle-api**: [`.nodespec/tasks/cloud-run-lifecycle-api-a7ee091d.task.md`](./.nodespec/tasks/cloud-run-lifecycle-api-a7ee091d.task.md)
 - **Operator Console UI**: [`.nodespec/tasks/operator-console-ui-9af301aa.task.md`](./.nodespec/tasks/operator-console-ui-9af301aa.task.md)
 
