@@ -98,6 +98,7 @@ recommended test types, framework suggestions, and test scenarios.
 - **Lifecycle Step Executor**: [`services/worker/src/steps/advance.emulator.test.ts`](./services/worker/src/steps/advance.emulator.test.ts)
 - **Lifecycle API Service**: [`packages/shared/src/dispatcher.test.ts`](./packages/shared/src/dispatcher.test.ts)
 - **Lifecycle API Service**: [`.nodespec/tests/req-001.tests.md`](./.nodespec/tests/req-001.tests.md)
+- **Lifecycle API Service**: [`services/api/src/roles.test.ts`](./services/api/src/roles.test.ts)
 - **Lifecycle Step Executor**: [`.nodespec/tests/req-013.tests.md`](./.nodespec/tests/req-013.tests.md)
 - **Lifecycle Step Executor**: [`services/worker/src/auth/taskAuth.test.ts`](./services/worker/src/auth/taskAuth.test.ts)
 - **Lifecycle API Service**: [`packages/shared/src/store.emulator.test.ts`](./packages/shared/src/store.emulator.test.ts)

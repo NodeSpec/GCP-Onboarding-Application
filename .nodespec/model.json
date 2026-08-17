@@ -1,7 +1,7 @@
 {
   "modelVersion": 1,
   "generatedBy": "nodespec",
-  "modelHash": "43445d6223c4a6d14ca6cc623ce2e02d1f375ef99fb9d8247c30ea2502cf0e8f",
+  "modelHash": "6b5978c72b9afea506d15a22c9e2ff791ab1ea3955ffa4ecebb6b33220be925f",
   "nodes": [
     {
       "id": "1c81cf63-c51e-4b0e-b6ad-7d318332d2fe",
@@ -781,6 +781,12 @@
       "id": "6a1d828b-94ee-4307-bcb3-c9dde24d8f8e",
       "nodeId": "c424e85a-6584-4bb7-a48e-2175ebc6a41b",
       "path": ".nodespec/tests/req-001.tests.md",
+      "kind": "test-plan"
+    },
+    {
+      "id": "6ef6583b-4078-48df-a707-beab36fe91eb",
+      "nodeId": "c424e85a-6584-4bb7-a48e-2175ebc6a41b",
+      "path": "services/api/src/roles.test.ts",
       "kind": "test-plan"
     },
     {
