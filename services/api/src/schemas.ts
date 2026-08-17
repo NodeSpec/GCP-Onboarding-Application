@@ -46,6 +46,12 @@ export type CreatePayload = z.infer<typeof createPayloadSchema>;
  * letter is explaining, so sending there is a guaranteed dead end rather than an
  * edge case; catching it at the boundary tells the operator immediately instead
  * of after a step has run (REQ-004 AC-2).
+ *
+ * `regenerate` decides which credential step the plan gets, so it is a
+ * submission-time decision rather than something the worker infers. Defaulting
+ * it to false is the important half: resetting a real person's password is a
+ * thing an operator asks for explicitly, never something that happens because a
+ * stored credential quietly turned out to be unusable (REQ-030 AC-3, AC-4).
  */
 export const notifyPayloadSchema = z
   .object({
@@ -53,6 +59,7 @@ export const notifyPayloadSchema = z
     givenName: z.string().trim().min(1).max(60),
     familyName: z.string().trim().min(1).max(60),
     notificationEmail: email,
+    regenerate: z.boolean().optional().default(false),
   })
   .strict()
   .refine((p) => p.notificationEmail !== p.primaryEmail, {

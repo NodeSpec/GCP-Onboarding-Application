@@ -1,7 +1,7 @@
 {
   "modelVersion": 1,
   "generatedBy": "nodespec",
-  "modelHash": "dc25fa06e00ee05a0b0908b75869d44b97c6d54811c9b43779dcab9ce88a0e2a",
+  "modelHash": "12e1abd0d860ad9b503c531d504017741e198f0d081f0e86e211bb08968e4e51",
   "nodes": [
     {
       "id": "1c81cf63-c51e-4b0e-b6ad-7d318332d2fe",
@@ -626,7 +626,7 @@
       "nodeId": "c424e85a-6584-4bb7-a48e-2175ebc6a41b",
       "path": "services/api/src/schemas.ts",
       "kind": "source",
-      "contentHash": "000000006e6c40c1"
+      "contentHash": "000000000d28131a"
     },
     {
       "id": "1b30aa33-c945-4448-a9b7-4a7ae469d123",
@@ -888,10 +888,10 @@
     },
     {
       "id": "a2e864ce-457a-42a8-b945-b5895739e1f8",
-      "nodeId": "db8e5409-dc6f-4052-887a-7ba1dd5fb717",
-      "path": "services/worker/src/credentials/credentialStore.ts",
+      "nodeId": "c424e85a-6584-4bb7-a48e-2175ebc6a41b",
+      "path": "packages/shared/src/credentials.ts",
       "kind": "source",
-      "contentHash": "0000000005cdd946"
+      "contentHash": "00000000385f21c2"
     },
     {
       "id": "a69dd899-09db-432c-9e71-a6ad6110de25",
@@ -1092,7 +1092,7 @@
       "nodeId": "c424e85a-6584-4bb7-a48e-2175ebc6a41b",
       "path": "packages/shared/src/stepPlans.ts",
       "kind": "source",
-      "contentHash": "000000007b27601d"
+      "contentHash": "000000005ca85213"
     },
     {
       "id": "e9153a25-3a71-4ecd-a3fe-77950e450ea4",
@@ -1145,7 +1145,7 @@
       "nodeId": "db8e5409-dc6f-4052-887a-7ba1dd5fb717",
       "path": "services/worker/src/steps/executor.ts",
       "kind": "source",
-      "contentHash": "0000000010d5c3b7"
+      "contentHash": "000000005ba89b64"
     },
     {
       "id": "f5c8e402-1d76-4b39-8a52-7e03d6194bc8",

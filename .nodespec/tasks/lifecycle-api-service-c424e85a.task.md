@@ -1527,6 +1527,7 @@ Startup/initialization order based on edge directions and interaction patterns.
 | `services/api/tsconfig.json` | config | --- | draft |
 | `services/api/src/routes/admin.emulator.test.ts` | test-plan | --- | draft |
 | `packages/shared/tsconfig.json` | config | --- | draft |
+| `packages/shared/src/credentials.ts` | source | --- | draft |
 | `packages/shared/src/index.ts` | source | --- | draft |
 | `services/api/src/logging.ts` | source | --- | draft |
 | `packages/shared/package.json` | config | --- | draft |

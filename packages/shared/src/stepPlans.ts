@@ -59,13 +59,22 @@ export function stepPlanFor(phase: Phase, payload: Record<string, unknown>): Ste
       ];
     case 'notify':
       // Phase 2, which is also the resend path (REQ-030): confirm the account
-      // and the notification address, then send.
+      // and the notification address, settle the credential, then send.
+      //
+      // The credential step is NAMED for what it does, and the two names are
+      // distinct on purpose. Approval policy is keyed by step name, so a tenant
+      // that wants two-party approval before an operator resets a real person's
+      // password can require it on 'regenerate-credential' alone, without
+      // putting an approval in front of every ordinary resend (AC-7).
       //
       // Sending is ONE step. Splitting render from deliver would create a step
       // that can succeed while the person still hears nothing, and a partially
       // sent letter is not a state that exists.
       return [
         { name: 'validate-notify-request', input: {} },
+        payload.regenerate === true
+          ? { name: 'regenerate-credential', input: {} }
+          : { name: 'confirm-credential', input: {} },
         { name: 'send-welcome-letter', input: {} },
       ];
     case 'update':

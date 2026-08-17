@@ -1,5 +1,9 @@
-import type { LifecycleStep, LifecycleStore } from '@lifecycle/shared';
-import type { CredentialStore } from '../credentials/credentialStore.js';
+import {
+  CredentialUnavailableError,
+  type CredentialStore,
+  type LifecycleStep,
+  type LifecycleStore,
+} from '@lifecycle/shared';
 import { logger } from '../logging.js';
 import { WorkspaceError } from '../workspace/directoryClient.js';
 import type { DirectoryClient } from '../workspace/directoryClient.js';
@@ -212,7 +216,14 @@ async function settleFailure(
     patch: {
       error: {
         class: errorClass,
-        code: exhausted ? 'retry_budget_exhausted' : (workspaceError?.errorClass ?? 'unhandled'),
+        code: exhausted
+          ? 'retry_budget_exhausted'
+          : // A resend that finds no usable credential is the one non-Workspace
+            // failure an operator is expected to hit and act on, so it gets a
+            // code they can recognise rather than 'unhandled' (REQ-030 AC-3).
+            err instanceof CredentialUnavailableError
+            ? 'credential_unavailable'
+            : (workspaceError?.errorClass ?? 'unhandled'),
         message,
       },
     },

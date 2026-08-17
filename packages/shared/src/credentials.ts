@@ -1,11 +1,15 @@
 import { createCipheriv, createDecipheriv, randomBytes } from 'node:crypto';
 import { SecretManagerServiceClient } from '@google-cloud/secret-manager';
 import { Firestore, Timestamp } from '@google-cloud/firestore';
-import { COLLECTIONS, type CredentialHandoff } from '@lifecycle/shared';
-import { config } from '../config.js';
+import { COLLECTIONS, credentialState, type CredentialHandoff, type CredentialState } from './model.js';
 
 /**
  * Protects the one-time password between generation and operator retrieval.
+ *
+ * Lives in the shared package rather than inside either service because both
+ * ends of the handoff need it: the worker seals a generated password, and the
+ * API service is where an operator retrieves it (REQ-017). A copy in each would
+ * have been two implementations of one ciphertext format.
  *
  * ENCRYPTED, not hashed. This is the decision most likely to be "corrected" by
  * someone applying the usual rule that passwords are hashed. That rule is about
@@ -47,6 +51,29 @@ export interface KeyProvider {
 }
 
 /**
+ * There is no credential left to hand over: none was ever stored, or the stored
+ * one has been retrieved, has expired, or was superseded by a regeneration.
+ *
+ * Typed rather than a bare Error because it is the one failure a resend is
+ * expected to hit on an ordinary day, and the remedy is specific: regenerate.
+ * The executor classifies it as terminal, so the request stops here instead of
+ * burning its retry budget on a condition no retry can change (REQ-030 AC-3).
+ */
+export class CredentialUnavailableError extends Error {
+  constructor(
+    readonly primaryEmail: string,
+    readonly state: CredentialState | 'missing',
+  ) {
+    super(
+      `No usable one-time password is stored for ${primaryEmail} (${state}). ` +
+        'Resend with regenerate=true to set a fresh password, which resets the ' +
+        "account holder's sign-in.",
+    );
+    this.name = 'CredentialUnavailableError';
+  }
+}
+
+/**
  * The credential was written under a key version that can no longer be read,
  * which in practice means the version was destroyed. Typed and specific,
  * because a raw GCM auth-tag failure looks like data corruption and gets
@@ -81,7 +108,13 @@ export class SecretManagerKeyProvider implements KeyProvider {
    */
   private readonly cache = new Map<string, ResolvedKey>();
 
-  constructor(private readonly secretName: string = config.CREDENTIAL_KEY_SECRET) {}
+  /**
+   * The secret resource name is passed in rather than read from a module-level
+   * config. Both services hold this value under their own configuration, and
+   * reaching into either one from here would have tied the shared package to
+   * whichever service happened to be importing it.
+   */
+  constructor(private readonly secretName: string) {}
 
   async resolve(): Promise<ResolvedKey> {
     // Cached for the instance lifetime. A rotation is picked up when Cloud Run
@@ -142,11 +175,72 @@ export function unpack(packed: string): { iv: Buffer; data: Buffer; tag: Buffer 
 export class CredentialStore {
   constructor(
     private readonly db: Firestore,
-    private readonly keys: KeyProvider = new SecretManagerKeyProvider(),
+    private readonly keys: KeyProvider,
   ) {}
 
   private handoffRef(requestId: string) {
     return this.db.collection(COLLECTIONS.credentialHandoffs).doc(requestId);
+  }
+
+  /**
+   * Encrypts a password and returns the record to store, WITHOUT writing it.
+   *
+   * Split out from `stash` for regeneration (REQ-030 AC-4), where the new
+   * ciphertext, the invalidation of the record it supersedes, and the audit
+   * event all have to land in one transaction. Crypto cannot happen inside a
+   * Firestore transaction handler that may be retried, so sealing happens first
+   * and the store commits the result.
+   */
+  async seal(params: {
+    primaryEmail: string;
+    password: string;
+    ttlHours: number;
+  }): Promise<CredentialHandoff> {
+    const { key, version } = await this.keys.resolve();
+    const iv = randomBytes(IV_BYTES);
+    const cipher = createCipheriv(ALGORITHM, key, iv);
+
+    const encrypted = Buffer.concat([cipher.update(params.password, 'utf8'), cipher.final()]);
+    const authTag = cipher.getAuthTag();
+
+    return {
+      primaryEmail: params.primaryEmail,
+      // iv.ciphertext.tag, each base64url. Self describing, so a rotation or an
+      // algorithm change can be detected rather than guessed at.
+      oneTimePasswordCiphertext: [iv, encrypted, authTag]
+        .map((part) => part.toString('base64url'))
+        .join('.'),
+      keyVersion: version,
+      retrievedAt: null,
+      expiresAt: Timestamp.fromMillis(Date.now() + params.ttlHours * 3_600_000),
+      supersededAt: null,
+      supersededBy: null,
+    };
+  }
+
+  /**
+   * The credential a resend would reuse: the newest record for this address
+   * that can still be handed over (REQ-030 AC-3).
+   *
+   * An equality query on primaryEmail only, deliberately. Adding an orderBy
+   * would need a composite index for a collection holding a handful of
+   * documents per user, so the ordering is done here instead.
+   */
+  async currentFor(
+    primaryEmail: string,
+    now: number = Date.now(),
+  ): Promise<{ requestId: string; record: CredentialHandoff } | null> {
+    const snap = await this.db
+      .collection(COLLECTIONS.credentialHandoffs)
+      .where('primaryEmail', '==', primaryEmail.toLowerCase())
+      .get();
+
+    const usable = snap.docs
+      .map((doc) => ({ requestId: doc.id, record: doc.data() as CredentialHandoff }))
+      .filter(({ record }) => credentialState(record, now) === 'valid')
+      .sort((a, b) => b.record.expiresAt.toMillis() - a.record.expiresAt.toMillis());
+
+    return usable[0] ?? null;
   }
 
   /**
@@ -159,24 +253,11 @@ export class CredentialStore {
     password: string;
     ttlHours: number;
   }): Promise<void> {
-    const { key, version } = await this.keys.resolve();
-    const iv = randomBytes(IV_BYTES);
-    const cipher = createCipheriv(ALGORITHM, key, iv);
-
-    const encrypted = Buffer.concat([cipher.update(params.password, 'utf8'), cipher.final()]);
-    const authTag = cipher.getAuthTag();
-
-    // iv.ciphertext.tag, each base64url. Self describing, so a rotation or an
-    // algorithm change can be detected rather than guessed at.
-    const packed = [iv, encrypted, authTag].map((part) => part.toString('base64url')).join('.');
-
-    const record: CredentialHandoff = {
+    const record = await this.seal({
       primaryEmail: params.primaryEmail,
-      oneTimePasswordCiphertext: packed,
-      keyVersion: version,
-      retrievedAt: null,
-      expiresAt: Timestamp.fromMillis(Date.now() + params.ttlHours * 3_600_000),
-    };
+      password: params.password,
+      ttlHours: params.ttlHours,
+    });
 
     await this.handoffRef(params.requestId).set(record);
   }
@@ -186,8 +267,9 @@ export class CredentialStore {
    * concurrent retrievals yield exactly one success (REQ-017).
    *
    * Returns null when there is nothing to give: no record, already retrieved,
-   * or expired. The caller maps that to 410; distinguishing the three would
-   * tell an unauthorised caller more than they should learn.
+   * expired, or superseded by a regeneration. The caller maps that to 410;
+   * distinguishing them would tell an unauthorised caller more than they should
+   * learn.
    */
   async retrieveOnce(requestId: string): Promise<{ primaryEmail: string; password: string } | null> {
     // Resolve the key BEFORE the claim transaction, not after.
@@ -215,8 +297,11 @@ export class CredentialStore {
       if (!snap.exists) return null;
 
       const record = snap.data() as CredentialHandoff;
-      if (record.retrievedAt !== null) return null;
-      if (record.expiresAt.toMillis() <= Date.now()) return null;
+      // One predicate for "can this still be handed over", shared with the
+      // resend precondition. A regeneration supersedes this record, and a
+      // superseded record must not yield a password an operator would then hand
+      // over believing it still signs in (REQ-030 AC-5).
+      if (credentialState(record, Date.now()) !== 'valid') return null;
 
       tx.update(ref, {
         retrievedAt: Timestamp.now(),
