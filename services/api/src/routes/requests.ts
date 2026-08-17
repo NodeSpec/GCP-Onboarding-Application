@@ -5,6 +5,7 @@ import {
   StepNotAwaitingApprovalError,
   buildNewRequest,
   normalisePolicy,
+  resolveStepPolicy,
   stepPlanFor,
   type ApprovalPolicy,
   type CredentialStore,
@@ -119,7 +120,14 @@ export function requestRoutes(deps: RequestRouteDeps): Router {
     // the dispatch is committed against and the task is the follow-up. The
     // enqueue is idempotent on the step's idempotency key, so a repeat is
     // collapsed by Cloud Tasks rather than executing the step twice.
-    const dispatch = await enqueueForStep(deps.dispatcher, documents.request.requestId, started);
+    //
+    // The expiry hours come from the SNAPSHOT, not the live policy. The
+    // snapshot is what decideStep will honour, and reading live policy here
+    // would let an edit between the two produce a halt whose expiry disagrees
+    // with the approval requirements it belongs to (REQ-002 AC-6, AC-7).
+    const dispatch = await enqueueForStep(deps.dispatcher, documents.request.requestId, started, {
+      expiryHours: resolveStepPolicy(documents.request.policySnapshot, started.step.name).expiryHours,
+    });
 
     res.status(201).json({
       requestId: documents.request.requestId,
@@ -351,16 +359,37 @@ async function tryEnqueue(enqueue: () => Promise<void>): Promise<DispatchOutcome
  * it was dispatched, the approver notification when it halted. The halt already
  * wrote its notification record inside the transaction, so this is the drain of
  * that record rather than the record of the intent.
+ *
+ * A halt with an expiry configured also schedules the expiry firing, here at
+ * the halt rather than by a sweep later, so the instant the task fires at is
+ * fixed the moment the waiting starts (REQ-002 AC-7). The worker's advance()
+ * does the same for every later step; this covers the one halt that advance
+ * never sees, the request's first step.
  */
 async function enqueueForStep(
   dispatcher: TaskDispatcher,
   requestId: string,
   started: { outcome: 'dispatched' | 'awaiting_approval'; step: { stepId: string; idempotencyKey: string } },
+  options: { expiryHours?: number | undefined } = {},
 ): Promise<DispatchOutcome> {
   if (started.outcome === 'awaiting_approval') {
-    return tryEnqueue(() =>
+    const notified = await tryEnqueue(() =>
       dispatcher.enqueueApproverNotification({ requestId, stepId: started.step.stepId }),
     );
+
+    if (options.expiryHours && options.expiryHours > 0) {
+      // Scheduled unconditionally once configured; the firing is a no-op when
+      // the step was decided in time, decided transactionally in the store.
+      await tryEnqueue(() =>
+        dispatcher.enqueueApprovalExpiry({
+          requestId,
+          stepId: started.step.stepId,
+          fireAt: new Date(Date.now() + options.expiryHours! * 3_600_000),
+        }),
+      );
+    }
+
+    return notified;
   }
 
   return tryEnqueue(() =>

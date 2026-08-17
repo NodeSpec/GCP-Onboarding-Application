@@ -43,8 +43,6 @@ Ordered WORK ORDERS synthesized from the model — this node's deliverable kind,
   Dependency contract — capture the reference/identifier wiring in this node's config artifacts; no payload schema expected.
 - [ ] **T5 — Implement the integration with Cloud Tasks: lifecycle-steps (gcp-cloud-tasks) per Contract "Step Task Enqueue" (rest).**
   Build to the contract schema EXACTLY (see Interface Contracts).
-  ↳ serves (unverified match): REQ-002 "When a step enters 'awaiting_approval' with an expiry configured, a Cloud Task is scheduled for the expiry instant; if the approval is still pending when that task fires the request terminates in 'rejected' with reason 'approval_expired', and if the step was already decided the task is a no-op" — requirement not mapped to that node; verify or reassign before relying on it
-  ↳ serves (unverified match): REQ-002 "With requiresApproval=false for every step, a request runs end to end with no human interaction beyond submission" — requirement not mapped to that node; verify or reassign before relying on it
   ↳ serves (unverified match): REQ-031 "A create, update or delete request targeting an address on the protected-account list is refused at admission with 409 and a typed ProtectedAccount error, and no request or step document is persisted" — requirement not mapped to that node; verify or reassign before relying on it
   ↳ serves (unverified match): REQ-007 "The lifecycle-worker service admits exactly two caller identities, each confined to its own route class: the Cloud Tasks queue invoker on /tasks/*, and the lifecycle-api service account on /lookup/*. A token issued to either identity is rejected with 401 on the other's routes, and an unauthenticated request is rejected on both" — requirement not mapped to that node; verify or reassign before relying on it
 - [ ] **T6 — Implement the integration with Firestore: lifecycle state and audit (gcp-firestore) per Contract "Lifecycle State Store" (nosql).**
@@ -154,10 +152,10 @@ Any step in any lifecycle phase can be marked as requiring two-party approval by
   → THIS NODE: internal logic
 - [x] Approval policy is read from configuration at request-creation time and snapshotted onto the request, so a later policy edit cannot retroactively change an in-flight request's approval requirements
   → THIS NODE: internal logic
-- [ ] When a step enters 'awaiting_approval' with an expiry configured, a Cloud Task is scheduled for the expiry instant; if the approval is still pending when that task fires the request terminates in 'rejected' with reason 'approval_expired', and if the step was already decided the task is a no-op
-  → covered by Task T5
-- [ ] With requiresApproval=false for every step, a request runs end to end with no human interaction beyond submission
-  → covered by Task T5
+- [x] When a step enters 'awaiting_approval' with an expiry configured, a Cloud Task is scheduled for the expiry instant; if the approval is still pending when that task fires the request terminates in 'rejected' with reason 'approval_expired', and if the step was already decided the task is a no-op
+  → possible match: Contract "Step Task Enqueue" (rest) to Cloud Tasks: lifecycle-steps (unverified — requirement not mapped to that node)
+- [x] With requiresApproval=false for every step, a request runs end to end with no human interaction beyond submission
+  → possible match: Contract "Step Task Enqueue" (rest) to Cloud Tasks: lifecycle-steps (unverified — requirement not mapped to that node)
 
 ### REQ-010: Audit event model, operator-action auditing and log redaction
 Category: non-functional | Status: in-progress
