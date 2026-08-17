@@ -66,6 +66,28 @@ export interface NotificationRecord {
 /** The approver notice written when a step halts. Same shape, distinct role. */
 export type ApproverNotificationRecord = NotificationRecord;
 
+/**
+ * What a step did about the one-time password, and where the retrievable copy
+ * of it now lives (REQ-030).
+ *
+ * The pointer is the part that matters. A credential handoff document is keyed
+ * by the request that produced it, and a resend is a NEW request with a new id,
+ * so without this the operator retrieving "the credential for this request"
+ * would find nothing on a resend that reused the original credential. Recording
+ * the pointer on the step keeps the request document unchanged and gives
+ * retrieval a single place to look.
+ */
+export interface CredentialStepRecord {
+  /** The credentialHandoffs document id holding the retrievable ciphertext. */
+  credentialRequestId: string;
+  /** Set only when this step generated a new password (REQ-030 AC-4). */
+  rotatedAt: FirebaseFirestore.Timestamp | null;
+  /** The record this rotation invalidated, if there was one. */
+  supersededRequestId: string | null;
+  keyVersion: string;
+  expiresAt: FirebaseFirestore.Timestamp;
+}
+
 /** Per-step approval configuration, frozen onto a request at creation. */
 export interface StepPolicy {
   requiresApproval: boolean;
@@ -114,6 +136,12 @@ export interface LifecycleStep {
    * replay of either can short-circuit on its own record.
    */
   notification: NotificationRecord | null;
+  /**
+   * What this step did about the one-time password: confirmed an existing one
+   * is still retrievable, or rotated it (REQ-030). Null on every step whose
+   * work has nothing to do with the credential, which is most of them.
+   */
+  credential: CredentialStepRecord | null;
   startedAt: FirebaseFirestore.Timestamp | null;
   completedAt: FirebaseFirestore.Timestamp | null;
 }
@@ -162,6 +190,40 @@ export interface CredentialHandoff {
   keyVersion: string;
   retrievedAt: FirebaseFirestore.Timestamp | null;
   expiresAt: FirebaseFirestore.Timestamp;
+  /**
+   * Set when a regeneration replaced this record (REQ-030 AC-4). The old
+   * ciphertext is emptied at the same time, so the flag is a reason rather than
+   * the enforcement: retrieval refuses on either.
+   *
+   * Optional on read because records written before regeneration existed carry
+   * neither field. Treat an absent value as null rather than as unset.
+   */
+  supersededAt?: FirebaseFirestore.Timestamp | null;
+  supersededBy?: string | null;
+}
+
+/**
+ * Why a credential cannot be handed over. Ordered from most to least specific,
+ * which is the order `credentialState` tests them in: a superseded record has
+ * usually also been emptied, and reporting "destroyed" there would hide the
+ * fact that a regeneration is the reason.
+ */
+export type CredentialState = 'valid' | 'superseded' | 'retrieved' | 'expired' | 'destroyed';
+
+/**
+ * Whether a stored credential can still be handed to an operator.
+ *
+ * Shared by the resend precondition (REQ-030 AC-3) and by retrieval itself
+ * (REQ-017), so the two cannot disagree about what "still valid" means. Pure,
+ * and takes `now` explicitly, so the expiry boundary is testable without
+ * waiting for a TTL.
+ */
+export function credentialState(record: CredentialHandoff, now: number): CredentialState {
+  if ((record.supersededAt ?? null) !== null) return 'superseded';
+  if (record.retrievedAt !== null) return 'retrieved';
+  if (record.expiresAt.toMillis() <= now) return 'expired';
+  if (record.oneTimePasswordCiphertext === '') return 'destroyed';
+  return 'valid';
 }
 
 export const TERMINAL_REQUEST_STATUSES: readonly RequestStatus[] = [
