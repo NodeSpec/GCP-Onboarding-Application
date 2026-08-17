@@ -40,7 +40,6 @@ Ordered WORK ORDERS synthesized from the model — this node's deliverable kind,
   ↳ serves (unverified match): REQ-006 "A delete step targeting a user already absent from the domain resolves as satisfied (idempotent) rather than failing" — requirement not mapped to that node; verify or reassign before relying on it
   ↳ serves (unverified match): REQ-006 "When a Drive data-transfer successor is specified, the transfer is initiated and confirmed complete before the delete step is dispatched" — requirement not mapped to that node; verify or reassign before relying on it
   ↳ serves (unverified match): REQ-006 "Every offboarding step, including the compensating unsuspend, records the affected user, actor, and outcome to the audit log" — requirement not mapped to that node; verify or reassign before relying on it
-  ↳ serves (unverified match): REQ-013 "Concurrent duplicate task deliveries for the same step result in exactly one Workspace mutation" — requirement not mapped to that node; verify or reassign before relying on it
 - [ ] **T3 — Implement the integration with Firestore: lifecycle state and audit (gcp-firestore) per Contract "Lifecycle State Store" (nosql).**
   Build to the contract schema EXACTLY (see Interface Contracts).
   ↳ serves (unverified match): REQ-005 "Submitting an update request computes a diff against the user's live Workspace state and persists it on the request before execution" — requirement not mapped to that node; verify or reassign before relying on it
@@ -352,8 +351,8 @@ Because Cloud Tasks delivers at least once and Workspace calls can time out afte
   → possible match: Contract "Lifecycle State Store" (nosql) to Firestore: lifecycle state and audit (unverified — requirement not mapped to that node)
 - [x] All retry and classification behavior lives in the shared Workspace client, verified by the absence of retry logic in any phase handler
   → possible match: Contract "Audit Log Sink" (dependency) to Cloud Logging: audit sink (unverified — requirement not mapped to that node)
-- [ ] Concurrent duplicate task deliveries for the same step result in exactly one Workspace mutation
-  → covered by Task T2
+- [x] Concurrent duplicate task deliveries for the same step result in exactly one Workspace mutation
+  → possible match: Contract "Step Task Enqueue" (rest) to Cloud Tasks: lifecycle-steps (unverified — requirement not mapped to that node)
 
 ### REQ-019: Credential generation and encryption at rest
 Category: non-functional | Status: in-progress
@@ -1222,6 +1221,7 @@ Startup/initialization order based on edge directions and interaction patterns.
 | `services/worker/src/notify/singlePath.test.ts` | test-plan | --- | draft |
 | `services/worker/src/steps/approvalExpiry.emulator.test.ts` | source | --- | draft |
 | `services/worker/src/steps/handler.ts` | source | --- | draft |
+| `services/worker/src/steps/duplicateDelivery.emulator.test.ts` | source | --- | draft |
 | `services/worker/src/index.ts` | source | --- | draft |
 | `services/worker/src/auth/taskAuth.test.ts` | test-plan | --- | draft |
 | `services/worker/src/workspace/passwordReset.test.ts` | source | --- | draft |
