@@ -14,8 +14,6 @@ import { beforeAll, beforeEach, describe, expect, it } from 'vitest';
  * a handler that correctly skips both return success to a mock.
  */
 
-// Configuration is read lazily, so this only has to be in place before the
-// first property access. verify-account reads WORKSPACE_CUSTOMER_ID.
 beforeAll(() => {
   Object.assign(process.env, {
     GCP_PROJECT_ID: 'company-project',
@@ -32,7 +30,7 @@ beforeAll(() => {
 });
 
 const { resolveHandler } = await import('../steps/handler.js');
-const { WorkspaceError } = await import('../workspace/directoryClient.js');
+const { UserAlreadyExistsError, WorkspaceError } = await import('../workspace/directoryClient.js');
 await import('./create.js');
 
 type User = admin_directory_v1.Schema$User;
@@ -42,7 +40,6 @@ class FakeDomain {
   users = new Map<string, User>();
   memberships = new Map<string, Set<string>>();
   readonly calls: string[] = [];
-  /** Set to make the next call of that name throw. */
   failures = new Map<string, unknown>();
 
   private maybeFail(op: string) {
@@ -129,8 +126,6 @@ const PAYLOAD = {
   groups: ['engineering@company.com', 'platform@company.com'],
 };
 
-// Named so the group cases read clearly and so indexed access does not fight
-// noUncheckedIndexedAccess in every assertion.
 const [GROUP_A, GROUP_B] = PAYLOAD.groups as [string, string];
 
 let domain: FakeDomain;
@@ -243,12 +238,12 @@ describe('AC-2: every requested group appears in the membership list', () => {
 });
 
 describe('AC-3: a colliding primary email fails before any mutation', () => {
-  it('refuses at validation with a terminal error naming the collision', async () => {
+  it('refuses at validation with a typed AlreadyExists error naming the collision', async () => {
     domain.users.set(PAYLOAD.primaryEmail, { id: 'existing', primaryEmail: PAYLOAD.primaryEmail });
 
     const failing = run('validate-request');
-    await expect(failing).rejects.toBeInstanceOf(WorkspaceError);
-    await expect(failing).rejects.toMatchObject({ errorClass: 'terminal', status: 409 });
+    await expect(failing).rejects.toBeInstanceOf(UserAlreadyExistsError);
+    await expect(failing).rejects.toMatchObject({ errorClass: 'conflict', status: 409 });
     await expect(failing).rejects.toThrow(PAYLOAD.primaryEmail);
   });
 
@@ -277,8 +272,6 @@ describe('AC-4: the account is created with a forced password change', () => {
     expect(credentials.stashed[0]!.requestId).toBe('req-001');
     expect(credentials.stashed[0]!.ttlHours).toBeGreaterThan(0);
 
-    // The step output is readable in the console and mirrored to logs, so the
-    // password must not be anywhere in it.
     expect(JSON.stringify(result)).not.toContain(credentials.stashed[0]!.password);
   });
 
@@ -401,8 +394,6 @@ describe('REQ-013 AC-1: replaying a step against a satisfied domain mutates noth
     const mutations =
       domain.countCalls('insertUser') + domain.countCalls('updateUser') + domain.countCalls('addMember');
 
-    // Replay from create-user, not from validate-request. See the guard test
-    // below for why validation is deliberately excluded.
     await run('create-user');
     await run('apply-attributes');
     for (const groupKey of PAYLOAD.groups) {
@@ -416,34 +407,19 @@ describe('REQ-013 AC-1: replaying a step against a satisfied domain mutates noth
     ).toBe(mutations);
   });
 
-  /**
-   * validate-request is a guard, not a mutation, and it is the one step that
-   * deliberately does NOT resolve as satisfied on replay: REQ-003 AC-3 requires
-   * a colliding primary email to fail. A guard that skipped when the account
-   * already existed would make that criterion unmeetable. Replaying it after
-   * its own phase has created the account is not a real delivery either, since
-   * the executor's transactional claim (REQ-016 AC-2) means a second delivery
-   * of a completed step never reaches the handler.
-   *
-   * This test pins that intent so the conflict is visible rather than being
-   * rediscovered as a bug.
-   */
   it('deliberately refuses to skip validation, which is a guard rather than a mutation', async () => {
     await run('create-user');
 
-    await expect(run('validate-request')).rejects.toMatchObject({ errorClass: 'terminal', status: 409 });
+    await expect(run('validate-request')).rejects.toMatchObject({ errorClass: 'conflict', status: 409 });
     expect(domain.countCalls('insertUser')).toBe(1);
   });
 });
 
 describe('REQ-013 AC-5: a mutation that landed before a client timeout is not applied twice', () => {
   it('detects the server-side success on the next attempt through the pre-mutation read', async () => {
-    // The account is created, then the response is lost: the handler never
-    // returns, so the step is retried with the domain already changed.
     domain.failures.set(`insertUser:${PAYLOAD.primaryEmail}`, { code: 504, message: 'gateway timeout' });
     await run('create-user').catch(() => undefined);
 
-    // Model the mutation having landed despite the lost response.
     await domain.insertUser({
       primaryEmail: PAYLOAD.primaryEmail,
       name: { givenName: 'Ada', familyName: 'Lovelace' },

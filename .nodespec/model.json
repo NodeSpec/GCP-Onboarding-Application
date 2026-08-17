@@ -1,7 +1,7 @@
 {
   "modelVersion": 1,
   "generatedBy": "nodespec",
-  "modelHash": "3564435a02fe79089bbe82b177a2aaa06f6f9e27979b8038d9d06656c2ba2a72",
+  "modelHash": "7708a5695b4b3ecdb4124206f135cc48f0e44f9a0690b2de2fe518d0a26f58de",
   "nodes": [
     {
       "id": "1c81cf63-c51e-4b0e-b6ad-7d318332d2fe",
@@ -1150,7 +1150,8 @@
       "id": "d4e5f6a7-8b9c-0d1e-2f3a-b4c5d6e7f8a9",
       "nodeId": "db8e5409-dc6f-4052-887a-7ba1dd5fb717",
       "path": "services/worker/src/phases/offboarding.emulator.test.ts",
-      "kind": "test-plan"
+      "kind": "test-plan",
+      "contentHash": "000000007104ab63"
     },
     {
       "id": "d63fb149-8e25-4c7a-b134-0a27c95df8e3",
@@ -1188,7 +1189,8 @@
       "id": "e5f6a7b8-9c0d-1e2f-3a4b-c5d6e7f8a9b0",
       "nodeId": "c424e85a-6584-4bb7-a48e-2175ebc6a41b",
       "path": "services/api/src/routes/cancel.emulator.test.ts",
-      "kind": "test-plan"
+      "kind": "test-plan",
+      "contentHash": "0000000028bce886"
     },
     {
       "id": "e6f8b230-9a41-4d75-8c16-3b0e5d2f7a94",
@@ -1238,6 +1240,12 @@
       "kind": "source"
     },
     {
+      "id": "f1a2b3c4-5d6e-7f8a-9b0c-d1e2f3a4b5c6",
+      "nodeId": "db8e5409-dc6f-4052-887a-7ba1dd5fb717",
+      "path": "services/worker/src/phases/create.test.ts",
+      "kind": "test-plan"
+    },
+    {
       "id": "f2186192-700c-4d99-8590-cb2aac591885",
       "nodeId": "565b92bd-2c2c-4a82-be62-b691decdbadf",
       "path": "README.md",
@@ -1261,13 +1269,6 @@
       "nodeId": "c424e85a-6584-4bb7-a48e-2175ebc6a41b",
       "path": "services/api/src/routes/credential.emulator.test.ts",
       "kind": "source"
-    },
-    {
-      "id": "f5c8e402-1d76-4b39-8a52-7e03d6194bc8",
-      "nodeId": "db8e5409-dc6f-4052-887a-7ba1dd5fb717",
-      "path": "services/worker/src/phases/create.test.ts",
-      "kind": "test-plan",
-      "contentHash": "00000000750129b4"
     },
     {
       "id": "f83cdb84-1369-451c-91fe-13e5eb3f9016",

@@ -1222,6 +1222,6 @@ Startup/initialization order based on edge directions and interaction patterns.
 | `services/worker/src/workspace/retry.test.ts` | test-plan | --- | draft |
 | `services/worker/src/phases/credentialExposure.emulator.test.ts` | source | --- | draft |
 | `services/worker/src/logging.ts` | source | --- | draft |
+| `services/worker/src/phases/create.test.ts` | test-plan | --- | draft |
 | `services/worker/src/notify/templates.ts` | source | --- | draft |
 | `services/worker/src/steps/executor.ts` | source | --- | draft |
-| `services/worker/src/phases/create.test.ts` | test-plan | --- | draft |
