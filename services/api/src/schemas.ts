@@ -135,11 +135,40 @@ export const updatePayloadSchema = z
     },
   );
 
+/**
+ * Phase 4: offboarding (REQ-006).
+ *
+ * Two optional fields, and both change the plan rather than a step's behaviour.
+ * `transferDriveTo` adds the data-transfer step; its absence means the files go
+ * with the account, which is a decision an operator makes explicitly rather
+ * than one this system makes for them. `holdHours` is the window between
+ * suspension and deletion during which the request can still be cancelled.
+ *
+ * The successor is refused when it equals the account being deleted: Workspace
+ * would accept the transfer and it would achieve nothing, leaving an operator
+ * believing the files were saved.
+ */
+export const deletePayloadSchema = z
+  .object({
+    primaryEmail: email,
+    transferDriveTo: email.optional(),
+    // Capped at 30 days. A hold is a pause, not an archive, and a request left
+    // in flight for a year is a stuck job by any other name.
+    holdHours: z.number().int().min(1).max(720).optional(),
+    reason: z.string().trim().min(1).max(2000).optional(),
+  })
+  .strict()
+  .refine((p) => p.transferDriveTo === undefined || p.transferDriveTo !== p.primaryEmail, {
+    path: ['transferDriveTo'],
+    message: 'the Drive successor must be a different account from the one being deleted',
+  });
+
 /** Phases with no implementation have no schema, so submission is refused. */
 const PHASE_SCHEMAS: Partial<Record<Phase, z.ZodTypeAny>> = {
   create: createPayloadSchema,
   notify: notifyPayloadSchema,
   update: updatePayloadSchema,
+  delete: deletePayloadSchema,
 };
 
 export interface ValidationIssue {
@@ -189,6 +218,18 @@ export function validatePayload(phase: Phase, payload: unknown): ValidationResul
 export const decisionSchema = z
   .object({
     justification: z.string().trim().min(1, 'a justification is required').max(2000),
+  })
+  .strict();
+
+/**
+ * A cancellation. The reason is required for the same reason an approval
+ * justification is: cancelling an offboarding mid-flight is a decision someone
+ * will ask about later, and 'cancelled by operator@company.com' on its own does
+ * not answer them.
+ */
+export const cancelSchema = z
+  .object({
+    reason: z.string().trim().min(1, 'a reason is required').max(2000),
   })
   .strict();
 

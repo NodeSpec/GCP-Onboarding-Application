@@ -23,6 +23,20 @@ export interface StepPlanEntry {
   input: Record<string, unknown>;
 }
 
+/**
+ * The step appended when an offboarding is cancelled after suspension
+ * (REQ-006 AC-4).
+ *
+ * Not part of any plan: it is added to a request already in flight, because by
+ * the time someone cancels, the account is suspended in Workspace and putting
+ * it back is a Workspace mutation. Mutations only ever happen in the executor,
+ * so a cancellation has to become a step rather than a status change.
+ *
+ * Named here rather than in the phase module so that `advance` can recognise a
+ * finished plan as cancelled rather than succeeded without importing the worker.
+ */
+export const COMPENSATING_STEP = 'unsuspend-user';
+
 /** Thrown when a payload cannot produce a plan. Callers map this to 400. */
 export class InvalidPhasePayload extends Error {
   constructor(
@@ -137,10 +151,30 @@ export function stepPlanFor(phase: Phase, payload: Record<string, unknown>): Ste
       ];
     }
     case 'delete':
-      // Phase 4 is not implemented. Refusing here is deliberate: an empty plan
-      // would persist a request with no steps, which would sit in 'pending'
-      // forever looking like a stuck job rather than an unbuilt one.
-      throw new InvalidPhasePayload(phase, 'this phase is not implemented yet');
+      // Phase 4 (REQ-006). Staged and reversible until the last step.
+      //
+      // The ordering is the safety property, not a preference. Suspension comes
+      // first because it is the immediate access cut and the only step that can
+      // be undone; everything destructive happens behind it. Revocation follows
+      // because a live session or an issued OAuth token outlives a suspension
+      // and would otherwise keep working. Memberships go before deletion so the
+      // access is gone even if a later step fails and the request stops
+      // half-done. Drive transfer is last before deletion because the account
+      // has to still exist to own the files being handed over.
+      //
+      // Memberships are ONE step rather than one per group, unlike phases 1 and
+      // 3. Those act on groups an operator named; this one acts on every group
+      // the account belongs to, which is not knowable at submission time and
+      // which an operator should not have to enumerate to offboard someone.
+      return [
+        { name: 'suspend-user', input: {} },
+        { name: 'revoke-access', input: {} },
+        { name: 'remove-memberships', input: {} },
+        ...(typeof payload.transferDriveTo === 'string' && payload.transferDriveTo.length > 0
+          ? [{ name: 'transfer-drive', input: { successor: payload.transferDriveTo } }]
+          : []),
+        { name: 'delete-user', input: {} },
+      ];
     default: {
       const exhaustive: never = phase;
       throw new InvalidPhasePayload(exhaustive, 'unknown phase');
