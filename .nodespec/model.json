@@ -1,7 +1,7 @@
 {
   "modelVersion": 1,
   "generatedBy": "nodespec",
-  "modelHash": "7c6532603f95b2f185408421c6fbfaad0c6258b53dfd1f5b767cdb8ce8c3a0e6",
+  "modelHash": "37298d01cfd8ebdadf46a448ffd6e0cce7ce9f8df8a020d652914a6c9eff98b7",
   "nodes": [
     {
       "id": "1c81cf63-c51e-4b0e-b6ad-7d318332d2fe",
@@ -654,6 +654,12 @@
       "path": "services/api/src/authz.ts",
       "kind": "source",
       "contentHash": "000000004d3dd53f"
+    },
+    {
+      "id": "2d61cf24-e8e0-4eac-95bb-3ed60c7434aa",
+      "nodeId": "c424e85a-6584-4bb7-a48e-2175ebc6a41b",
+      "path": ".nodespec/tests/req-012.tests.md",
+      "kind": "test-plan"
     },
     {
       "id": "330aa1e9-7fa7-490f-a1ba-a447bf2502d8",
