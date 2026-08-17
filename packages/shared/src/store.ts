@@ -9,6 +9,8 @@ import {
   type ApproverNotificationRecord,
   type AuditActor,
   type AuditEvent,
+  type CredentialHandoff,
+  type CredentialStepRecord,
   type LifecycleRequest,
   type LifecycleStep,
   type NotificationRecord,
@@ -679,6 +681,115 @@ export class LifecycleStore {
         outcome: params.record.error === null ? 'success' : 'failure',
       });
     });
+  }
+
+  // ---------------------------------------------------------------------------
+  // Credential handoff (REQ-017, REQ-030)
+  //
+  // These documents live in their own collection but their lifecycle is
+  // lifecycle state, so the transactions are here rather than in CredentialStore
+  // for the same reason the role bindings are: appendAudit is private, and an
+  // audited change written from a second class would have needed a second copy
+  // of it. CredentialStore keeps the crypto, which needs neither a transaction
+  // nor an audit event.
+  // ---------------------------------------------------------------------------
+
+  private handoffRef(credentialRequestId: string) {
+    return this.db.collection(COLLECTIONS.credentialHandoffs).doc(credentialRequestId);
+  }
+
+  /**
+   * Records what a step decided about the one-time password, and where the step
+   * rotated it, installs the new ciphertext and invalidates the old record, all
+   * in ONE transaction (REQ-030 AC-4, AC-6).
+   *
+   * The writes belong together. A new ciphertext committed without the
+   * invalidation would leave two live credentials for one account, only one of
+   * which actually signs in; an invalidation committed without its replacement
+   * would leave the account with a password nobody holds. Neither is a state an
+   * operator could untangle from the trail afterwards.
+   *
+   * NEITHER PASSWORD IS AUDITED. The event names the operator, the target user
+   * and the records involved, and nothing else. An audit trail readable by
+   * everyone entitled to read audit is not a place to put a credential (AC-6).
+   */
+  async recordCredential(params: {
+    requestId: string;
+    stepId: string;
+    targetUser: string;
+    record: CredentialStepRecord;
+    /** Present only for a rotation. Absent when an existing record is reused. */
+    rotation?: {
+      /** Written at credentialHandoffs/{requestId}. Already encrypted. */
+      handoff: CredentialHandoff;
+      /** The record this replaces, if the account had a live one. */
+      supersedes: string | null;
+    };
+    actor: AuditActor;
+    action: string;
+  }): Promise<void> {
+    await this.db.runTransaction(async (tx) => {
+      const stepRef = this.stepRef(params.requestId, params.stepId);
+
+      // Every read first: Firestore requires it, and the superseded record has
+      // to be read before it can be invalidated.
+      const supersedes = params.rotation?.supersedes ?? null;
+      const [stepSnap, supersededSnap] = await Promise.all([
+        tx.get(stepRef),
+        supersedes === null ? Promise.resolve(null) : tx.get(this.handoffRef(supersedes)),
+      ]);
+
+      if (!stepSnap.exists) {
+        throw new Error(`Step ${params.stepId} not found on request ${params.requestId}`);
+      }
+
+      if (params.rotation) {
+        tx.set(this.handoffRef(params.requestId), params.rotation.handoff);
+
+        if (supersedes !== null && supersededSnap?.exists) {
+          // Emptied, not merely flagged. A flag left beside readable ciphertext
+          // is one bug away from handing an operator a password that no longer
+          // signs in, which is worse than handing over none (AC-5).
+          tx.update(this.handoffRef(supersedes), {
+            oneTimePasswordCiphertext: '',
+            supersededAt: Timestamp.now(),
+            supersededBy: params.requestId,
+          });
+        }
+      }
+
+      tx.update(stepRef, { credential: params.record });
+
+      this.appendAudit(tx, params.requestId, params.stepId, {
+        actor: params.actor,
+        action: params.action,
+        targetUser: params.targetUser,
+        before: supersedes === null ? null : { credentialRequestId: supersedes },
+        after: {
+          credentialRequestId: params.record.credentialRequestId,
+          rotated: params.record.rotatedAt !== null,
+          keyVersion: params.record.keyVersion,
+          expiresAt: params.record.expiresAt.toDate().toISOString(),
+        },
+      });
+    });
+  }
+
+  /**
+   * Which credentialHandoffs document holds the password for this request.
+   *
+   * A resend reuses the credential the original create request produced, so the
+   * document is not always keyed by the request being asked about. Falls back to
+   * the request's own id, which is the create-phase case and the only one that
+   * existed before resend (REQ-030).
+   */
+  async resolveCredentialRequestId(requestId: string): Promise<string> {
+    const steps = await this.listSteps(requestId);
+    for (const step of steps) {
+      const pointer = step.credential?.credentialRequestId;
+      if (pointer) return pointer;
+    }
+    return requestId;
   }
 
   /**

@@ -1,5 +1,9 @@
-import type { LifecycleRequest, LifecycleStep, LifecycleStore } from '@lifecycle/shared';
-import type { CredentialStore } from '../credentials/credentialStore.js';
+import type {
+  CredentialStore,
+  LifecycleRequest,
+  LifecycleStep,
+  LifecycleStore,
+} from '@lifecycle/shared';
 import type { DirectoryClient } from '../workspace/directoryClient.js';
 
 /**
