@@ -1530,5 +1530,6 @@ Startup/initialization order based on edge directions and interaction patterns.
 | `packages/shared/src/requestFactory.test.ts` | test-plan | --- | draft |
 | `packages/shared/src/stepPlans.ts` | source | --- | draft |
 | `packages/shared/src/transitions.ts` | source | --- | draft |
+| `services/api/src/routes/credential.emulator.test.ts` | source | --- | draft |
 | `services/api/src/config.ts` | source | --- | draft |
 | `packages/shared/src/stepPlans.test.ts` | test-plan | --- | draft |

@@ -1,7 +1,7 @@
 {
   "modelVersion": 1,
   "generatedBy": "nodespec",
-  "modelHash": "0df529b5b12231f862d10ebb401f53e5779f75109d361e4288da714f1412791e",
+  "modelHash": "b868f4596fe8e0d1b0ef64bef733400c77a931c3c10bb5d6fb9583b0b360bb7d",
   "nodes": [
     {
       "id": "1c81cf63-c51e-4b0e-b6ad-7d318332d2fe",
@@ -1177,6 +1177,12 @@
       "path": "services/worker/src/steps/executor.ts",
       "kind": "source",
       "contentHash": "000000005ba89b64"
+    },
+    {
+      "id": "f2a9c817-5d43-4e06-b8e1-9c2f7a0d3b65",
+      "nodeId": "c424e85a-6584-4bb7-a48e-2175ebc6a41b",
+      "path": "services/api/src/routes/credential.emulator.test.ts",
+      "kind": "source"
     },
     {
       "id": "f5c8e402-1d76-4b39-8a52-7e03d6194bc8",
