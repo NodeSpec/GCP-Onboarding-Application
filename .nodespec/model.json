@@ -1,7 +1,7 @@
 {
   "modelVersion": 1,
   "generatedBy": "nodespec",
-  "modelHash": "466f85fad5f90d53e12824946a63c31d186cd6ce4001de6d69ee89942786251f",
+  "modelHash": "0a6f00193d2bfb784dc4d2d59bdf90500a3a363bfc11c8a04446f4ef95e1cfd6",
   "nodes": [
     {
       "id": "1c81cf63-c51e-4b0e-b6ad-7d318332d2fe",
@@ -1224,7 +1224,7 @@
       "nodeId": "db8e5409-dc6f-4052-887a-7ba1dd5fb717",
       "path": "services/worker/src/steps/executor.ts",
       "kind": "source",
-      "contentHash": "000000003fc10795"
+      "contentHash": "000000002669d026"
     },
     {
       "id": "f2a9c817-5d43-4e06-b8e1-9c2f7a0d3b65",
