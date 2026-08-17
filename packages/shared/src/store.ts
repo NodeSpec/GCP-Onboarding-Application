@@ -11,6 +11,7 @@ import {
   type AuditEvent,
   type LifecycleRequest,
   type LifecycleStep,
+  type NotificationRecord,
   type OperatorRole,
   type RequestStatus,
   type RoleBinding,
@@ -632,6 +633,52 @@ export class LifecycleStore {
     };
     tx.create(this.db.collection(COLLECTIONS.audit).doc(event.eventId), event);
     return event;
+  }
+
+  /**
+   * Records the outcome of an outbound message on a step, WITHOUT moving it.
+   *
+   * A separate path from transitionStep because sending is not a status change:
+   * the record has to be durable the instant the provider accepts, before the
+   * step is settled, or a crash in between would lose the delivery id and the
+   * replay would send a second copy (REQ-004 AC-3, REQ-032 AC-4). It is still
+   * audited in the same transaction, so this does not become a way to change
+   * state without a record.
+   *
+   * `field` picks which record to write: 'notification' for a step whose own
+   * work was to send, 'approverNotification' for the notice about a halt.
+   */
+  async recordNotification(params: {
+    requestId: string;
+    stepId: string;
+    field: 'notification' | 'approverNotification';
+    record: NotificationRecord;
+    actor: AuditActor;
+    action: string;
+  }): Promise<void> {
+    await this.db.runTransaction(async (tx) => {
+      const ref = this.stepRef(params.requestId, params.stepId);
+      const snap = await tx.get(ref);
+      if (!snap.exists) {
+        throw new Error(`Step ${params.stepId} not found on request ${params.requestId}`);
+      }
+
+      tx.update(ref, { [params.field]: params.record });
+
+      this.appendAudit(tx, params.requestId, params.stepId, {
+        actor: params.actor,
+        action: params.action,
+        // Recipients are addresses, not message content. The body is never
+        // audited: it is rendered from a template and could carry anything the
+        // template author put there.
+        after: {
+          recipients: params.record.recipients,
+          deliveryId: params.record.deliveryId,
+          error: params.record.error,
+        },
+        outcome: params.record.error === null ? 'success' : 'failure',
+      });
+    });
   }
 
   /**

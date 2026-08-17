@@ -1225,6 +1225,7 @@ Startup/initialization order based on edge directions and interaction patterns.
 |------|------|----------|--------|
 | `services/worker/src/workspace/directoryClient.test.ts` | test-plan | --- | draft |
 | `services/worker/package.json` | config | --- | draft |
+| `services/worker/src/notify/templates.test.ts` | test-plan | --- | draft |
 | `.nodespec/tests/req-008.tests.md` - Test plan for requirement: Workspace admin access without Domain-Wide Delegation | test-plan | markdown | draft |
 | `.nodespec/tests/req-016.tests.md` - Test plan for requirement: Durable step execution, resumability and transition integrity | test-plan | markdown | draft |
 | `services/worker/tsconfig.json` | config | --- | draft |
@@ -1238,6 +1239,7 @@ Startup/initialization order based on edge directions and interaction patterns.
 | `services/worker/src/auth/taskAuth.ts` | source | --- | draft |
 | `services/worker/src/config.ts` | source | --- | draft |
 | `.nodespec/tests/req-013.tests.md` - Test plan for requirement: Idempotent, retry-safe Workspace mutations | test-plan | markdown | draft |
+| `services/worker/src/notify/singlePath.test.ts` | test-plan | --- | draft |
 | `services/worker/src/steps/handler.ts` | source | --- | draft |
 | `services/worker/src/credentials/credentialStore.ts` | source | --- | draft |
 | `services/worker/src/index.ts` | source | --- | draft |
