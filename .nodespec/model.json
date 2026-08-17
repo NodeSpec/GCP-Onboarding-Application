@@ -1,7 +1,7 @@
 {
   "modelVersion": 1,
   "generatedBy": "nodespec",
-  "modelHash": "5cce065a3c6f45428b09fd3bb486430a4f4c0cf878191db2d76cbc3bd7c44f08",
+  "modelHash": "c926cdf1d87ca9ab72c4dd10dc1cb8b6ad471ac8144def963275b00c6e570c46",
   "nodes": [
     {
       "id": "1c81cf63-c51e-4b0e-b6ad-7d318332d2fe",
@@ -1025,6 +1025,12 @@
       "contentHash": "000000007f65a93f"
     },
     {
+      "id": "c3d4e5f6-7a8b-9c0d-1e2f-a3b4c5d6e7f8",
+      "nodeId": "db8e5409-dc6f-4052-887a-7ba1dd5fb717",
+      "path": "services/worker/src/phases/update.emulator.test.ts",
+      "kind": "test-plan"
+    },
+    {
       "id": "c3f8a129-6174-4a09-bd53-49ec721fa068",
       "nodeId": "565b92bd-2c2c-4a82-be62-b691decdbadf",
       "path": "package.json",
@@ -1127,6 +1133,12 @@
       "nodeId": "db8e5409-dc6f-4052-887a-7ba1dd5fb717",
       "path": "services/worker/src/workspace/passwordPolicy.test.ts",
       "kind": "source"
+    },
+    {
+      "id": "d4e5f6a7-8b9c-0d1e-2f3a-b4c5d6e7f8a9",
+      "nodeId": "db8e5409-dc6f-4052-887a-7ba1dd5fb717",
+      "path": "services/worker/src/phases/offboarding.emulator.test.ts",
+      "kind": "test-plan"
     },
     {
       "id": "d63fb149-8e25-4c7a-b134-0a27c95df8e3",
