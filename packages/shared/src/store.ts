@@ -280,7 +280,7 @@ export class LifecycleStore {
     decision: 'approved' | 'rejected';
     approver: AuditActor;
     justification: string;
-  }): Promise<{ stepStatus: StepStatus; requestStatus: RequestStatus }> {
+  }): Promise<{ stepStatus: StepStatus; requestStatus: RequestStatus; idempotencyKey: string }> {
     return this.db.runTransaction(async (tx) => {
       const requestRef = this.requestRef(params.requestId);
       const stepRef = this.stepRef(params.requestId, params.stepId);
@@ -327,7 +327,15 @@ export class LifecycleStore {
         after: { status: nextStep, requestStatus: nextRequest, justification: params.justification },
       });
 
-      return { stepStatus: nextStep, requestStatus: nextRequest };
+      // The idempotency key comes back with the decision so the caller can
+      // enqueue the released step without a second read. The key is the task's
+      // deduplication discriminator, so returning it here is what lets the
+      // approval path and the worker's own dispatch agree on one task name.
+      return {
+        stepStatus: nextStep,
+        requestStatus: nextRequest,
+        idempotencyKey: step.idempotencyKey,
+      };
     });
   }
 
