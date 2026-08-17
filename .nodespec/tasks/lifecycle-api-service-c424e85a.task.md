@@ -1529,6 +1529,7 @@ Startup/initialization order based on edge directions and interaction patterns.
 | `packages/shared/src/transitions.test.ts` | test-plan | --- | draft |
 | `packages/shared/src/store.ts` | source | --- | draft |
 | `.nodespec/tests/req-002.tests.md` - Test plan for requirement: Optional two-party approval on any step | test-plan | markdown | draft |
+| `services/api/src/tasks/dispatcher.ts` | source | --- | draft |
 | `services/api/src/routes/requests.ts` | source | --- | draft |
 | `services/api/src/schemas.test.ts` | test-plan | --- | draft |
 | `services/api/package.json` | config | --- | draft |
