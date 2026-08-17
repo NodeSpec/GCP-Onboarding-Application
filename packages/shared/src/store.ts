@@ -9,7 +9,9 @@ import {
   type AuditEvent,
   type LifecycleRequest,
   type LifecycleStep,
+  type OperatorRole,
   type RequestStatus,
+  type RoleBinding,
   type StepStatus,
 } from './model.js';
 import type { NewRequestDocuments } from './requestFactory.js';
@@ -188,14 +190,13 @@ export class LifecycleStore {
    *
    * ON "ENQUEUED IN THE SAME TRANSACTION" (REQ-001 AC-7, REQ-016 AC-7).
    * A Cloud Tasks enqueue is a call to a different system and CANNOT be part of
-   * a Firestore transaction. Taking the criterion literally is impossible. What
-   * it is actually asking for is that a halt can never be committed without the
-   * notification being committed to, and that is achievable: the notification
-   * record is written in the same transaction as the halt, so the two land
-   * together or not at all. The record is the outbox entry; REQ-032 sends from
-   * it and stamps sentAt. If the send is lost, the outstanding record is what
-   * lets a sweeper find it, which a fire-and-forget enqueue after commit would
-   * not.
+   * a Firestore transaction. What the criteria ask for is that a halt can never
+   * be committed without the notification being committed to, and that is
+   * achievable: the notification record is written in the same transaction as
+   * the halt, so the two land together or not at all. The record is the outbox
+   * entry; REQ-032 sends from it and stamps sentAt. If the send is lost, the
+   * outstanding record is what lets a sweeper find it, which a fire-and-forget
+   * enqueue after commit would not.
    *
    * Returns what the caller should enqueue AFTER the transaction commits.
    * Enqueueing inside would risk a task for a transaction that then aborted.
@@ -339,6 +340,102 @@ export class LifecycleStore {
     });
   }
 
+  // ---------------------------------------------------------------------------
+  // Role bindings (REQ-012)
+  //
+  // These live on this class rather than in a store of their own precisely
+  // because of the audit invariant above: appendAudit is private, so a second
+  // class writing role-change audit events would have needed its own copy, and
+  // the guarantee that no audited change can be written without its record
+  // would then be enforced in two places instead of one.
+  // ---------------------------------------------------------------------------
+
+  private roleBindingRef(subject: string) {
+    return this.db.collection(COLLECTIONS.roleBindings).doc(subject.toLowerCase());
+  }
+
+  async getRoleBinding(subject: string): Promise<RoleBinding | null> {
+    const snap = await this.roleBindingRef(subject).get();
+    return snap.exists ? (snap.data() as RoleBinding) : null;
+  }
+
+  /** Every binding, for the admin view. Subject is the document id. */
+  async listRoleBindings(): Promise<(RoleBinding & { subject: string })[]> {
+    const snap = await this.db.collection(COLLECTIONS.roleBindings).get();
+    return snap.docs.map((doc) => ({ ...(doc.data() as RoleBinding), subject: doc.id }));
+  }
+
+  /**
+   * Grants a subject a set of roles, replacing whatever it held.
+   *
+   * The audit event carries the roles BEFORE and AFTER, in one transaction with
+   * the write (REQ-012 AC-6). Recording only the new set would make a privilege
+   * escalation and a no-op edit look identical in the trail, which is the one
+   * question this record exists to answer.
+   */
+  async setRoleBinding(params: {
+    subject: string;
+    kind: 'user' | 'group';
+    roles: OperatorRole[];
+    actor: AuditActor;
+  }): Promise<{ before: OperatorRole[] | null; after: OperatorRole[] }> {
+    const subject = params.subject.toLowerCase();
+    // Deduplicated and ordered, so the before/after comparison in the audit
+    // trail reflects a real privilege change rather than a reordering.
+    const roles = [...new Set(params.roles)].sort();
+
+    return this.db.runTransaction(async (tx) => {
+      const ref = this.roleBindingRef(subject);
+      const snap = await tx.get(ref);
+      const before = snap.exists ? (snap.data() as RoleBinding).roles : null;
+
+      const record: RoleBinding = {
+        kind: params.kind,
+        roles,
+        updatedBy: params.actor.email.toLowerCase(),
+        updatedAt: Timestamp.now(),
+      };
+      tx.set(ref, record);
+
+      this.appendAudit(tx, null, null, {
+        actor: params.actor,
+        action: 'roleBinding.set',
+        targetUser: subject,
+        before: before === null ? null : { roles: before },
+        after: { roles, kind: params.kind },
+      });
+
+      return { before, after: roles };
+    });
+  }
+
+  /** Removes a binding entirely, leaving the subject authorized for nothing. */
+  async removeRoleBinding(params: {
+    subject: string;
+    actor: AuditActor;
+  }): Promise<{ before: OperatorRole[] | null }> {
+    const subject = params.subject.toLowerCase();
+
+    return this.db.runTransaction(async (tx) => {
+      const ref = this.roleBindingRef(subject);
+      const snap = await tx.get(ref);
+      if (!snap.exists) return { before: null };
+
+      const before = (snap.data() as RoleBinding).roles;
+      tx.delete(ref);
+
+      this.appendAudit(tx, null, null, {
+        actor: params.actor,
+        action: 'roleBinding.removed',
+        targetUser: subject,
+        before: { roles: before },
+        after: { roles: [] },
+      });
+
+      return { before };
+    });
+  }
+
   /**
    * The only way to write an audit event. Private to this module and always
    * called from a transition, so an audit event cannot be written without the
@@ -346,7 +443,7 @@ export class LifecycleStore {
    */
   private appendAudit(
     tx: Transaction,
-    requestId: string,
+    requestId: string | null,
     stepId: string | null,
     input: AuditInput,
   ): AuditEvent {
