@@ -1,7 +1,7 @@
 {
   "modelVersion": 1,
   "generatedBy": "nodespec",
-  "modelHash": "4164b1e8c47732a4a556366ad407e0f9b6d60836a20c2fe2e03a1c6775a72753",
+  "modelHash": "d97cc497a3f13344324ef6ec1905c718e5918df57685e46b86f0acf699d7a044",
   "nodes": [
     {
       "id": "1c81cf63-c51e-4b0e-b6ad-7d318332d2fe",
@@ -665,7 +665,8 @@
       "id": "330aa1e9-7fa7-490f-a1ba-a447bf2502d8",
       "nodeId": "c424e85a-6584-4bb7-a48e-2175ebc6a41b",
       "path": "packages/shared/src/transitions.test.ts",
-      "kind": "test-plan"
+      "kind": "test-plan",
+      "contentHash": "00000000240c47ab"
     },
     {
       "id": "34377226-914f-402f-8e00-45e9c6dc9dfa",

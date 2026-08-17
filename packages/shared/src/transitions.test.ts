@@ -44,7 +44,13 @@ const LEGAL_STEP_EDGES: Record<StepStatus, StepStatus[]> = {
   pending: ['ready', 'awaiting_approval', 'skipped'],
   awaiting_approval: ['ready', 'failed'],
   ready: ['running'],
-  running: ['succeeded', 'failed', 'skipped'],
+  // Beyond the three outcomes: 'ready' is the hand-back after a retryable
+  // failure (without it a transient error wedges the step, since claiming
+  // requires 'ready'), and 'running' is the stale-lease reclaim of a step whose
+  // instance died mid-flight. The reclaim is additionally gated on the lease
+  // having expired inside claimStep's transaction; that gate is what this table
+  // deliberately does NOT express, and it is proven in the executor suite.
+  running: ['succeeded', 'failed', 'skipped', 'ready', 'running'],
   failed: ['ready'],
   succeeded: [],
   skipped: [],
