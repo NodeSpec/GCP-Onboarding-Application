@@ -1,7 +1,7 @@
 {
   "modelVersion": 1,
   "generatedBy": "nodespec",
-  "modelHash": "bc69ac1268965500b355954eaa5ea397822e5552025b2007f9e448b73625e59a",
+  "modelHash": "507dba9c132579c7bc43084b696441512f4fc7d07882fc080b39a0eb9d17e974",
   "nodes": [
     {
       "id": "1c81cf63-c51e-4b0e-b6ad-7d318332d2fe",
@@ -893,6 +893,12 @@
       "nodeId": "db8e5409-dc6f-4052-887a-7ba1dd5fb717",
       "path": "services/worker/src/workspace/retry.test.ts",
       "kind": "test-plan"
+    },
+    {
+      "id": "e7a4c136-8b25-4d90-a3f7-52d1096be714",
+      "nodeId": "c424e85a-6584-4bb7-a48e-2175ebc6a41b",
+      "path": "packages/shared/src/stepPlans.ts",
+      "kind": "source"
     },
     {
       "id": "e9153a25-3a71-4ecd-a3fe-77950e450ea4",
