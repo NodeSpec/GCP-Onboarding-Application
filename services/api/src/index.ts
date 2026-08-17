@@ -31,10 +31,17 @@ app.use(
   createIapAuth({
     audience: config.IAP_AUDIENCE ?? '',
     clockToleranceSeconds: config.IAP_CLOCK_SKEW_SECONDS,
-    bypassIdentity:
-      config.AUTH_MODE === 'dev-insecure'
-        ? { email: config.DEV_OPERATOR_EMAIL!.toLowerCase(), subject: 'dev-subject' }
-        : undefined,
+    // Spread rather than assign: under exactOptionalPropertyTypes an explicit
+    // undefined is a supplied bypass identity of the wrong type, not an absent
+    // one, and this is the field whose absence keeps verification switched on.
+    ...(config.AUTH_MODE === 'dev-insecure'
+      ? {
+          bypassIdentity: {
+            email: config.DEV_OPERATOR_EMAIL!.toLowerCase(),
+            subject: 'dev-subject',
+          },
+        }
+      : {}),
   }),
 );
 
