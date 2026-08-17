@@ -1228,6 +1228,8 @@ Startup/initialization order based on edge directions and interaction patterns.
 | `.nodespec/tests/req-008.tests.md` - Test plan for requirement: Workspace admin access without Domain-Wide Delegation | test-plan | markdown | draft |
 | `.nodespec/tests/req-016.tests.md` - Test plan for requirement: Durable step execution, resumability and transition integrity | test-plan | markdown | draft |
 | `services/worker/tsconfig.json` | config | --- | draft |
+| `services/worker/src/notify/approvers.ts` | source | --- | draft |
+| `services/worker/src/phases/notify.ts` | source | --- | draft |
 | `services/worker/src/tasks/dispatcher.ts` | source | --- | draft |
 | `.nodespec/tests/req-003.tests.md` - Test plan for requirement: Phase 1 — User creation with attributes and group assignment | test-plan | markdown | draft |
 | `.nodespec/tests/req-019.tests.md` - Test plan for requirement: Credential generation and encryption at rest | test-plan | markdown | draft |

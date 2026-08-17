@@ -1,7 +1,7 @@
 {
   "modelVersion": 1,
   "generatedBy": "nodespec",
-  "modelHash": "6cd00038caf2edf4bc3dba52485e8c11f9aff22ff5f56bf69cd05435e6dd4d75",
+  "modelHash": "731ef27abb4183eb4431423f6a5c5df70116f33a58c13e428aaaca3f13eddd59",
   "nodes": [
     {
       "id": "1c81cf63-c51e-4b0e-b6ad-7d318332d2fe",
@@ -642,6 +642,12 @@
       "kind": "doc"
     },
     {
+      "id": "23c255fd-55b1-495a-bbdf-81b50fbea74e",
+      "nodeId": "db8e5409-dc6f-4052-887a-7ba1dd5fb717",
+      "path": "services/worker/src/notify/approvers.ts",
+      "kind": "source"
+    },
+    {
       "id": "23e52777-960d-46b8-bd79-93d151596279",
       "nodeId": "c424e85a-6584-4bb7-a48e-2175ebc6a41b",
       "path": "services/api/src/index.ts",
@@ -660,6 +666,12 @@
       "nodeId": "c424e85a-6584-4bb7-a48e-2175ebc6a41b",
       "path": ".nodespec/tests/req-012.tests.md",
       "kind": "test-plan"
+    },
+    {
+      "id": "32a6af8e-e959-4d04-b912-a0b13bfb2608",
+      "nodeId": "db8e5409-dc6f-4052-887a-7ba1dd5fb717",
+      "path": "services/worker/src/phases/notify.ts",
+      "kind": "source"
     },
     {
       "id": "330aa1e9-7fa7-490f-a1ba-a447bf2502d8",
