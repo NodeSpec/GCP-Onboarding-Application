@@ -54,6 +54,32 @@ export class AdminRoleNotGrantedError extends WorkspaceError {
   }
 }
 
+/**
+ * The requested primary email is already taken in the domain.
+ *
+ * A distinct type rather than a message, because this is the one create-phase
+ * failure the operator causes and can fix themselves, and the alternative way
+ * to tell it apart from every other terminal failure is parsing prose. The
+ * executor maps it to a 'validation' step error carrying a stable
+ * 'already_exists' code (REQ-003 AC-3).
+ */
+export class UserAlreadyExistsError extends WorkspaceError {
+  constructor(
+    readonly primaryEmail: string,
+    operation: string,
+    options?: { cause?: unknown },
+  ) {
+    super(
+      `A user already exists with primary email ${primaryEmail}`,
+      'conflict',
+      409,
+      operation,
+      options,
+    );
+    this.name = 'UserAlreadyExistsError';
+  }
+}
+
 function statusOf(err: unknown): number | undefined {
   if (typeof err === 'object' && err !== null) {
     const candidate = err as { code?: unknown; status?: unknown; response?: { status?: unknown } };

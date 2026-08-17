@@ -44,7 +44,6 @@ Ordered WORK ORDERS synthesized from the model — this node's deliverable kind,
   Build to the contract schema EXACTLY (see Interface Contracts).
   ↳ serves (unverified match): REQ-005 "Submitting an update request computes a diff against the user's live Workspace state and persists it on the request before execution" — requirement not mapped to that node; verify or reassign before relying on it
   ↳ serves (unverified match): REQ-005 "Applying the update changes exactly the attributes and memberships in the diff and leaves all other user state untouched" — requirement not mapped to that node; verify or reassign before relying on it
-  ↳ serves (unverified match): REQ-003 "The PLAINTEXT initial password never appears in any Firestore document, API response body, or log entry — only the ciphertext written by REQ-019 is persisted, and a test provisions a user then greps the emitted records for the issued value" — requirement not mapped to that node; verify or reassign before relying on it
 - [ ] **T4 — Implement the integration with Secret Manager (gcp-secret-manager) per Contract "Secret Manager Access" (dependency).**
   Dependency contract — capture the reference/identifier wiring in this node's config artifacts; no payload schema expected.
   ↳ serves (unverified match): REQ-005 "Changing a user's role is expressed as group membership changes plus role-describing attributes — job title, department, manager and org unit path — and all of these are updatable through this phase" — requirement not mapped to that node; verify or reassign before relying on it
@@ -225,8 +224,8 @@ Generation and protection of the one-time password belong to REQ-019: it is pers
   → possible match: Contract "Step Task Enqueue" (rest) to Cloud Tasks: lifecycle-steps (unverified — requirement not mapped to that node)
 - [x] The verification step reads the user and memberships back from Workspace and fails the request if the observed state does not match the intended state
   → possible match: Contract "Step Task Enqueue" (rest) to Cloud Tasks: lifecycle-steps (unverified — requirement not mapped to that node)
-- [ ] The PLAINTEXT initial password never appears in any Firestore document, API response body, or log entry — only the ciphertext written by REQ-019 is persisted, and a test provisions a user then greps the emitted records for the issued value
-  → covered by Task T3
+- [x] The PLAINTEXT initial password never appears in any Firestore document, API response body, or log entry — only the ciphertext written by REQ-019 is persisted, and a test provisions a user then greps the emitted records for the issued value
+  → possible match: Contract "Lifecycle State Store" (nosql) to Firestore: lifecycle state and audit (unverified — requirement not mapped to that node)
 
 ### REQ-032: Approver notification when a step halts for approval
 Category: functional | Status: in-progress
@@ -1221,6 +1220,7 @@ Startup/initialization order based on edge directions and interaction patterns.
 | `.nodespec/tests/req-013.tests.md` - Test plan for requirement: Idempotent, retry-safe Workspace mutations | test-plan | markdown | draft |
 | `services/worker/src/notify/singlePath.test.ts` | test-plan | --- | draft |
 | `services/worker/src/steps/approvalExpiry.emulator.test.ts` | source | --- | draft |
+| `services/worker/src/phases/createCollision.emulator.test.ts` | source | --- | draft |
 | `services/worker/src/steps/handler.ts` | source | --- | draft |
 | `services/worker/src/steps/duplicateDelivery.emulator.test.ts` | source | --- | draft |
 | `services/worker/src/index.ts` | source | --- | draft |
