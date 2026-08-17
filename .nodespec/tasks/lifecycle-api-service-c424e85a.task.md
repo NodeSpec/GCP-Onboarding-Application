@@ -49,10 +49,6 @@ Ordered WORK ORDERS synthesized from the model — this node's deliverable kind,
 - [ ] **T5 — Implement the integration with Cloud Tasks: lifecycle-steps (gcp-cloud-tasks) per Contract "Step Task Enqueue" (rest).**
   Build to the contract schema EXACTLY (see Interface Contracts).
   ↳ serves (unverified match): REQ-001 "When the first step is halted in 'awaiting_approval', an approver-notification task is enqueued in the same transaction as the halt, so a halt can never be committed without the notification being scheduled (REQ-032 performs the send)" — requirement not mapped to that node; verify or reassign before relying on it
-  ↳ serves (unverified match): REQ-002 "A step whose policy sets requiresApproval=true halts in status 'awaiting_approval' and dispatches no Workspace call until approved" — requirement not mapped to that node; verify or reassign before relying on it
-  ↳ serves (unverified match): REQ-002 "An approval attempt by the same identity that created the request is rejected with 403 and the step remains in 'awaiting_approval'" — requirement not mapped to that node; verify or reassign before relying on it
-  ↳ serves (unverified match): REQ-002 "An approval by a distinct identity holding the required approver role transitions the step to 'ready' and dispatches its execution task" — requirement not mapped to that node; verify or reassign before relying on it
-  ↳ serves (unverified match): REQ-002 "A rejection transitions the request to 'rejected', records approver identity, timestamp and justification, and dispatches no further steps" — requirement not mapped to that node; verify or reassign before relying on it
   ↳ serves (unverified match): REQ-002 "When a step enters 'awaiting_approval' with an expiry configured, a Cloud Task is scheduled for the expiry instant; if the approval is still pending when that task fires the request terminates in 'rejected' with reason 'approval_expired', and if the step was already decided the task is a no-op" — requirement not mapped to that node; verify or reassign before relying on it
   ↳ serves (unverified match): REQ-002 "With requiresApproval=false for every step, a request runs end to end with no human interaction beyond submission" — requirement not mapped to that node; verify or reassign before relying on it
   ↳ serves (unverified match): REQ-031 "A create, update or delete request targeting an address on the protected-account list is refused at admission with 409 and a typed ProtectedAccount error, and no request or step document is persisted" — requirement not mapped to that node; verify or reassign before relying on it
@@ -88,19 +84,16 @@ Ordered WORK ORDERS synthesized from the model — this node's deliverable kind,
 - [ ] **T13 — Implement: "Group-based bindings resolve to the same effective permissions as an equivalent individual binding" (REQ-012).**
   No interface contract maps to this criterion — it is this node's internal responsibility.
   ↳ serves: REQ-012 "Group-based bindings resolve to the same effective permissions as an equivalent individual binding"
-- [ ] **T14 — Implement: "An approval or rejection submitted with an empty or whitespace-only justification is refused by the server with 400, independently of any client-side check" (REQ-002).**
-  No interface contract maps to this criterion — it is this node's internal responsibility.
-  ↳ serves: REQ-002 "An approval or rejection submitted with an empty or whitespace-only justification is refused by the server with 400, independently of any client-side check"
-- [ ] **T15 — Implement: "The deployed system exposes no unauthenticated route: an unauthenticated request to every path in the application's route table is rejected, enumerated as a test rather than spot-checked" (REQ-007).**
+- [ ] **T14 — Implement: "The deployed system exposes no unauthenticated route: an unauthenticated request to every path in the application's route table is rejected, enumerated as a test rather than spot-checked" (REQ-007).**
   No interface contract maps to this criterion — it is this node's internal responsibility.
   ↳ serves: REQ-007 "The deployed system exposes no unauthenticated route: an unauthenticated request to every path in the application's route table is rejected, enumerated as a test rather than spot-checked"
-- [ ] **T16 — Implement: "The one-time password can be retrieved exactly once; the ciphertext is destroyed on retrieval and a second attempt returns 410" (REQ-017).**
+- [ ] **T15 — Implement: "The one-time password can be retrieved exactly once; the ciphertext is destroyed on retrieval and a second attempt returns 410" (REQ-017).**
   No interface contract maps to this criterion — it is this node's internal responsibility.
   ↳ serves: REQ-017 "The one-time password can be retrieved exactly once; the ciphertext is destroyed on retrieval and a second attempt returns 410"
-- [ ] **T17 — Implement: "A retrieval after the credential record's TTL has expired returns 410 with the ciphertext already removed" (REQ-017).**
+- [ ] **T16 — Implement: "A retrieval after the credential record's TTL has expired returns 410 with the ciphertext already removed" (REQ-017).**
   No interface contract maps to this criterion — it is this node's internal responsibility.
   ↳ serves: REQ-017 "A retrieval after the credential record's TTL has expired returns 410 with the ciphertext already removed"
-- [ ] **T18 — Verify every acceptance criterion above and tick its box.**
+- [ ] **T17 — Verify every acceptance criterion above and tick its box.**
   Ordering doctrine — plans follow schemas (contract-first TDD): schemas → test plans → implement → verify. Resolve any open [PLACEHOLDER: schema] gap FIRST (get_build_readiness supplies draftInputs; submit the schema via propose_patches update_contract) — test-plan scenarios touching a schemaless contract stay one-line [blocked by schema: …] markers until the schema lands, then the plan refreshes itself.
   AUTOMATED criteria: call get_test_plan for EACH requirement this node serves, implement the plan's test cases, run them, and report every outcome via report_test_results — a passing result flips the criterion's met flag automatically and the response receipt shows which criteria flipped.
   MANUAL criteria (rows marked (manual) above): report_test_results REFUSES to bind them — prove each by ticking its criterion box in this task doc and having the user approve the resulting change card; that approval is the only thing that flips a manual criterion met.
@@ -176,16 +169,16 @@ Category: functional | Status: in-progress
 Any step in any lifecycle phase can be marked as requiring two-party approval by policy. When a step requires approval, execution halts at that step in status 'awaiting_approval' until a second, distinct human identity approves it. The requester may never approve their own request (enforced server-side against the IAP-verified identity, not a client-supplied field). Approval policy is configuration, not code: a policy document declares, per phase and per step, whether approval is required, which operator role may approve, and an optional expiry after which the pending approval auto-rejects. Approvals and rejections are recorded with the approver identity, timestamp, and free-text justification. Rejecting a step terminates the request in status 'rejected' and dispatches no further steps.
 
 **Acceptance criteria — your task boxes:**
-- [ ] A step whose policy sets requiresApproval=true halts in status 'awaiting_approval' and dispatches no Workspace call until approved
-  → covered by Task T5
-- [ ] An approval attempt by the same identity that created the request is rejected with 403 and the step remains in 'awaiting_approval'
-  → covered by Task T5
-- [ ] An approval by a distinct identity holding the required approver role transitions the step to 'ready' and dispatches its execution task
-  → covered by Task T5
-- [ ] A rejection transitions the request to 'rejected', records approver identity, timestamp and justification, and dispatches no further steps
-  → covered by Task T5
-- [ ] An approval or rejection submitted with an empty or whitespace-only justification is refused by the server with 400, independently of any client-side check
-  → covered by Task T14
+- [x] A step whose policy sets requiresApproval=true halts in status 'awaiting_approval' and dispatches no Workspace call until approved
+  → possible match: Contract "Step Task Enqueue" (rest) to Cloud Tasks: lifecycle-steps (unverified — requirement not mapped to that node)
+- [x] An approval attempt by the same identity that created the request is rejected with 403 and the step remains in 'awaiting_approval'
+  → possible match: Contract "Step Task Enqueue" (rest) to Cloud Tasks: lifecycle-steps (unverified — requirement not mapped to that node)
+- [x] An approval by a distinct identity holding the required approver role transitions the step to 'ready' and dispatches its execution task
+  → possible match: Contract "Step Task Enqueue" (rest) to Cloud Tasks: lifecycle-steps (unverified — requirement not mapped to that node)
+- [x] A rejection transitions the request to 'rejected', records approver identity, timestamp and justification, and dispatches no further steps
+  → possible match: Contract "Step Task Enqueue" (rest) to Cloud Tasks: lifecycle-steps (unverified — requirement not mapped to that node)
+- [x] An approval or rejection submitted with an empty or whitespace-only justification is refused by the server with 400, independently of any client-side check
+  → THIS NODE: internal logic
 - [x] Approval policy is read from configuration at request-creation time and snapshotted onto the request, so a later policy edit cannot retroactively change an in-flight request's approval requirements
   → THIS NODE: internal logic
 - [ ] When a step enters 'awaiting_approval' with an expiry configured, a Cloud Task is scheduled for the expiry instant; if the approval is still pending when that task fires the request terminates in 'rejected' with reason 'approval_expired', and if the step was already decided the task is a no-op
@@ -279,7 +272,7 @@ There is no end-user-facing surface anywhere in this system. Users being onboard
 - [ ] Every load-balancer backend service in the deployment has IAP enabled — asserted against the committed Terraform, so a backend added without IAP fails the check
   → covered by Task T2
 - [ ] The deployed system exposes no unauthenticated route: an unauthenticated request to every path in the application's route table is rejected, enumerated as a test rather than spot-checked
-  → covered by Task T15
+  → covered by Task T14
 - [ ] IAP is enabled on the operator backend service and access is granted only to the intended operator group in the OAuth/IAM configuration (manual)
   → covered by Task T2
 
@@ -291,11 +284,11 @@ Owned by the Lifecycle API Service. Credential handoff is split-channel: the wel
 - [ ] The one-time password is returned only to the authenticated operator who created the request, verified against the IAP identity, and a retrieval attempt by any other operator returns 403
   → covered by Task T2
 - [ ] The one-time password can be retrieved exactly once; the ciphertext is destroyed on retrieval and a second attempt returns 410
-  → covered by Task T16
+  → covered by Task T15
 - [ ] Retrieval reads and clears the ciphertext inside a single Firestore transaction, so two concurrent retrievals yield exactly one success
   → covered by Task T6
 - [ ] A retrieval after the credential record's TTL has expired returns 410 with the ciphertext already removed
-  → covered by Task T17
+  → covered by Task T16
 - [ ] The decrypted plaintext appears only in the response body — never in a URL, a redirect target, or any log entry
   → covered by Task T3
 - [ ] Every retrieval attempt — success, wrong operator, second attempt, expired — produces an audit event naming the operator identity

@@ -76,6 +76,18 @@ export function validatePayload(phase: Phase, payload: unknown): ValidationResul
   return { ok: true, value };
 }
 
+/**
+ * An approval decision. The justification is trimmed then length-checked, so a
+ * whitespace-only string is refused rather than stored as an empty audit
+ * record. Enforced here on the server, independently of any client-side check
+ * (REQ-002 AC-5).
+ */
+export const decisionSchema = z
+  .object({
+    justification: z.string().trim().min(1, 'a justification is required').max(2000),
+  })
+  .strict();
+
 /** The submission envelope, distinct from the phase-specific payload. */
 export const submitRequestSchema = z
   .object({

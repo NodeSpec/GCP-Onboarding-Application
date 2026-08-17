@@ -1,6 +1,8 @@
 import {
   ConflictingRequestError,
   InvalidPhasePayload,
+  SelfApprovalError,
+  StepNotAwaitingApprovalError,
   buildNewRequest,
   normalisePolicy,
   stepPlanFor,
@@ -10,7 +12,7 @@ import {
 import { Router } from 'express';
 import { requireRole, type RoleResolver } from '../authz.js';
 import { requireIdentity } from '../middleware/iapAuth.js';
-import { submitRequestSchema, validatePayload } from '../schemas.js';
+import { decisionSchema, submitRequestSchema, validatePayload } from '../schemas.js';
 
 /**
  * The operator request surface.
@@ -110,6 +112,66 @@ export function requestRoutes(deps: RequestRouteDeps): Router {
       steps: documents.steps.map((s) => ({ stepId: s.stepId, name: s.name, status: s.status })),
     });
   });
+
+  /**
+   * Approve or reject a halted step (REQ-002 AC-1 to AC-5).
+   *
+   * Mounted behind requireRole('approver'), so with the provisional resolver in
+   * place these routes are refused for everyone. That is correct while the role
+   * binding store is missing: an approval surface that admits whoever asks is
+   * worse than one nobody can reach.
+   *
+   * The self-approval refusal is NOT enforced here. It lives in the store,
+   * inside the transaction, against the persisted requester and the verified
+   * identity, so it cannot be bypassed by another caller of that method.
+   */
+  for (const decision of ['approved', 'rejected'] as const) {
+    const path = decision === 'approved' ? 'approve' : 'reject';
+
+    router.post(`/:requestId/steps/:stepId/${path}`, requireRole('approver', authz), async (req, res) => {
+      const identity = requireIdentity(req);
+
+      const parsed = decisionSchema.safeParse(req.body);
+      if (!parsed.success) {
+        res.status(400).json({
+          error: 'invalid_decision',
+          issues: parsed.error.issues.map((i) => ({
+            path: i.path.join('.') || '(root)',
+            message: i.message,
+          })),
+        });
+        return;
+      }
+
+      try {
+        const outcome = await deps.store.decideStep({
+          requestId: req.params.requestId!,
+          stepId: req.params.stepId!,
+          decision,
+          approver: { kind: 'human', email: identity.email },
+          justification: parsed.data.justification,
+        });
+
+        res.status(200).json({
+          requestId: req.params.requestId,
+          stepId: req.params.stepId,
+          decision,
+          stepStatus: outcome.stepStatus,
+          requestStatus: outcome.requestStatus,
+        });
+      } catch (err) {
+        if (err instanceof SelfApprovalError) {
+          res.status(403).json({ error: 'self_approval_refused', message: err.message });
+          return;
+        }
+        if (err instanceof StepNotAwaitingApprovalError) {
+          res.status(409).json({ error: 'not_awaiting_approval', observed: err.observed });
+          return;
+        }
+        throw err;
+      }
+    });
+  }
 
   /**
    * The full step history in one call (REQ-001 AC-5). Request, steps in
