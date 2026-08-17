@@ -88,6 +88,66 @@ export interface CredentialStepRecord {
   expiresAt: FirebaseFirestore.Timestamp;
 }
 
+/**
+ * The attributes phase 3 can change (REQ-005 AC-4).
+ *
+ * This list IS the recorded interpretation of "role": the fields that describe
+ * what someone does, alongside the group memberships that grant them access.
+ * Workspace ADMIN role assignment is deliberately absent here, from the
+ * Directory scopes, and from the custom admin role, because a service account
+ * that can assign admin roles can make itself Super Admin (AC-9).
+ */
+export type UpdatableAttribute =
+  | 'givenName'
+  | 'familyName'
+  | 'title'
+  | 'department'
+  | 'managerEmail'
+  | 'orgUnitPath';
+
+/**
+ * One requested attribute change, resolved against live Workspace state.
+ *
+ * `changed` is carried rather than left for the reader to derive, because null
+ * and absence are both meaningful: clearing a title is a real change from
+ * 'Engineer' to null, and a title that is already absent is not. A consumer
+ * comparing before to after would have to reimplement that distinction, and the
+ * approval view and the apply step must not disagree about it.
+ */
+export interface AttributeChange {
+  field: UpdatableAttribute;
+  before: string | null;
+  after: string | null;
+  /** False when the requested value already matches live state (AC-5). */
+  changed: boolean;
+}
+
+/** One requested membership change, resolved against live state. */
+export interface GroupChange {
+  groupKey: string;
+  operation: 'add' | 'remove';
+  /** Whether the user is a member at the moment the diff was computed. */
+  before: boolean;
+  after: boolean;
+  changed: boolean;
+}
+
+/**
+ * What a phase 3 request will actually do, computed against the account as it
+ * stands and frozen onto the request before anything is applied (AC-1).
+ *
+ * Every requested change appears here, including the ones that turn out to be
+ * no-ops, because an approver needs to see what was asked for as well as what
+ * will happen. Filtering the no-ops out would leave an approval screen that
+ * silently disagrees with the request it is approving.
+ */
+export interface UpdateDiff {
+  targetUser: string;
+  computedAt: FirebaseFirestore.Timestamp;
+  attributes: AttributeChange[];
+  groups: GroupChange[];
+}
+
 /** Per-step approval configuration, frozen onto a request at creation. */
 export interface StepPolicy {
   requiresApproval: boolean;
@@ -110,7 +170,12 @@ export interface LifecycleRequest {
    * requirements of a request already in flight (REQ-002).
    */
   policySnapshot: ApprovalPolicy[Phase];
-  computedDiff: Record<string, unknown> | null;
+  /**
+   * What this request will change, resolved against live Workspace state.
+   * Null on every phase that is not an update, and null on an update until its
+   * diff step has run (REQ-005 AC-1).
+   */
+  computedDiff: UpdateDiff | null;
   holdUntil: FirebaseFirestore.Timestamp | null;
   createdAt: FirebaseFirestore.Timestamp;
   updatedAt: FirebaseFirestore.Timestamp;

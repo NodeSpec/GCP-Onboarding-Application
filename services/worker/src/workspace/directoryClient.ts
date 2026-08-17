@@ -80,6 +80,32 @@ export class UserAlreadyExistsError extends WorkspaceError {
   }
 }
 
+/**
+ * The account a request targets does not exist.
+ *
+ * Distinct from the not_found that `call` raises for any 404, because this one
+ * is a verdict about the REQUEST rather than about one API call: the operator
+ * named an address that is not in the domain, and no retry or permission change
+ * will alter that. The executor maps it to a 'validation' step error
+ * (REQ-005 AC-8).
+ */
+export class UserNotFoundError extends WorkspaceError {
+  constructor(
+    readonly primaryEmail: string,
+    operation: string,
+    options?: { cause?: unknown },
+  ) {
+    super(
+      `No user exists with primary email ${primaryEmail}`,
+      'not_found',
+      404,
+      operation,
+      options,
+    );
+    this.name = 'UserNotFoundError';
+  }
+}
+
 function statusOf(err: unknown): number | undefined {
   if (typeof err === 'object' && err !== null) {
     const candidate = err as { code?: unknown; status?: unknown; response?: { status?: unknown } };
@@ -268,6 +294,30 @@ export class DirectoryClient {
   ): Promise<admin_directory_v1.Schema$User> {
     const res = await this.call('users.update', (api) =>
       api.users.update({ userKey: primaryEmail, requestBody: patch }),
+    );
+    return res.data;
+  }
+
+  /**
+   * Merge-updates a user, leaving every field not named in the patch alone
+   * (REQ-005 AC-3).
+   *
+   * users.patch rather than users.update, and the difference is the criterion.
+   * Patch semantics are what let phase 3 change a job title without having to
+   * resend the whole user resource, which is the version of this that
+   * accidentally clears whatever the caller forgot to include.
+   *
+   * Note that Workspace treats `organizations` and `relations` as whole arrays
+   * even under patch: sending one entry replaces the list. Callers building an
+   * attribute patch have to merge those against live state themselves, which
+   * phase 3 does.
+   */
+  async patchUser(
+    primaryEmail: string,
+    patch: admin_directory_v1.Schema$User,
+  ): Promise<admin_directory_v1.Schema$User> {
+    const res = await this.call('users.patch', (api) =>
+      api.users.patch({ userKey: primaryEmail, requestBody: patch }),
     );
     return res.data;
   }
