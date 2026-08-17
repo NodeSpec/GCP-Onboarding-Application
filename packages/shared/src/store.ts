@@ -3,6 +3,7 @@ import { randomUUID } from 'node:crypto';
 import {
   COLLECTIONS,
   NON_TERMINAL_REQUEST_STATUSES,
+  type ApprovalRecord,
   type ApproverNotificationRecord,
   type AuditActor,
   type AuditEvent,
@@ -50,6 +51,33 @@ export class ConflictingRequestError extends Error {
         'Wait for it to finish or cancel it before submitting another.',
     );
     this.name = 'ConflictingRequestError';
+  }
+}
+
+/**
+ * The requester tried to approve their own request. Callers map this to 403.
+ * Checked against the IAP-verified identity inside the transaction, never
+ * against anything the client supplied (REQ-002 AC-2).
+ */
+export class SelfApprovalError extends Error {
+  constructor(readonly requestId: string, readonly identity: string) {
+    super(
+      `${identity} created request ${requestId} and cannot approve it. ` +
+        'Two-party approval requires a second, distinct identity.',
+    );
+    this.name = 'SelfApprovalError';
+  }
+}
+
+/** The step is not waiting on anyone. Callers map this to 409. */
+export class StepNotAwaitingApprovalError extends Error {
+  constructor(
+    readonly requestId: string,
+    readonly stepId: string,
+    readonly observed: StepStatus,
+  ) {
+    super(`Step ${stepId} of ${requestId} is '${observed}', not awaiting approval.`);
+    this.name = 'StepNotAwaitingApprovalError';
   }
 }
 
@@ -226,6 +254,80 @@ export class LifecycleStore {
       });
 
       return { outcome: 'dispatched' as const, step: { ...step, status: 'ready' as const } };
+    });
+  }
+
+  /**
+   * Records an approval decision on a halted step, in ONE transaction.
+   *
+   * The self-approval check lives HERE, inside the transaction, against the
+   * request's persisted requestedBy and the caller's verified identity. Putting
+   * it in the route would leave it bypassable by any future caller of this
+   * method, and two-party approval that can be bypassed is not two-party
+   * approval. The status re-read in the same transaction also makes a double
+   * submit safe: the second observes a step that is no longer awaiting.
+   *
+   * Approval releases the step to 'ready' and returns the request to 'running'.
+   * Rejection fails the step and terminates the request in 'rejected'; no
+   * further step is dispatched because nothing dispatches from a terminal
+   * request.
+   *
+   * Serves REQ-002.
+   */
+  async decideStep(params: {
+    requestId: string;
+    stepId: string;
+    decision: 'approved' | 'rejected';
+    approver: AuditActor;
+    justification: string;
+  }): Promise<{ stepStatus: StepStatus; requestStatus: RequestStatus }> {
+    return this.db.runTransaction(async (tx) => {
+      const requestRef = this.requestRef(params.requestId);
+      const stepRef = this.stepRef(params.requestId, params.stepId);
+
+      const [requestSnap, stepSnap] = await Promise.all([tx.get(requestRef), tx.get(stepRef)]);
+      if (!requestSnap.exists) throw new Error(`Request ${params.requestId} not found`);
+      if (!stepSnap.exists) {
+        throw new Error(`Step ${params.stepId} not found on request ${params.requestId}`);
+      }
+
+      const request = requestSnap.data() as LifecycleRequest;
+      const step = stepSnap.data() as LifecycleStep;
+
+      if (step.status !== 'awaiting_approval') {
+        throw new StepNotAwaitingApprovalError(params.requestId, params.stepId, step.status);
+      }
+
+      const approver = params.approver.email.toLowerCase();
+      if (approver === request.requestedBy) {
+        throw new SelfApprovalError(params.requestId, approver);
+      }
+
+      const approval: ApprovalRecord = {
+        approvedBy: approver,
+        decision: params.decision,
+        justification: params.justification,
+        at: Timestamp.now(),
+      };
+
+      const nextStep: StepStatus = params.decision === 'approved' ? 'ready' : 'failed';
+      const nextRequest: RequestStatus = params.decision === 'approved' ? 'running' : 'rejected';
+
+      assertStepTransition(params.stepId, step.status, nextStep);
+      assertRequestTransition(params.requestId, request.status, nextRequest);
+
+      tx.update(stepRef, { status: nextStep, approval });
+      tx.update(requestRef, { status: nextRequest, updatedAt: Timestamp.now() });
+
+      this.appendAudit(tx, params.requestId, params.stepId, {
+        actor: params.approver,
+        action: `step.${params.decision}`,
+        targetUser: request.targetUser,
+        before: { status: step.status },
+        after: { status: nextStep, requestStatus: nextRequest, justification: params.justification },
+      });
+
+      return { stepStatus: nextStep, requestStatus: nextRequest };
     });
   }
 
