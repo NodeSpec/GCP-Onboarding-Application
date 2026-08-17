@@ -1,7 +1,7 @@
 {
   "modelVersion": 1,
   "generatedBy": "nodespec",
-  "modelHash": "19b3b4613aef8f3ee379928e3632462fe3e15b93cc5de4ee5c3fd8c68841b1b2",
+  "modelHash": "3a86c671d56981bc4543b54291caa6f854be30e966930f71e8e8295e684ceb81",
   "nodes": [
     {
       "id": "1c81cf63-c51e-4b0e-b6ad-7d318332d2fe",
@@ -850,6 +850,12 @@
       "path": ".nodespec/tasks/lifecycle-api-service-c424e85a.task.md",
       "kind": "task",
       "contentHash": "000000001e78f6ba"
+    },
+    {
+      "id": "d3a17f60-9e24-4b83-a175-6c02f8194e39",
+      "nodeId": "db8e5409-dc6f-4052-887a-7ba1dd5fb717",
+      "path": "services/worker/src/credentials/credentialStore.test.ts",
+      "kind": "test-plan"
     },
     {
       "id": "dc658fc7-51f2-4753-9b4e-df6fbd47599f",

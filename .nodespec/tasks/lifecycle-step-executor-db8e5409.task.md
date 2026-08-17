@@ -1276,6 +1276,7 @@ Startup/initialization order based on edge directions and interaction patterns.
 | `services/worker/src/workspace/noDelegation.test.ts` | test-plan | --- | draft |
 | `services/worker/src/steps/advance.ts` | source | --- | draft |
 | `services/worker/src/workspace/directoryClient.ts` | source | --- | draft |
+| `services/worker/src/credentials/credentialStore.test.ts` | test-plan | --- | draft |
 | `services/worker/src/workspace/retry.test.ts` | test-plan | --- | draft |
 | `services/worker/src/logging.ts` | source | --- | draft |
 | `services/worker/src/steps/executor.ts` | source | --- | draft |
