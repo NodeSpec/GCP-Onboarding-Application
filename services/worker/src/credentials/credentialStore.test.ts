@@ -138,9 +138,9 @@ describe('AC-2: the one-time password is stored only as ciphertext', () => {
     await store.stash({ requestId: 'req-1', primaryEmail: 'ada@company.com', password: PASSWORD, ttlHours: 72 });
 
     const record = recordFor('req-1');
-    const [iv, data, tag] = record.oneTimePasswordCiphertext.split('.');
+    const [iv, data, tag] = record.oneTimePasswordCiphertext.split('.') as [string, string, string];
     const flipped = Buffer.from(data, 'base64url');
-    flipped[0] ^= 0xff;
+    flipped[0] = (flipped[0] ?? 0) ^ 0xff;
     record.oneTimePasswordCiphertext = [iv, flipped.toString('base64url'), tag].join('.');
 
     // GCM authenticates as well as encrypts, so a modified record fails rather
