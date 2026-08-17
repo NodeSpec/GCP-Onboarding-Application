@@ -17,7 +17,7 @@
     "test:watch": "vitest",
     "test:emulator": "firebase emulators:exec --only firestore --project demo-lifecycle 'vitest run --config vitest.emulator.config.ts'",
     "typecheck": "npm run typecheck --workspaces --if-present",
-    "verify": "npm run typecheck && npm run test && npm run test:emulator"
+    "verify": "npm run build && npm run typecheck && npm run test && npm run test:emulator"
   },
   "devDependencies": {
     "firebase-tools": "^15.27.0",

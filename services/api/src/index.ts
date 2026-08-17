@@ -1,8 +1,11 @@
+import { Firestore } from '@google-cloud/firestore';
+import { LifecycleStore, normalisePolicy, policyPath, type ApprovalPolicy } from '@lifecycle/shared';
 import express from 'express';
 import pinoHttp from 'pino-http';
 import { config } from './config.js';
 import { logger } from './logging.js';
 import { createIapAuth } from './middleware/iapAuth.js';
+import { requestRoutes } from './routes/requests.js';
 
 /**
  * Service entry point.
@@ -44,6 +47,24 @@ app.use(
       : {}),
   }),
 );
+
+const db = new Firestore({
+  projectId: config.GCP_PROJECT_ID,
+  databaseId: config.FIRESTORE_DATABASE,
+});
+const store = new LifecycleStore(db);
+
+/**
+ * Reads the live approval policy. Called per submission rather than cached, so
+ * an admin's edit takes effect on the next request without a redeploy; each
+ * request then snapshots what it read (REQ-002 AC-6).
+ */
+async function loadPolicy(): Promise<ApprovalPolicy> {
+  const snap = await db.doc(policyPath()).get();
+  return normalisePolicy(snap.exists ? snap.data() : undefined);
+}
+
+app.use('/api/requests', requestRoutes({ store, loadPolicy }));
 
 app.get('/api/me', (req, res) => {
   // Roles are resolved from the role binding store in a later change. Returning
