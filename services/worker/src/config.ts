@@ -2,8 +2,7 @@ import { z } from 'zod';
 
 /**
  * Validated worker configuration. As in the API service, nothing reads
- * process.env directly and the service exits at startup rather than failing on
- * the first task.
+ * process.env directly and validation runs before any real use.
  *
  * QUEUE_INVOKER_SA and API_SERVICE_SA are the two identities this service will
  * admit, each confined to its own routes. A wrong value here should stop the
@@ -51,4 +50,22 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
   return parsed.data;
 }
 
-export const config: Config = loadConfig();
+/**
+ * Lazily resolved singleton. Evaluating at module scope would make every module
+ * that imports config unimportable without a complete environment, which breaks
+ * unit tests that never touch configuration at all. Resolution happens on first
+ * property access instead, so validation still runs before any real use.
+ */
+let cached: Config | undefined;
+
+export const config: Config = new Proxy({} as Config, {
+  get(_target, property) {
+    cached ??= loadConfig();
+    return cached[property as keyof Config];
+  },
+});
+
+/** Test helper: forget the resolved configuration. */
+export function resetConfigCache(): void {
+  cached = undefined;
+}

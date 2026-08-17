@@ -2,7 +2,7 @@ import express from 'express';
 import pinoHttp from 'pino-http';
 import { config } from './config.js';
 import { logger } from './logging.js';
-import { iapAuth } from './middleware/iapAuth.js';
+import { createIapAuth } from './middleware/iapAuth.js';
 
 /**
  * Service entry point.
@@ -24,8 +24,19 @@ app.get('/healthz', (_req, res) => {
   res.status(200).json({ status: 'ok' });
 });
 
-// Everything past this point requires a verified IAP assertion.
-app.use(iapAuth);
+// Everything past this point requires a verified IAP assertion. Built here, in
+// the composition root, rather than at module scope in the middleware: that
+// kept the middleware module unimportable without a full environment.
+app.use(
+  createIapAuth({
+    audience: config.IAP_AUDIENCE ?? '',
+    clockToleranceSeconds: config.IAP_CLOCK_SKEW_SECONDS,
+    bypassIdentity:
+      config.AUTH_MODE === 'dev-insecure'
+        ? { email: config.DEV_OPERATOR_EMAIL!.toLowerCase(), subject: 'dev-subject' }
+        : undefined,
+  }),
+);
 
 app.get('/api/me', (req, res) => {
   // Roles are resolved from the role binding store in a later change. Returning

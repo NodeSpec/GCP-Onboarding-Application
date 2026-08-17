@@ -1,7 +1,7 @@
 {
   "specVersion": 1,
   "generatedBy": "nodespec",
-  "specHash": "f77413e37a7e91cd6ed6612736e682ed5b319dc7363f98025e25a306ae034b1d",
+  "specHash": "0bc26501a3162550eb9b7706105abdb74419d159cd110946370f6198ad11b349",
   "vision": "Company wants an application that supports the full user lifecycle in four phases:\n\n1. User creation, including assignment of attributes and groups\n2. Notifying the user of their new account with a welcome letter and initial password setting instructions\n3. Updating a user's roles/attributes over time\n4. Account deletion\n\nScope and constraints as stated by the customer:\n\n- The application should only worry about one IDP for now — Google Workspace.\n- All of the steps in account creation must be stateful and have optional two-party approval features.\n- The application should run serverless — Cloud Run on GCP.\n- Because it uses Google Workspace, the app must include instructions on how to configure a GCP service account to have admin permissions in Workspace WITHOUT using Domain-Wide Delegation.\n- The serverless application must be protected by IAP, and must include code to verify the IAP JWT header so the security controls cannot be bypassed by reaching the service directly.\n\nThe product is an internal, operator-facing lifecycle console: an IAP-protected web UI plus an API where a requester drafts a lifecycle action, an optional second approver signs off, and a durable state machine executes the Workspace changes step by step — every step resumable, auditable, and idempotent, so a partially-completed onboarding is never left in an unknown state.",
   "constraints": [],
   "preferences": {},
@@ -168,15 +168,15 @@
       "category": "non-functional",
       "acceptanceCriteria": [
         "Each audit event records actor identity, action, target user, before/after state, outcome, and timestamp",
-        "Every operator action — approve, reject, cancel, resume, credential retrieval, role-binding change — writes an audit event in the same Firestore transaction as the state change it describes",
-        "Authorization failures (401 from JWT verification, 403 from self-approval or role checks) produce audit events",
-        "For an automated step the actor is recorded as the system principal together with the request's originating human requester, so machine actions remain attributable",
+        "When an operator performs an approve, reject, cancel, resume, credential retrieval, or role-binding change, the API shall write the audit event and the state change it describes in a single Firestore transaction, verified by a test that forces the transaction to fail and observes neither the state change nor the audit event",
+        "When a request is refused with 401 by assertion verification, or with 403 by the self-approval guard or a role check, the API shall write an audit event carrying the refusal reason, the requested path, and the source IP, recording actor identity only where verification succeeded",
+        "When an automated step writes an audit event, the API shall record the actor as the system principal and shall also record the originating human requester of the parent request, so no machine action is left unattributable",
         "The data access layer exposes no update or delete operation against the audit collection, verified by a test asserting the module's public surface and by a repository check for direct Firestore delete calls on that collection",
         "A structured-logging redaction filter strips password, ciphertext, key, secret, token and assertion fields from every sink, verified by a test that logs a payload containing each and asserts on the emitted record",
-        "No audit payload contains a password, ciphertext, secret value, or raw JWT assertion",
-        "The complete audit history for a request is retrievable in chronological order through the API"
+        "When any audit event is written, the API shall persist a payload containing no password, no ciphertext, no secret value, and no raw JWT assertion, verified by a test that drives every audit-writing path and asserts on the persisted documents",
+        "When an operator requests the audit history for a lifecycle request, the API shall return every audit event recorded against that request in ascending timestamp order, with no event omitted"
       ],
-      "contentHash": "5edfd50bf2ee4544f40fef5d09240cddffae5ed4a624227bd0d2c14a2fca72b0"
+      "contentHash": "90b21326230fce8881d7abc5805fe70ceb2f54aa36640c609fe5e602e9d771a8"
     },
     {
       "requirementId": "REQ-011",

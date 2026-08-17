@@ -27,16 +27,8 @@ Ordered WORK ORDERS synthesized from the model — this node's deliverable kind,
   Start from the catalog's suggested structure: `src/index.ts`, `src/routes/index.ts`, `package.json`, `tsconfig.json`.
 - [ ] **T2 — Implement the integration with Identity-Aware Proxy (gcp-identity-aware-proxy) per Contract "IAP Assertion Verification (JWK Set)" (rest).**
   Build to the contract schema EXACTLY (see Interface Contracts).
-  ↳ serves (unverified match): REQ-010 "Authorization failures (401 from JWT verification, 403 from self-approval or role checks) produce audit events" — requirement not mapped to that node; verify or reassign before relying on it
-  ↳ serves (unverified match): REQ-010 "A structured-logging redaction filter strips password, ciphertext, key, secret, token and assertion fields from every sink, verified by a test that logs a payload containing each and asserts on the emitted record" — requirement not mapped to that node; verify or reassign before relying on it
-  ↳ serves (unverified match): REQ-010 "No audit payload contains a password, ciphertext, secret value, or raw JWT assertion" — requirement not mapped to that node; verify or reassign before relying on it
-  ↳ serves (unverified match): REQ-007 "Every operator-facing route rejects a request carrying no x-goog-iap-jwt-assertion header with 401, and no route handler is invoked" — requirement not mapped to that node; verify or reassign before relying on it
-  ↳ serves (unverified match): REQ-007 "A request with a syntactically valid but wrongly-signed assertion is rejected with 401" — requirement not mapped to that node; verify or reassign before relying on it
-  ↳ serves (unverified match): REQ-007 "A request whose assertion carries a different audience string than the configured backend-service audience is rejected with 401" — requirement not mapped to that node; verify or reassign before relying on it
-  ↳ serves (unverified match): REQ-007 "A request whose assertion carries an issuer other than https://cloud.google.com/iap is rejected with 401" — requirement not mapped to that node; verify or reassign before relying on it
-  ↳ serves (unverified match): REQ-007 "An expired assertion (exp in the past beyond the configured skew) is rejected with 401" — requirement not mapped to that node; verify or reassign before relying on it
-  ↳ serves (unverified match): REQ-007 "A valid assertion populates the request identity from the token's email and sub claims, and a client-supplied identity header or body field is ignored and never overrides it" — requirement not mapped to that node; verify or reassign before relying on it
-  ↳ serves (unverified match): REQ-007 "Verification failures are logged with the reason and source IP but never log the raw assertion" — requirement not mapped to that node; verify or reassign before relying on it
+  ↳ serves (unverified match): REQ-010 "When a request is refused with 401 by assertion verification, or with 403 by the self-approval guard or a role check, the API shall write an audit event carrying the refusal reason, the requested path, and the source IP, recording actor identity only where verification succeeded" — requirement not mapped to that node; verify or reassign before relying on it
+  ↳ serves (unverified match): REQ-010 "When any audit event is written, the API shall persist a payload containing no password, no ciphertext, no secret value, and no raw JWT assertion, verified by a test that drives every audit-writing path and asserts on the persisted documents" — requirement not mapped to that node; verify or reassign before relying on it
   ↳ serves (unverified match): REQ-007 "Every load-balancer backend service in the deployment has IAP enabled — asserted against the committed Terraform, so a backend added without IAP fails the check" — requirement not mapped to that node; verify or reassign before relying on it
   ↳ serves (unverified match): REQ-007 "IAP is enabled on the operator backend service and access is granted only to the intended operator group in the OAuth/IAM configuration" — requirement not mapped to that node; verify or reassign before relying on it
   ↳ serves (unverified match): REQ-017 "The one-time password is returned only to the authenticated operator who created the request, verified against the IAP identity, and a retrieval attempt by any other operator returns 403" — requirement not mapped to that node; verify or reassign before relying on it
@@ -45,9 +37,10 @@ Ordered WORK ORDERS synthesized from the model — this node's deliverable kind,
   ↳ serves (unverified match): REQ-012 "The admin role can edit approval policy, cancel or resume any request, and read the full audit trail" — requirement not mapped to that node; verify or reassign before relying on it
   ↳ serves (unverified match): REQ-012 "Role binding changes write audit events recording the actor, the subject, and the before/after roles" — requirement not mapped to that node; verify or reassign before relying on it
   ↳ serves (unverified match): REQ-010 "Each audit event records actor identity, action, target user, before/after state, outcome, and timestamp" — requirement not mapped to that node; verify or reassign before relying on it
-  ↳ serves (unverified match): REQ-010 "Every operator action — approve, reject, cancel, resume, credential retrieval, role-binding change — writes an audit event in the same Firestore transaction as the state change it describes" — requirement not mapped to that node; verify or reassign before relying on it
+  ↳ serves (unverified match): REQ-010 "When an operator performs an approve, reject, cancel, resume, credential retrieval, or role-binding change, the API shall write the audit event and the state change it describes in a single Firestore transaction, verified by a test that forces the transaction to fail and observes neither the state change nor the audit event" — requirement not mapped to that node; verify or reassign before relying on it
+  ↳ serves (unverified match): REQ-010 "When an automated step writes an audit event, the API shall record the actor as the system principal and shall also record the originating human requester of the parent request, so no machine action is left unattributable" — requirement not mapped to that node; verify or reassign before relying on it
   ↳ serves (unverified match): REQ-010 "The data access layer exposes no update or delete operation against the audit collection, verified by a test asserting the module's public surface and by a repository check for direct Firestore delete calls on that collection" — requirement not mapped to that node; verify or reassign before relying on it
-  ↳ serves (unverified match): REQ-010 "The complete audit history for a request is retrievable in chronological order through the API" — requirement not mapped to that node; verify or reassign before relying on it
+  ↳ serves (unverified match): REQ-010 "When an operator requests the audit history for a lifecycle request, the API shall return every audit event recorded against that request in ascending timestamp order, with no event omitted" — requirement not mapped to that node; verify or reassign before relying on it
   ↳ serves (unverified match): REQ-031 "A refused attempt writes an audit event naming the operator, the targeted protected account, and the action attempted" — requirement not mapped to that node; verify or reassign before relying on it
   ↳ serves (unverified match): REQ-017 "The decrypted plaintext appears only in the response body — never in a URL, a redirect target, or any log entry" — requirement not mapped to that node; verify or reassign before relying on it
   ↳ serves (unverified match): REQ-017 "Every retrieval attempt — success, wrong operator, second attempt, expired — produces an audit event naming the operator identity" — requirement not mapped to that node; verify or reassign before relying on it
@@ -66,7 +59,6 @@ Ordered WORK ORDERS synthesized from the model — this node's deliverable kind,
   ↳ serves (unverified match): REQ-002 "A rejection transitions the request to 'rejected', records approver identity, timestamp and justification, and dispatches no further steps" — requirement not mapped to that node; verify or reassign before relying on it
   ↳ serves (unverified match): REQ-002 "When a step enters 'awaiting_approval' with an expiry configured, a Cloud Task is scheduled for the expiry instant; if the approval is still pending when that task fires the request terminates in 'rejected' with reason 'approval_expired', and if the step was already decided the task is a no-op" — requirement not mapped to that node; verify or reassign before relying on it
   ↳ serves (unverified match): REQ-002 "With requiresApproval=false for every step, a request runs end to end with no human interaction beyond submission" — requirement not mapped to that node; verify or reassign before relying on it
-  ↳ serves (unverified match): REQ-010 "For an automated step the actor is recorded as the system principal together with the request's originating human requester, so machine actions remain attributable" — requirement not mapped to that node; verify or reassign before relying on it
   ↳ serves (unverified match): REQ-031 "A create, update or delete request targeting an address on the protected-account list is refused at admission with 409 and a typed ProtectedAccount error, and no request or step document is persisted" — requirement not mapped to that node; verify or reassign before relying on it
   ↳ serves (unverified match): REQ-007 "The lifecycle-worker service admits exactly two caller identities, each confined to its own route class: the Cloud Tasks queue invoker on /tasks/*, and the lifecycle-api service account on /lookup/*. A token issued to either identity is rejected with 401 on the other's routes, and an unauthenticated request is rejected on both" — requirement not mapped to that node; verify or reassign before relying on it
 - [ ] **T6 — Implement the integration with Firestore: lifecycle state and audit (gcp-firestore) per Contract "Lifecycle State Store" (nosql).**
@@ -110,19 +102,16 @@ Ordered WORK ORDERS synthesized from the model — this node's deliverable kind,
 - [ ] **T16 — Implement: "Approval policy is read from configuration at request-creation time and snapshotted onto the request, so a later policy edit cannot retroactively change an in-flight request's approval requirements" (REQ-002).**
   No interface contract maps to this criterion — it is this node's internal responsibility.
   ↳ serves: REQ-002 "Approval policy is read from configuration at request-creation time and snapshotted onto the request, so a later policy edit cannot retroactively change an in-flight request's approval requirements"
-- [ ] **T17 — Implement: "An unknown key id triggers a JWK set refresh and the request succeeds if the refreshed set contains the key; a still-unknown kid is rejected with 401" (REQ-007).**
-  No interface contract maps to this criterion — it is this node's internal responsibility.
-  ↳ serves: REQ-007 "An unknown key id triggers a JWK set refresh and the request succeeds if the refreshed set contains the key; a still-unknown kid is rejected with 401"
-- [ ] **T18 — Implement: "The deployed system exposes no unauthenticated route: an unauthenticated request to every path in the application's route table is rejected, enumerated as a test rather than spot-checked" (REQ-007).**
+- [ ] **T17 — Implement: "The deployed system exposes no unauthenticated route: an unauthenticated request to every path in the application's route table is rejected, enumerated as a test rather than spot-checked" (REQ-007).**
   No interface contract maps to this criterion — it is this node's internal responsibility.
   ↳ serves: REQ-007 "The deployed system exposes no unauthenticated route: an unauthenticated request to every path in the application's route table is rejected, enumerated as a test rather than spot-checked"
-- [ ] **T19 — Implement: "The one-time password can be retrieved exactly once; the ciphertext is destroyed on retrieval and a second attempt returns 410" (REQ-017).**
+- [ ] **T18 — Implement: "The one-time password can be retrieved exactly once; the ciphertext is destroyed on retrieval and a second attempt returns 410" (REQ-017).**
   No interface contract maps to this criterion — it is this node's internal responsibility.
   ↳ serves: REQ-017 "The one-time password can be retrieved exactly once; the ciphertext is destroyed on retrieval and a second attempt returns 410"
-- [ ] **T20 — Implement: "A retrieval after the credential record's TTL has expired returns 410 with the ciphertext already removed" (REQ-017).**
+- [ ] **T19 — Implement: "A retrieval after the credential record's TTL has expired returns 410 with the ciphertext already removed" (REQ-017).**
   No interface contract maps to this criterion — it is this node's internal responsibility.
   ↳ serves: REQ-017 "A retrieval after the credential record's TTL has expired returns 410 with the ciphertext already removed"
-- [ ] **T21 — Verify every acceptance criterion above and tick its box.**
+- [ ] **T20 — Verify every acceptance criterion above and tick its box.**
   Ordering doctrine — plans follow schemas (contract-first TDD): schemas → test plans → implement → verify. Resolve any open [PLACEHOLDER: schema] gap FIRST (get_build_readiness supplies draftInputs; submit the schema via propose_patches update_contract) — test-plan scenarios touching a schemaless contract stay one-line [blocked by schema: …] markers until the schema lands, then the plan refreshes itself.
   AUTOMATED criteria: call get_test_plan for EACH requirement this node serves, implement the plan's test cases, run them, and report every outcome via report_test_results — a passing result flips the criterion's met flag automatically and the response receipt shows which criteria flipped.
   MANUAL criteria (rows marked (manual) above): report_test_results REFUSES to bind them — prove each by ticking its criterion box in this task doc and having the user approve the resulting change card; that approval is the only thing that flips a manual criterion met.
@@ -226,19 +215,19 @@ The redaction filter lives here too: secrets, passwords, ciphertext, and raw JWT
 **Acceptance criteria — your task boxes:**
 - [ ] Each audit event records actor identity, action, target user, before/after state, outcome, and timestamp
   → covered by Task T3
-- [ ] Every operator action — approve, reject, cancel, resume, credential retrieval, role-binding change — writes an audit event in the same Firestore transaction as the state change it describes
+- [ ] When an operator performs an approve, reject, cancel, resume, credential retrieval, or role-binding change, the API shall write the audit event and the state change it describes in a single Firestore transaction, verified by a test that forces the transaction to fail and observes neither the state change nor the audit event
   → covered by Task T3
-- [ ] Authorization failures (401 from JWT verification, 403 from self-approval or role checks) produce audit events
+- [ ] When a request is refused with 401 by assertion verification, or with 403 by the self-approval guard or a role check, the API shall write an audit event carrying the refusal reason, the requested path, and the source IP, recording actor identity only where verification succeeded
   → covered by Task T2
-- [ ] For an automated step the actor is recorded as the system principal together with the request's originating human requester, so machine actions remain attributable
-  → covered by Task T5
+- [ ] When an automated step writes an audit event, the API shall record the actor as the system principal and shall also record the originating human requester of the parent request, so no machine action is left unattributable
+  → covered by Task T3
 - [ ] The data access layer exposes no update or delete operation against the audit collection, verified by a test asserting the module's public surface and by a repository check for direct Firestore delete calls on that collection
   → covered by Task T3
-- [ ] A structured-logging redaction filter strips password, ciphertext, key, secret, token and assertion fields from every sink, verified by a test that logs a payload containing each and asserts on the emitted record
+- [x] A structured-logging redaction filter strips password, ciphertext, key, secret, token and assertion fields from every sink, verified by a test that logs a payload containing each and asserts on the emitted record
+  → possible match: Contract "IAP Assertion Verification (JWK Set)" (rest) to Identity-Aware Proxy (unverified — requirement not mapped to that node)
+- [ ] When any audit event is written, the API shall persist a payload containing no password, no ciphertext, no secret value, and no raw JWT assertion, verified by a test that drives every audit-writing path and asserts on the persisted documents
   → covered by Task T2
-- [ ] No audit payload contains a password, ciphertext, secret value, or raw JWT assertion
-  → covered by Task T2
-- [ ] The complete audit history for a request is retrievable in chronological order through the API
+- [ ] When an operator requests the audit history for a lifecycle request, the API shall return every audit event recorded against that request in ascending timestamp order, with no event omitted
   → covered by Task T3
 
 ### REQ-031: Protected accounts excluded from lifecycle targeting
@@ -278,22 +267,22 @@ Across both services, Cloud Run ingress is restricted to internal-and-cloud-load
 There is no end-user-facing surface anywhere in this system. Users being onboarded never interact with the application; they receive a letter and use Google's own sign-in and password-change flow. That is what allows total IAP coverage, and any future feature that would require an unauthenticated route is a change to this requirement and needs the customer's agreement first.
 
 **Acceptance criteria — your task boxes:**
-- [ ] Every operator-facing route rejects a request carrying no x-goog-iap-jwt-assertion header with 401, and no route handler is invoked
-  → covered by Task T2
-- [ ] A request with a syntactically valid but wrongly-signed assertion is rejected with 401
-  → covered by Task T2
-- [ ] A request whose assertion carries a different audience string than the configured backend-service audience is rejected with 401
-  → covered by Task T2
-- [ ] A request whose assertion carries an issuer other than https://cloud.google.com/iap is rejected with 401
-  → covered by Task T2
-- [ ] An expired assertion (exp in the past beyond the configured skew) is rejected with 401
-  → covered by Task T2
-- [ ] A valid assertion populates the request identity from the token's email and sub claims, and a client-supplied identity header or body field is ignored and never overrides it
-  → covered by Task T2
-- [ ] An unknown key id triggers a JWK set refresh and the request succeeds if the refreshed set contains the key; a still-unknown kid is rejected with 401
-  → covered by Task T17
-- [ ] Verification failures are logged with the reason and source IP but never log the raw assertion
-  → covered by Task T2
+- [x] Every operator-facing route rejects a request carrying no x-goog-iap-jwt-assertion header with 401, and no route handler is invoked
+  → possible match: Contract "IAP Assertion Verification (JWK Set)" (rest) to Identity-Aware Proxy (unverified — requirement not mapped to that node)
+- [x] A request with a syntactically valid but wrongly-signed assertion is rejected with 401
+  → possible match: Contract "IAP Assertion Verification (JWK Set)" (rest) to Identity-Aware Proxy (unverified — requirement not mapped to that node)
+- [x] A request whose assertion carries a different audience string than the configured backend-service audience is rejected with 401
+  → possible match: Contract "IAP Assertion Verification (JWK Set)" (rest) to Identity-Aware Proxy (unverified — requirement not mapped to that node)
+- [x] A request whose assertion carries an issuer other than https://cloud.google.com/iap is rejected with 401
+  → possible match: Contract "IAP Assertion Verification (JWK Set)" (rest) to Identity-Aware Proxy (unverified — requirement not mapped to that node)
+- [x] An expired assertion (exp in the past beyond the configured skew) is rejected with 401
+  → possible match: Contract "IAP Assertion Verification (JWK Set)" (rest) to Identity-Aware Proxy (unverified — requirement not mapped to that node)
+- [x] A valid assertion populates the request identity from the token's email and sub claims, and a client-supplied identity header or body field is ignored and never overrides it
+  → possible match: Contract "IAP Assertion Verification (JWK Set)" (rest) to Identity-Aware Proxy (unverified — requirement not mapped to that node)
+- [x] An unknown key id triggers a JWK set refresh and the request succeeds if the refreshed set contains the key; a still-unknown kid is rejected with 401
+  → THIS NODE: internal logic
+- [x] Verification failures are logged with the reason and source IP but never log the raw assertion
+  → possible match: Contract "IAP Assertion Verification (JWK Set)" (rest) to Identity-Aware Proxy (unverified — requirement not mapped to that node)
 - [ ] Each deployed Cloud Run service rejects a direct request to its *.run.app URL, proving the load balancer is the only ingress path into the system
   → covered by Task T8
 - [ ] The lifecycle-worker service admits exactly two caller identities, each confined to its own route class: the Cloud Tasks queue invoker on /tasks/*, and the lifecycle-api service account on /lookup/*. A token issued to either identity is rejected with 401 on the other's routes, and an unauthenticated request is rejected on both
@@ -301,7 +290,7 @@ There is no end-user-facing surface anywhere in this system. Users being onboard
 - [ ] Every load-balancer backend service in the deployment has IAP enabled — asserted against the committed Terraform, so a backend added without IAP fails the check
   → covered by Task T2
 - [ ] The deployed system exposes no unauthenticated route: an unauthenticated request to every path in the application's route table is rejected, enumerated as a test rather than spot-checked
-  → covered by Task T18
+  → covered by Task T17
 - [ ] IAP is enabled on the operator backend service and access is granted only to the intended operator group in the OAuth/IAM configuration (manual)
   → covered by Task T2
 
@@ -313,11 +302,11 @@ Owned by the Lifecycle API Service. Credential handoff is split-channel: the wel
 - [ ] The one-time password is returned only to the authenticated operator who created the request, verified against the IAP identity, and a retrieval attempt by any other operator returns 403
   → covered by Task T2
 - [ ] The one-time password can be retrieved exactly once; the ciphertext is destroyed on retrieval and a second attempt returns 410
-  → covered by Task T19
+  → covered by Task T18
 - [ ] Retrieval reads and clears the ciphertext inside a single Firestore transaction, so two concurrent retrievals yield exactly one success
   → covered by Task T6
 - [ ] A retrieval after the credential record's TTL has expired returns 410 with the ciphertext already removed
-  → covered by Task T20
+  → covered by Task T19
 - [ ] The decrypted plaintext appears only in the response body — never in a URL, a redirect target, or any log entry
   → covered by Task T3
 - [ ] Every retrieval attempt — success, wrong operator, second attempt, expired — produces an audit event naming the operator identity
@@ -1542,3 +1531,26 @@ Startup/initialization order based on edge directions and interaction patterns.
 - HTTP errors from Lifecycle Step Executor ("Directory Lookup (read-only)"): handle 4xx (client error), 5xx (server error), timeouts, and connection refused
 
 **Parent Container:** Cloud Run: lifecycle-api (docker-container)
+
+## Existing Implementation
+
+| File | Kind | Language | Status |
+|------|------|----------|--------|
+| `packages/shared/src/model.ts` | source | --- | draft |
+| `services/api/src/middleware/iapAuth.test.ts` | test-plan | --- | draft |
+| `.nodespec/tests/req-007.tests.md` - Test plan for requirement: IAP protection with server-side JWT assertion verification | test-plan | markdown | draft |
+| `packages/shared/src/logging.ts` | source | --- | draft |
+| `.nodespec/tests/req-010.tests.md` - Test plan for requirement: Audit event model, operator-action auditing and log redaction | test-plan | markdown | draft |
+| `services/api/src/index.ts` | source | --- | draft |
+| `packages/shared/src/transitions.test.ts` | test-plan | --- | draft |
+| `packages/shared/package.json` | config | --- | draft |
+| `packages/shared/src/store.ts` | source | --- | draft |
+| `services/api/package.json` | config | --- | draft |
+| `services/api/src/middleware/iapAuth.ts` | source | --- | draft |
+| `services/api/tsconfig.json` | config | --- | draft |
+| `packages/shared/src/index.ts` | source | --- | draft |
+| `services/api/src/logging.ts` | source | --- | draft |
+| `packages/shared/src/logging.test.ts` | test-plan | --- | draft |
+| `services/api/src/config.test.ts` | test-plan | --- | draft |
+| `packages/shared/src/transitions.ts` | source | --- | draft |
+| `services/api/src/config.ts` | source | --- | draft |

@@ -1,0 +1,19 @@
+{
+  "name": "gcp-onboarding-application",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Serverless Google Workspace user-lifecycle console. Workspace root.",
+  "type": "module",
+  "engines": { "node": ">=22" },
+  "workspaces": ["packages/*", "services/*"],
+  "scripts": {
+    "build": "npm run build --workspaces --if-present",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "typecheck": "npm run typecheck --workspaces --if-present"
+  },
+  "devDependencies": {
+    "typescript": "^5.6.3",
+    "vitest": "^2.1.5"
+  }
+}

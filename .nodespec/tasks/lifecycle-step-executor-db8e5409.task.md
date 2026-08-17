@@ -73,7 +73,6 @@ Ordered WORK ORDERS synthesized from the model — this node's deliverable kind,
   ↳ serves (unverified match): REQ-019 "The one-time password is persisted only as ciphertext under the Secret Manager credential encryption key, never as plaintext and never as a hash, and a test asserts the stored field decrypts to the issued value" — requirement not mapped to that node; verify or reassign before relying on it
   ↳ serves (unverified match): REQ-019 "The credential record carries a Firestore TTL and is removed on expiry without operator action" — requirement not mapped to that node; verify or reassign before relying on it
   ↳ serves (unverified match): REQ-019 "The generated plaintext password never appears in any Firestore document, any worker API response body, or any log entry, verified by a test that provisions a user and greps the emitted records" — requirement not mapped to that node; verify or reassign before relying on it
-  ↳ serves (unverified match): REQ-016 "An illegal state transition (e.g. 'succeeded' -> 'running') is rejected by the transition guard and raises a typed InvalidTransition error rather than mutating state" — requirement not mapped to that node; verify or reassign before relying on it
 - [ ] **T4 — Implement the integration with Secret Manager (gcp-secret-manager) per Contract "Secret Manager Access" (dependency).**
   Dependency contract — capture the reference/identifier wiring in this node's config artifacts; no payload schema expected.
   ↳ serves (unverified match): REQ-005 "Changing a user's role is expressed as group membership changes plus role-describing attributes — job title, department, manager and org unit path — and all of these are updatable through this phase" — requirement not mapped to that node; verify or reassign before relying on it
@@ -83,7 +82,6 @@ Ordered WORK ORDERS synthesized from the model — this node's deliverable kind,
   ↳ serves (unverified match): REQ-030 "A resend requested with regenerate=true sets a fresh one-time password via users.update with changePasswordAtNextLogin=true, writes new ciphertext with a new TTL, and invalidates the prior credential record" — requirement not mapped to that node; verify or reassign before relying on it
   ↳ serves (unverified match): REQ-030 "Regeneration writes an audit event typed as a credential rotation, naming the operator and the target user, and never recording either password value" — requirement not mapped to that node; verify or reassign before relying on it
   ↳ serves (unverified match): REQ-003 "The user is created with changePasswordAtNextLogin=true and a password meeting the configured generation policy" — requirement not mapped to that node; verify or reassign before relying on it
-  ↳ serves (unverified match): REQ-013 "All retry and classification behavior lives in the shared Workspace client, verified by the absence of retry logic in any phase handler" — requirement not mapped to that node; verify or reassign before relying on it
   ↳ serves (unverified match): REQ-019 "The generated password meets the configured generation policy and the user is created with changePasswordAtNextLogin=true" — requirement not mapped to that node; verify or reassign before relying on it
 - [ ] **T6 — Implement the integration with Email Delivery Service per Contract "Welcome Letter Delivery" (rest).**
   Build to the contract schema EXACTLY (see Interface Contracts).
@@ -433,8 +431,8 @@ Because Cloud Tasks delivers at least once and Workspace calls can time out afte
   → covered by Task T2
 - [ ] A mutation that times out client-side but succeeded server-side is detected by the pre-mutation state read on the next attempt and not applied twice
   → covered by Task T3
-- [ ] All retry and classification behavior lives in the shared Workspace client, verified by the absence of retry logic in any phase handler
-  → covered by Task T5
+- [x] All retry and classification behavior lives in the shared Workspace client, verified by the absence of retry logic in any phase handler
+  → possible match: Contract "Audit Log Sink" (dependency) to Cloud Logging: audit sink (unverified — requirement not mapped to that node)
 - [ ] Concurrent duplicate task deliveries for the same step result in exactly one Workspace mutation
   → covered by Task T2
 
@@ -465,8 +463,8 @@ Owned by the Lifecycle Step Executor. Steps admitted by REQ-001 are executed one
   → covered by Task T2
 - [ ] Delivering the same step task twice results in exactly one execution: the second delivery observes a non-'ready' status inside the transaction and returns without side effects
   → covered by Task T2
-- [ ] An illegal state transition (e.g. 'succeeded' -> 'running') is rejected by the transition guard and raises a typed InvalidTransition error rather than mutating state
-  → covered by Task T3
+- [x] An illegal state transition (e.g. 'succeeded' -> 'running') is rejected by the transition guard and raises a typed InvalidTransition error rather than mutating state
+  → possible match: Contract "Lifecycle State Store" (nosql) to Firestore: lifecycle state and audit (unverified — requirement not mapped to that node)
 - [ ] Every step status transition writes its audit event in the same Firestore transaction as the transition, verified by a test that fails the transaction and observes neither the transition nor the audit event
   → covered by Task T2
 - [ ] A step that exhausts its retry budget lands in status 'failed' with the terminal error recorded, the parent request moves to 'failed', and no subsequent step is dispatched
@@ -1281,3 +1279,27 @@ Startup/initialization order based on edge directions and interaction patterns.
 - HTTP errors from Google Workspace (Admin SDK Directory) ("Google Admin SDK Directory API"): handle 4xx (client error), 5xx (server error), timeouts, and connection refused
 
 **Parent Container:** Cloud Run: lifecycle-worker (docker-container)
+
+## Existing Implementation
+
+| File | Kind | Language | Status |
+|------|------|----------|--------|
+| `services/worker/src/workspace/directoryClient.test.ts` | test-plan | --- | draft |
+| `services/worker/package.json` | config | --- | draft |
+| `.nodespec/tests/req-016.tests.md` - Test plan for requirement: Durable step execution, resumability and transition integrity | test-plan | markdown | draft |
+| `services/worker/tsconfig.json` | config | --- | draft |
+| `services/worker/src/tasks/dispatcher.ts` | source | --- | draft |
+| `.nodespec/tests/req-003.tests.md` - Test plan for requirement: Phase 1 — User creation with attributes and group assignment | test-plan | markdown | draft |
+| `.nodespec/tests/req-019.tests.md` - Test plan for requirement: Credential generation and encryption at rest | test-plan | markdown | draft |
+| `services/worker/src/auth/taskAuth.ts` | source | --- | draft |
+| `services/worker/src/config.ts` | source | --- | draft |
+| `.nodespec/tests/req-013.tests.md` - Test plan for requirement: Idempotent, retry-safe Workspace mutations | test-plan | markdown | draft |
+| `services/worker/src/steps/handler.ts` | source | --- | draft |
+| `services/worker/src/credentials/credentialStore.ts` | source | --- | draft |
+| `services/worker/src/index.ts` | source | --- | draft |
+| `services/worker/src/routes/tasks.ts` | source | --- | draft |
+| `services/worker/src/phases/create.ts` | source | --- | draft |
+| `services/worker/src/steps/advance.ts` | source | --- | draft |
+| `services/worker/src/workspace/directoryClient.ts` | source | --- | draft |
+| `services/worker/src/logging.ts` | source | --- | draft |
+| `services/worker/src/steps/executor.ts` | source | --- | draft |

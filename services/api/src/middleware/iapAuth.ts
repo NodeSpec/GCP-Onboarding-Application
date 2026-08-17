@@ -1,7 +1,6 @@
 import type { NextFunction, Request, RequestHandler, Response } from 'express';
 import { createRemoteJWKSet, jwtVerify, type JWTPayload, type JWTVerifyGetKey } from 'jose';
 import type { Logger } from 'pino';
-import { config } from '../config.js';
 import { logger as defaultLogger } from '../logging.js';
 
 /**
@@ -143,16 +142,6 @@ export function createIapAuth(options: IapAuthOptions): RequestHandler {
     next();
   };
 }
-
-/** The wired middleware the service mounts. */
-export const iapAuth: RequestHandler = createIapAuth({
-  audience: config.IAP_AUDIENCE ?? '',
-  clockToleranceSeconds: config.IAP_CLOCK_SKEW_SECONDS,
-  bypassIdentity:
-    config.AUTH_MODE === 'dev-insecure'
-      ? { email: config.DEV_OPERATOR_EMAIL!.toLowerCase(), subject: 'dev-subject' }
-      : undefined,
-});
 
 /**
  * Reads the identity established above. Throws rather than returning null, so a

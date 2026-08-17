@@ -4,9 +4,8 @@ import { z } from 'zod';
  * One validated configuration module. Nothing else in the service reads
  * process.env directly; call sites import `config` instead.
  *
- * The service exits at startup on invalid configuration rather than failing
- * on the first request, because a missing IAP audience is a security
- * misconfiguration and should never reach a running listener.
+ * Validation runs before any real use, so a missing IAP audience stops the
+ * service rather than surfacing on the first request.
  */
 
 const AuthMode = z.enum(['iap', 'dev-insecure']);
@@ -45,7 +44,7 @@ const schema = z
     }
 
     // Refuse to start with assertion verification disabled outside local
-    // development. This is asserted by a test as well as here.
+    // development. Asserted by config.test.ts as well as here.
     if (cfg.AUTH_MODE === 'dev-insecure') {
       if (cfg.NODE_ENV !== 'development') {
         ctx.addIssue({
@@ -77,4 +76,22 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
   return parsed.data;
 }
 
-export const config: Config = loadConfig();
+/**
+ * Lazily resolved singleton. Evaluating at module scope would make every module
+ * that imports config unimportable without a complete environment, which breaks
+ * unit tests that never touch configuration at all. Resolution happens on first
+ * property access instead, so the validation still runs before any real use.
+ */
+let cached: Config | undefined;
+
+export const config: Config = new Proxy({} as Config, {
+  get(_target, property) {
+    cached ??= loadConfig();
+    return cached[property as keyof Config];
+  },
+});
+
+/** Test helper: forget the resolved configuration. */
+export function resetConfigCache(): void {
+  cached = undefined;
+}
