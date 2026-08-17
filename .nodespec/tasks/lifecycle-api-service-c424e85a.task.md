@@ -1535,6 +1535,7 @@ Startup/initialization order based on edge directions and interaction patterns.
 | `services/api/src/authz.ts` | source | --- | draft |
 | `packages/shared/src/transitions.test.ts` | test-plan | --- | draft |
 | `packages/shared/src/store.ts` | source | --- | draft |
+| `.nodespec/tests/req-002.tests.md` - Test plan for requirement: Optional two-party approval on any step | test-plan | markdown | draft |
 | `services/api/src/routes/requests.ts` | source | --- | draft |
 | `services/api/package.json` | config | --- | draft |
 | `services/api/src/middleware/iapAuth.ts` | source | --- | draft |
