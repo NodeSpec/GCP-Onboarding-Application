@@ -1,7 +1,7 @@
 {
   "modelVersion": 1,
   "generatedBy": "nodespec",
-  "modelHash": "c926cdf1d87ca9ab72c4dd10dc1cb8b6ad471ac8144def963275b00c6e570c46",
+  "modelHash": "3564435a02fe79089bbe82b177a2aaa06f6f9e27979b8038d9d06656c2ba2a72",
   "nodes": [
     {
       "id": "1c81cf63-c51e-4b0e-b6ad-7d318332d2fe",
@@ -936,6 +936,12 @@
       "contentHash": "000000005d5d861d"
     },
     {
+      "id": "a1b2c3d4-5e6f-7a8b-9c0d-e1f2a3b4c5d6",
+      "nodeId": "db8e5409-dc6f-4052-887a-7ba1dd5fb717",
+      "path": "services/worker/src/phases/update.test.ts",
+      "kind": "test-plan"
+    },
+    {
       "id": "a1d5e762-8b30-4f97-b3c8-5e0d9f4a2c71",
       "nodeId": "db8e5409-dc6f-4052-887a-7ba1dd5fb717",
       "path": "services/worker/src/steps/duplicateDelivery.emulator.test.ts",
@@ -979,6 +985,12 @@
       "path": "services/worker/src/index.ts",
       "kind": "source",
       "contentHash": "000000001a8b82df"
+    },
+    {
+      "id": "b2c3d4e5-6f7a-8b9c-0d1e-f2a3b4c5d6e7",
+      "nodeId": "db8e5409-dc6f-4052-887a-7ba1dd5fb717",
+      "path": "services/worker/src/phases/delete.test.ts",
+      "kind": "test-plan"
     },
     {
       "id": "b2d7c018-5063-4e98-ac42-38db610f9e57",
