@@ -1,5 +1,5 @@
 import { Timestamp } from '@google-cloud/firestore';
-import type { LifecycleStep, LifecycleStore } from '@lifecycle/shared';
+import { isTerminalRequestStatus, type LifecycleStep, type LifecycleStore } from '@lifecycle/shared';
 import { logger } from '../logging.js';
 import type { TaskDispatcher } from '../tasks/dispatcher.js';
 
@@ -63,6 +63,16 @@ export async function advance(
 
   const request = await store.getRequest(requestId);
   if (!request) return;
+
+  // A terminal request dispatches nothing further. Without this an admin
+  // cancelling a running request would stop the pending steps in the store but
+  // not this code path: the step that was already executing would finish, reach
+  // here, and release the next one, because the step transitions are guarded on
+  // the STEP's status and know nothing about the request's (REQ-012 AC-5).
+  if (isTerminalRequestStatus(request.status)) {
+    logger.info({ requestId, status: request.status }, 'request is terminal, dispatching nothing');
+    return;
+  }
 
   const steps = await store.listSteps(requestId);
   const next = nextUnfinished(steps, completedStepId);
