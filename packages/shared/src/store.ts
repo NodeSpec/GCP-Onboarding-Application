@@ -98,6 +98,45 @@ export interface AuditInput {
   outcome?: 'success' | 'failure' | 'denied';
 }
 
+/**
+ * Writes one audit event inside a transaction the caller already owns.
+ *
+ * Exported, unlike the private method that wraps it, for exactly one reason:
+ * the credential handoff claim has to destroy the ciphertext and record who
+ * took it in ONE transaction, and that transaction lives in CredentialStore,
+ * where the decryption key is. A second copy of this function there would have
+ * meant two implementations of the audit record, and the guarantee that every
+ * audited change carries its record would then be enforced in two places
+ * (REQ-017 AC-6).
+ *
+ * It takes a Transaction and nothing else, so it still cannot be used to write
+ * an audit event on its own: a caller has to be inside a transaction that is
+ * doing something. It creates, and never updates or deletes, so the collection
+ * stays append only.
+ */
+export function appendAuditEvent(
+  db: Firestore,
+  tx: Transaction,
+  requestId: string | null,
+  stepId: string | null,
+  input: AuditInput,
+): AuditEvent {
+  const event: AuditEvent = {
+    eventId: randomUUID(),
+    requestId,
+    stepId,
+    actor: input.actor,
+    action: input.action,
+    targetUser: input.targetUser ?? null,
+    before: input.before ?? null,
+    after: input.after ?? null,
+    outcome: input.outcome ?? 'success',
+    timestamp: Timestamp.now(),
+  };
+  tx.create(db.collection(COLLECTIONS.audit).doc(event.eventId), event);
+  return event;
+}
+
 export class LifecycleStore {
   constructor(private readonly db: Firestore) {}
 
@@ -621,20 +660,7 @@ export class LifecycleStore {
     stepId: string | null,
     input: AuditInput,
   ): AuditEvent {
-    const event: AuditEvent = {
-      eventId: randomUUID(),
-      requestId,
-      stepId,
-      actor: input.actor,
-      action: input.action,
-      targetUser: input.targetUser ?? null,
-      before: input.before ?? null,
-      after: input.after ?? null,
-      outcome: input.outcome ?? 'success',
-      timestamp: Timestamp.now(),
-    };
-    tx.create(this.db.collection(COLLECTIONS.audit).doc(event.eventId), event);
-    return event;
+    return appendAuditEvent(this.db, tx, requestId, stepId, input);
   }
 
   /**
