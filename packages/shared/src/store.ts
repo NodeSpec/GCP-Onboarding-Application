@@ -22,33 +22,9 @@ import {
 } from './model.js';
 import { normalisePolicy, policyPath } from './policy.js';
 import type { NewRequestDocuments } from './requestFactory.js';
+import { deriveIdempotencyKey } from './stepPlans.js';
 import { assertRequestTransition, assertStepTransition } from './transitions.js';
 
-/**
- * The data access layer for lifecycle state and audit.
- *
- * Two properties are enforced here rather than left to callers.
- *
- * 1. A state change and its audit event are written in ONE transaction. There
- *    is no exported way to move a status without describing why, and no
- *    exported way to write an audit event on its own. A change therefore cannot
- *    exist without its record, in either direction (REQ-010, REQ-016).
- *
- * 2. The audit collection is append only. This module exports no update and no
- *    delete for it, deliberately. Note that this is the ONLY real enforcement:
- *    Firestore security rules do not apply, because all access here is
- *    server-side through Admin SDK credentials which bypass rules entirely, and
- *    Firestore IAM is database-scoped rather than per-collection. Tamper
- *    evidence comes from the Cloud Logging mirror with a locked retention
- *    policy (REQ-018), not from this file. Do not add a delete helper because
- *    a test fixture wants one.
- */
-
-/**
- * A target user already has a request in flight. Callers map this to 409.
- * Carries the blocking request so an operator is told what to wait for rather
- * than just being refused.
- */
 export class ConflictingRequestError extends Error {
   constructor(
     readonly targetUser: string,
@@ -63,11 +39,6 @@ export class ConflictingRequestError extends Error {
   }
 }
 
-/**
- * The requester tried to approve their own request. Callers map this to 403.
- * Checked against the IAP-verified identity inside the transaction, never
- * against anything the client supplied (REQ-002 AC-2).
- */
 export class SelfApprovalError extends Error {
   constructor(readonly requestId: string, readonly identity: string) {
     super(
@@ -78,7 +49,6 @@ export class SelfApprovalError extends Error {
   }
 }
 
-/** The step is not waiting on anyone. Callers map this to 409. */
 export class StepNotAwaitingApprovalError extends Error {
   constructor(
     readonly requestId: string,
@@ -99,22 +69,6 @@ export interface AuditInput {
   outcome?: 'success' | 'failure' | 'denied';
 }
 
-/**
- * Writes one audit event inside a transaction the caller already owns.
- *
- * Exported, unlike the private method that wraps it, for exactly one reason:
- * the credential handoff claim has to destroy the ciphertext and record who
- * took it in ONE transaction, and that transaction lives in CredentialStore,
- * where the decryption key is. A second copy of this function there would have
- * meant two implementations of the audit record, and the guarantee that every
- * audited change carries its record would then be enforced in two places
- * (REQ-017 AC-6).
- *
- * It takes a Transaction and nothing else, so it still cannot be used to write
- * an audit event on its own: a caller has to be inside a transaction that is
- * doing something. It creates, and never updates or deletes, so the collection
- * stays append only.
- */
 export function appendAuditEvent(
   db: Firestore,
   tx: Transaction,
@@ -154,7 +108,6 @@ export class LifecycleStore {
     return snap.exists ? (snap.data() as LifecycleRequest) : null;
   }
 
-  /** Steps in execution order, for the operator timeline. */
   async listSteps(requestId: string): Promise<LifecycleStep[]> {
     const snap = await this.requestRef(requestId)
       .collection(COLLECTIONS.steps)
@@ -163,7 +116,6 @@ export class LifecycleStore {
     return snap.docs.map((doc) => doc.data() as LifecycleStep);
   }
 
-  /** Audit history for one request, oldest first. */
   async listAudit(requestId: string): Promise<AuditEvent[]> {
     const snap = await this.db
       .collection(COLLECTIONS.audit)
@@ -173,13 +125,6 @@ export class LifecycleStore {
     return snap.docs.map((doc) => doc.data() as AuditEvent);
   }
 
-  /**
-   * The whole audit trail, newest first, for the admin view (REQ-012 AC-5).
-   *
-   * Bounded by `limit` rather than returning everything: this collection grows
-   * without limit and an unbounded read would eventually be the slowest, most
-   * expensive query in the system. `before` pages backwards through it.
-   */
   async listAllAudit(options: { limit?: number; before?: Timestamp } = {}): Promise<AuditEvent[]> {
     let query = this.db
       .collection(COLLECTIONS.audit)
@@ -192,23 +137,6 @@ export class LifecycleStore {
     return snap.docs.map((doc) => doc.data() as AuditEvent);
   }
 
-  /**
-   * Admits a new lifecycle request: the request document, one step document per
-   * plan entry, and the admission audit event, in ONE transaction.
-   *
-   * The concurrency guard is a query issued INSIDE that transaction, before any
-   * write. Checking beforehand would leave a window in which two operators both
-   * see no conflict and both create a request against the same account, which
-   * is the exact race REQ-001 AC-2 exists to close. Firestore aborts and
-   * retries the transaction when the queried set changes under it, so the loser
-   * re-reads and sees the winner's request.
-   *
-   * Nothing is dispatched here. The request lands in 'draft' with every step
-   * 'pending'; starting the first step is the caller's next move, so a failure
-   * to dispatch cannot leave a half-created request behind.
-   *
-   * Serves REQ-001.
-   */
   async createRequest(
     documents: NewRequestDocuments,
     actor: AuditActor,
@@ -216,9 +144,6 @@ export class LifecycleStore {
     const { request, steps } = documents;
 
     await this.db.runTransaction(async (tx) => {
-      // READ FIRST. Firestore requires every read in a transaction to precede
-      // every write, and this read is also the guard, so the ordering is not
-      // incidental.
       const conflicting = await tx.get(
         this.db
           .collection(COLLECTIONS.requests)
@@ -249,23 +174,6 @@ export class LifecycleStore {
     return documents;
   }
 
-  /**
-   * Starts a newly admitted request: releases its first step, or halts it for
-   * approval, according to the policy snapshotted at creation.
-   *
-   * ON "ENQUEUED IN THE SAME TRANSACTION" (REQ-001 AC-7, REQ-016 AC-7).
-   * A Cloud Tasks enqueue is a call to a different system and CANNOT be part of
-   * a Firestore transaction. What the criteria ask for is that a halt can never
-   * be committed without the notification being committed to, and that is
-   * achievable: the notification record is written in the same transaction as
-   * the halt, so the two land together or not at all. The record is the outbox
-   * entry; REQ-032 sends from it and stamps sentAt. If the send is lost, the
-   * outstanding record is what lets a sweeper find it, which a fire-and-forget
-   * enqueue after commit would not.
-   *
-   * Returns what the caller should enqueue AFTER the transaction commits.
-   * Enqueueing inside would risk a task for a transaction that then aborted.
-   */
   async startFirstStep(
     requestId: string,
     actor: AuditActor,
@@ -323,23 +231,6 @@ export class LifecycleStore {
     });
   }
 
-  /**
-   * Records an approval decision on a halted step, in ONE transaction.
-   *
-   * The self-approval check lives HERE, inside the transaction, against the
-   * request's persisted requestedBy and the caller's verified identity. Putting
-   * it in the route would leave it bypassable by any future caller of this
-   * method, and two-party approval that can be bypassed is not two-party
-   * approval. The status re-read in the same transaction also makes a double
-   * submit safe: the second observes a step that is no longer awaiting.
-   *
-   * Approval releases the step to 'ready' and returns the request to 'running'.
-   * Rejection fails the step and terminates the request in 'rejected'; no
-   * further step is dispatched because nothing dispatches from a terminal
-   * request.
-   *
-   * Serves REQ-002.
-   */
   async decideStep(params: {
     requestId: string;
     stepId: string;
@@ -393,10 +284,6 @@ export class LifecycleStore {
         after: { status: nextStep, requestStatus: nextRequest, justification: params.justification },
       });
 
-      // The idempotency key comes back with the decision so the caller can
-      // enqueue the released step without a second read. The key is the task's
-      // deduplication discriminator, so returning it here is what lets the
-      // approval path and the worker's own dispatch agree on one task name.
       return {
         stepStatus: nextStep,
         requestStatus: nextRequest,
@@ -405,23 +292,6 @@ export class LifecycleStore {
     });
   }
 
-  /**
-   * Expires a pending approval when its scheduled task fires (REQ-002 AC-7).
-   *
-   * The decision about whether anything expires is made HERE, inside the
-   * transaction, against the step's current status, not at enqueue time and not
-   * in the route. The expiry task is scheduled the moment a step halts and then
-   * fires unconditionally hours later; by then the step has usually been
-   * decided, and the common case of this method is doing nothing. That is the
-   * design: a no-op task is free, but an expiry that raced a same-instant
-   * approval outside a transaction could reject a request a human had just
-   * released.
-   *
-   * An expiry is a rejection with nobody to name. The step fails with a typed
-   * error rather than acquiring a synthetic ApprovalRecord, because approval
-   * records name the human who decided and inventing a system "approver" would
-   * make the audit trail lie about a person existing.
-   */
   async expireApproval(params: {
     requestId: string;
     stepId: string;
@@ -432,8 +302,6 @@ export class LifecycleStore {
       const stepRef = this.stepRef(params.requestId, params.stepId);
 
       const [requestSnap, stepSnap] = await Promise.all([tx.get(requestRef), tx.get(stepRef)]);
-      // A firing for a request that no longer exists is a no-op, not an error:
-      // the task outlived its subject, which retrying cannot change.
       if (!requestSnap.exists || !stepSnap.exists) {
         return { expired: false, observedStep: null, observedRequest: null };
       }
@@ -441,10 +309,6 @@ export class LifecycleStore {
       const request = requestSnap.data() as LifecycleRequest;
       const step = stepSnap.data() as LifecycleStep;
 
-      // Decided, cancelled, or never halted: the task fired after the fact.
-      // This is the normal outcome of most expiry tasks and is deliberately
-      // silent in the trail; auditing millions of "nothing happened" firings
-      // would bury the events the trail exists to surface.
       if (step.status !== 'awaiting_approval' || isTerminalRequestStatus(request.status)) {
         return { expired: false, observedStep: step.status, observedRequest: request.status };
       }
@@ -476,24 +340,11 @@ export class LifecycleStore {
     });
   }
 
-  // ---------------------------------------------------------------------------
-  // Admin capabilities (REQ-012 AC-5)
-  // ---------------------------------------------------------------------------
-
   async getApprovalPolicy(): Promise<ApprovalPolicy> {
     const snap = await this.db.doc(policyPath()).get();
     return normalisePolicy(snap.exists ? snap.data() : undefined);
   }
 
-  /**
-   * Replaces the approval policy, recording the whole document before and after.
-   *
-   * The policy decides which steps need a second pair of eyes, so an edit is a
-   * change to a security control and the trail has to show what it was as well
-   * as what it became. Requests already in flight are unaffected: they carry a
-   * snapshot taken at creation (REQ-002 AC-6), which is why this method does not
-   * touch them.
-   */
   async setApprovalPolicy(params: {
     policy: ApprovalPolicy;
     actor: AuditActor;
@@ -518,16 +369,6 @@ export class LifecycleStore {
     });
   }
 
-  /**
-   * Cancels a request and skips everything it had not yet done.
-   *
-   * Pending steps are moved to 'skipped' in the SAME transaction as the
-   * cancellation. Leaving them 'pending' would mean a task already in the queue
-   * could still find work to do on a cancelled request, which is precisely what
-   * an operator hitting cancel is trying to prevent. A step already running is
-   * left alone: it is mid-flight against Workspace and cannot be recalled, so
-   * the honest thing is to let it finish and stop there.
-   */
   async cancelRequest(params: {
     requestId: string;
     actor: AuditActor;
@@ -551,8 +392,6 @@ export class LifecycleStore {
       for (const doc of stepsSnap.docs) {
         const step = doc.data() as LifecycleStep;
         if (step.status !== 'pending' && step.status !== 'awaiting_approval') continue;
-        // 'awaiting_approval' has no legal move to 'skipped'; a cancelled
-        // approval is a failure of that step, not a silent pass.
         const to = step.status === 'pending' ? 'skipped' : 'failed';
         assertStepTransition(step.stepId, step.status, to);
         tx.update(doc.ref, { status: to, completedAt: Timestamp.now() });
@@ -573,13 +412,85 @@ export class LifecycleStore {
     });
   }
 
-  /**
-   * Puts a failed request back to work at its failed step.
-   *
-   * Returns the step to enqueue so the caller can dispatch AFTER the commit, on
-   * the same reasoning as startFirstStep: a task for a transaction that then
-   * aborted is worse than a resume that has to be retried.
-   */
+  async appendCompensatingStep(params: {
+    requestId: string;
+    stepName: string;
+    actor: AuditActor;
+    reason: string;
+  }): Promise<{ appended: boolean; observed: RequestStatus; step: LifecycleStep | null }> {
+    return this.db.runTransaction(async (tx) => {
+      const requestRef = this.requestRef(params.requestId);
+      const requestSnap = await tx.get(requestRef);
+      if (!requestSnap.exists) throw new Error(`Request ${params.requestId} not found`);
+      const request = requestSnap.data() as LifecycleRequest;
+
+      const stepsSnap = await tx.get(requestRef.collection(COLLECTIONS.steps).orderBy('ordinal', 'asc'));
+
+      if (isTerminalRequestStatus(request.status)) {
+        return { appended: false, observed: request.status, step: null };
+      }
+
+      const existing = stepsSnap.docs.map((doc) => doc.data() as LifecycleStep);
+
+      const already = existing.find((step) => step.name === params.stepName);
+      if (already) {
+        return { appended: false, observed: request.status, step: already };
+      }
+
+      let stopped = 0;
+      for (const doc of stepsSnap.docs) {
+        const step = doc.data() as LifecycleStep;
+        if (step.status !== 'pending' && step.status !== 'awaiting_approval') continue;
+        const to = step.status === 'pending' ? 'skipped' : 'failed';
+        assertStepTransition(step.stepId, step.status, to);
+        tx.update(doc.ref, { status: to, completedAt: Timestamp.now() });
+        stopped += 1;
+      }
+
+      const ordinal = existing.reduce((max, step) => Math.max(max, step.ordinal), -1) + 1;
+      const stepId = `${String(ordinal).padStart(3, '0')}-${params.stepName}`;
+      const step: LifecycleStep = {
+        stepId,
+        name: params.stepName,
+        ordinal,
+        status: 'ready',
+        attempts: 0,
+        requiresApproval: false,
+        idempotencyKey: deriveIdempotencyKey(params.requestId, stepId, {}),
+        input: {},
+        output: null,
+        error: null,
+        approval: null,
+        approverNotification: null,
+        notification: null,
+        credential: null,
+        startedAt: null,
+        completedAt: null,
+      };
+      tx.create(this.stepRef(params.requestId, stepId), step);
+
+      if (request.status !== 'running') {
+        assertRequestTransition(params.requestId, request.status, 'running');
+        tx.update(requestRef, { status: 'running', updatedAt: Timestamp.now() });
+      }
+
+      this.appendAudit(tx, params.requestId, stepId, {
+        actor: params.actor,
+        action: 'request.cancellation_requested',
+        targetUser: request.targetUser,
+        before: { status: request.status },
+        after: {
+          status: 'running',
+          compensatingStep: params.stepName,
+          reason: params.reason,
+          stepsStopped: stopped,
+        },
+      });
+
+      return { appended: true, observed: request.status, step };
+    });
+  }
+
   async resumeRequest(params: {
     requestId: string;
     actor: AuditActor;
@@ -598,8 +509,6 @@ export class LifecycleStore {
 
       const failedDoc = stepsSnap.docs.find((d) => (d.data() as LifecycleStep).status === 'failed');
       if (!failedDoc) {
-        // The request failed without a failed step, so there is nothing to
-        // retry. Refusing is better than guessing which step to restart.
         return { resumed: false, observed: request.status, step: null };
       }
 
@@ -607,9 +516,6 @@ export class LifecycleStore {
       assertStepTransition(step.stepId, step.status, 'ready');
       assertRequestTransition(params.requestId, request.status, 'running');
 
-      // The error is cleared, the attempt counter is NOT. A resume is another
-      // attempt, and hiding that would make a step that has failed five times
-      // look untouched.
       tx.update(failedDoc.ref, { status: 'ready', error: null, completedAt: null });
       tx.update(requestRef, { status: 'running', updatedAt: Timestamp.now() });
 
@@ -625,16 +531,6 @@ export class LifecycleStore {
     });
   }
 
-  // ---------------------------------------------------------------------------
-  // Role bindings (REQ-012)
-  //
-  // These live on this class rather than in a store of their own precisely
-  // because of the audit invariant above: appendAudit is private, so a second
-  // class writing role-change audit events would have needed its own copy, and
-  // the guarantee that no audited change can be written without its record
-  // would then be enforced in two places instead of one.
-  // ---------------------------------------------------------------------------
-
   private roleBindingRef(subject: string) {
     return this.db.collection(COLLECTIONS.roleBindings).doc(subject.toLowerCase());
   }
@@ -644,20 +540,11 @@ export class LifecycleStore {
     return snap.exists ? (snap.data() as RoleBinding) : null;
   }
 
-  /** Every binding, for the admin view. Subject is the document id. */
   async listRoleBindings(): Promise<(RoleBinding & { subject: string })[]> {
     const snap = await this.db.collection(COLLECTIONS.roleBindings).get();
     return snap.docs.map((doc) => ({ ...(doc.data() as RoleBinding), subject: doc.id }));
   }
 
-  /**
-   * Grants a subject a set of roles, replacing whatever it held.
-   *
-   * The audit event carries the roles BEFORE and AFTER, in one transaction with
-   * the write (REQ-012 AC-6). Recording only the new set would make a privilege
-   * escalation and a no-op edit look identical in the trail, which is the one
-   * question this record exists to answer.
-   */
   async setRoleBinding(params: {
     subject: string;
     kind: 'user' | 'group';
@@ -665,8 +552,6 @@ export class LifecycleStore {
     actor: AuditActor;
   }): Promise<{ before: OperatorRole[] | null; after: OperatorRole[] }> {
     const subject = params.subject.toLowerCase();
-    // Deduplicated and ordered, so the before/after comparison in the audit
-    // trail reflects a real privilege change rather than a reordering.
     const roles = [...new Set(params.roles)].sort();
 
     return this.db.runTransaction(async (tx) => {
@@ -694,7 +579,6 @@ export class LifecycleStore {
     });
   }
 
-  /** Removes a binding entirely, leaving the subject authorized for nothing. */
   async removeRoleBinding(params: {
     subject: string;
     actor: AuditActor;
@@ -721,11 +605,6 @@ export class LifecycleStore {
     });
   }
 
-  /**
-   * The only way to write an audit event. Private to this module and always
-   * called from a transition, so an audit event cannot be written without the
-   * change it describes.
-   */
   private appendAudit(
     tx: Transaction,
     requestId: string | null,
@@ -735,15 +614,6 @@ export class LifecycleStore {
     return appendAuditEvent(this.db, tx, requestId, stepId, input);
   }
 
-  /**
-   * Freezes a phase 3 request's computed diff onto the request (REQ-005 AC-1).
-   *
-   * Written once, before anything mutates, and audited in the same transaction
-   * like every other state change. The audit event carries the change set in
-   * full rather than a count: this is the record of what an approver was shown,
-   * and "3 attributes changed" would not answer the question an auditor is
-   * actually asking six months later.
-   */
   async recordComputedDiff(params: {
     requestId: string;
     stepId: string;
@@ -763,9 +633,6 @@ export class LifecycleStore {
         actor: params.actor,
         action: 'request.diff_computed',
         targetUser: params.diff.targetUser,
-        // Non-null only on a recompute, which happens when a step is
-        // redelivered. Recording the prior diff makes that visible rather than
-        // silently replacing what an approver may already have seen.
         before: existing === null ? null : { computedDiff: existing },
         after: {
           attributes: params.diff.attributes.filter((a) => a.changed),
@@ -777,19 +644,6 @@ export class LifecycleStore {
     });
   }
 
-  /**
-   * Records the outcome of an outbound message on a step, WITHOUT moving it.
-   *
-   * A separate path from transitionStep because sending is not a status change:
-   * the record has to be durable the instant the provider accepts, before the
-   * step is settled, or a crash in between would lose the delivery id and the
-   * replay would send a second copy (REQ-004 AC-3, REQ-032 AC-4). It is still
-   * audited in the same transaction, so this does not become a way to change
-   * state without a record.
-   *
-   * `field` picks which record to write: 'notification' for a step whose own
-   * work was to send, 'approverNotification' for the notice about a halt.
-   */
   async recordNotification(params: {
     requestId: string;
     stepId: string;
@@ -810,9 +664,6 @@ export class LifecycleStore {
       this.appendAudit(tx, params.requestId, params.stepId, {
         actor: params.actor,
         action: params.action,
-        // Recipients are addresses, not message content. The body is never
-        // audited: it is rendered from a template and could carry anything the
-        // template author put there.
         after: {
           recipients: params.record.recipients,
           deliveryId: params.record.deliveryId,
@@ -823,46 +674,17 @@ export class LifecycleStore {
     });
   }
 
-  // ---------------------------------------------------------------------------
-  // Credential handoff (REQ-017, REQ-030)
-  //
-  // These documents live in their own collection but their lifecycle is
-  // lifecycle state, so the transactions are here rather than in CredentialStore
-  // for the same reason the role bindings are: appendAudit is private, and an
-  // audited change written from a second class would have needed a second copy
-  // of it. CredentialStore keeps the crypto, which needs neither a transaction
-  // nor an audit event.
-  // ---------------------------------------------------------------------------
-
   private handoffRef(credentialRequestId: string) {
     return this.db.collection(COLLECTIONS.credentialHandoffs).doc(credentialRequestId);
   }
 
-  /**
-   * Records what a step decided about the one-time password, and where the step
-   * rotated it, installs the new ciphertext and invalidates the old record, all
-   * in ONE transaction (REQ-030 AC-4, AC-6).
-   *
-   * The writes belong together. A new ciphertext committed without the
-   * invalidation would leave two live credentials for one account, only one of
-   * which actually signs in; an invalidation committed without its replacement
-   * would leave the account with a password nobody holds. Neither is a state an
-   * operator could untangle from the trail afterwards.
-   *
-   * NEITHER PASSWORD IS AUDITED. The event names the operator, the target user
-   * and the records involved, and nothing else. An audit trail readable by
-   * everyone entitled to read audit is not a place to put a credential (AC-6).
-   */
   async recordCredential(params: {
     requestId: string;
     stepId: string;
     targetUser: string;
     record: CredentialStepRecord;
-    /** Present only for a rotation. Absent when an existing record is reused. */
     rotation?: {
-      /** Written at credentialHandoffs/{requestId}. Already encrypted. */
       handoff: CredentialHandoff;
-      /** The record this replaces, if the account had a live one. */
       supersedes: string | null;
     };
     actor: AuditActor;
@@ -871,8 +693,6 @@ export class LifecycleStore {
     await this.db.runTransaction(async (tx) => {
       const stepRef = this.stepRef(params.requestId, params.stepId);
 
-      // Every read first: Firestore requires it, and the superseded record has
-      // to be read before it can be invalidated.
       const supersedes = params.rotation?.supersedes ?? null;
       const [stepSnap, supersededSnap] = await Promise.all([
         tx.get(stepRef),
@@ -887,9 +707,6 @@ export class LifecycleStore {
         tx.set(this.handoffRef(params.requestId), params.rotation.handoff);
 
         if (supersedes !== null && supersededSnap?.exists) {
-          // Emptied, not merely flagged. A flag left beside readable ciphertext
-          // is one bug away from handing an operator a password that no longer
-          // signs in, which is worse than handing over none (AC-5).
           tx.update(this.handoffRef(supersedes), {
             oneTimePasswordCiphertext: '',
             supersededAt: Timestamp.now(),
@@ -915,14 +732,6 @@ export class LifecycleStore {
     });
   }
 
-  /**
-   * Which credentialHandoffs document holds the password for this request.
-   *
-   * A resend reuses the credential the original create request produced, so the
-   * document is not always keyed by the request being asked about. Falls back to
-   * the request's own id, which is the create-phase case and the only one that
-   * existed before resend (REQ-030).
-   */
   async resolveCredentialRequestId(requestId: string): Promise<string> {
     const steps = await this.listSteps(requestId);
     for (const step of steps) {
@@ -932,25 +741,6 @@ export class LifecycleStore {
     return requestId;
   }
 
-  /**
-   * Claims a step for execution, in ONE transaction (REQ-016 AC-1, AC-2).
-   *
-   * Two deliveries of the same task race here, and exactly one may win. The
-   * normal case is 'ready' -> 'running'; the loser re-reads inside the
-   * transaction, sees 'running', and is told so rather than executing.
-   *
-   * The second case is why this is not just transitionStep. An instance killed
-   * mid-step leaves its step 'running' with nobody working on it, and nothing
-   * would ever move it again: the step is not 'ready', so no redelivery could
-   * claim it, and the request would sit wedged forever. So a 'running' step
-   * whose lease has expired is RECLAIMABLE. The lease is startedAt plus
-   * leaseSeconds, compared inside the transaction, which is what stops a
-   * concurrent delivery stealing a claim that is merely slow rather than dead.
-   *
-   * Pick leaseSeconds well above the longest a step can legitimately take; a
-   * lease that expires under a slow-but-live step is how you get a step running
-   * twice at once.
-   */
   async claimStep(params: {
     requestId: string;
     stepId: string;
@@ -975,7 +765,6 @@ export class LifecycleStore {
       if (current.status === 'running') {
         const startedAt = current.startedAt?.toMillis() ?? 0;
         const expired = Date.now() - startedAt >= params.leaseSeconds * 1000;
-        // Someone else holds a live claim. Not an error: the work is in hand.
         if (!expired) return { claimed: false, observed: current.status, reclaimed: false };
         reclaimed = true;
       }
@@ -998,14 +787,6 @@ export class LifecycleStore {
     });
   }
 
-  /**
-   * Move a step, guarded, with its audit event, in one transaction.
-   *
-   * `expectedFrom` is the concurrency control. The current status is re-read
-   * inside the transaction and compared, so a redelivered task that lost the
-   * race observes the newer status and gets `applied: false` rather than
-   * executing a second time.
-   */
   async transitionStep(params: {
     requestId: string;
     stepId: string;
@@ -1027,7 +808,6 @@ export class LifecycleStore {
 
       const current = snap.data() as LifecycleStep;
 
-      // Lost the race, or a duplicate delivery. Not an error: the work is done.
       if (!expected.includes(current.status)) {
         return { applied: false, observed: current.status };
       }
@@ -1043,11 +823,6 @@ export class LifecycleStore {
           : {}),
       });
 
-      // MERGED, not replaced. The observed status is authoritative and always
-      // wins, but a caller's own context is kept: the executor attaches the
-      // error, the attempt and whether the retry budget ran out, and overwriting
-      // `after` here discarded all of it, so the trail recorded that a step
-      // failed while losing every detail of why.
       this.appendAudit(tx, params.requestId, params.stepId, {
         ...params.audit,
         before: { ...params.audit.before, status: current.status },
@@ -1058,7 +833,6 @@ export class LifecycleStore {
     });
   }
 
-  /** Move a request, guarded, with its audit event, in one transaction. */
   async transitionRequest(params: {
     requestId: string;
     expectedFrom: RequestStatus | RequestStatus[];
@@ -1084,8 +858,6 @@ export class LifecycleStore {
 
       tx.update(ref, { ...params.patch, status: params.to, updatedAt: Timestamp.now() });
 
-      // Merged for the same reason as transitionStep: the status is
-      // authoritative, the caller's context survives alongside it.
       this.appendAudit(tx, params.requestId, null, {
         ...params.audit,
         before: { ...params.audit.before, status: current.status },
@@ -1096,25 +868,6 @@ export class LifecycleStore {
     });
   }
 
-  /**
-   * Records an authorisation refusal. These carry no state change, so this is
-   * the one audit path with nothing to pair with. It is a create-only write to
-   * the audit collection and still exposes no update or delete.
-   *
-   * `path` and `sourceIp` are recorded alongside the reason (REQ-010 AC-3). A
-   * refusal without them says someone was turned away and nothing about who
-   * from where, which is precisely the question an investigation opens with;
-   * with a request id often absent on a 401, they are frequently the ONLY
-   * identifying detail the event can carry.
-   *
-   * `requestId` is nullable because a 401 is refused before any route runs, so
-   * there is no request to hang the event on. Inventing a sentinel id would
-   * make the per-request audit query return events that were never about it.
-   *
-   * The ACTOR may be the anonymous principal. On a failed assertion nothing
-   * about the caller has been verified, and recording a claimed identity would
-   * put an attacker's chosen string into the trail as though it were checked.
-   */
   async recordDenied(params: {
     requestId: string | null;
     stepId?: string | null;
