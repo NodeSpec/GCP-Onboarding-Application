@@ -1,7 +1,7 @@
 {
   "modelVersion": 1,
   "generatedBy": "nodespec",
-  "modelHash": "73bd987bcc8123a16bcfc6ab0bf9c60c369cdc979290afbdf66273fd6a2c09e8",
+  "modelHash": "7787ce3ca40524edf2605fe0f4bae265cf52b0ac143d4bce75f0d7173aca5a69",
   "nodes": [
     {
       "id": "1c81cf63-c51e-4b0e-b6ad-7d318332d2fe",
@@ -657,7 +657,8 @@
       "id": "4038fb45-11ae-474b-8fd2-d6bf72d410e8",
       "nodeId": "db8e5409-dc6f-4052-887a-7ba1dd5fb717",
       "path": "services/worker/src/tasks/dispatcher.ts",
-      "kind": "source"
+      "kind": "source",
+      "contentHash": "000000004fd6c693"
     },
     {
       "id": "43d99e01-5a83-4f43-94c5-7f4b255de8d8",

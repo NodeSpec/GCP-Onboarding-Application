@@ -66,9 +66,11 @@ export class CloudTasksDispatcher implements TaskDispatcher {
         parent: this.queuePath,
         task: {
           name: taskName(this.queuePath, params.discriminator),
-          scheduleTime: params.scheduleAt
-            ? { seconds: Math.floor(params.scheduleAt.toMillis() / 1000) }
-            : undefined,
+          // Spread rather than assign undefined: an explicit undefined is not
+          // an absent field under exactOptionalPropertyTypes.
+          ...(params.scheduleAt
+            ? { scheduleTime: { seconds: Math.floor(params.scheduleAt.toMillis() / 1000) } }
+            : {}),
           httpRequest: {
             httpMethod: 'POST',
             url,
@@ -99,7 +101,7 @@ export class CloudTasksDispatcher implements TaskDispatcher {
       route: '/tasks/execute-step',
       body: { requestId: input.requestId, stepId: input.stepId, idempotencyKey: input.idempotencyKey, attempt: 1 },
       discriminator: `execute:${input.idempotencyKey}`,
-      scheduleAt: input.scheduleAt,
+      ...(input.scheduleAt === undefined ? {} : { scheduleAt: input.scheduleAt }),
     });
   }
 
