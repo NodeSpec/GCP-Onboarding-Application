@@ -153,6 +153,8 @@ export class DirectoryClient {
 
   private async client(): Promise<admin_directory_v1.Admin> {
     if (!this.api) {
+      // auth is only absent when an api was injected, which is the branch above.
+      if (!this.auth) throw new Error('DirectoryClient has neither an injected api nor credentials');
       this.api = google.admin({ version: 'directory_v1', auth: this.auth });
     }
     return this.api;
@@ -270,7 +272,7 @@ export class DirectoryClient {
         customer: this.customerId,
         query,
         maxResults: limit,
-        pageToken,
+        ...(pageToken === undefined ? {} : { pageToken }),
         orderBy: 'email',
       }),
     );
@@ -282,7 +284,8 @@ export class DirectoryClient {
       suspended: user.suspended === true,
     }));
 
-    return { users, nextPageToken: res.data.nextPageToken ?? undefined };
+    const nextPageToken = res.data.nextPageToken ?? undefined;
+    return { users, ...(nextPageToken === undefined ? {} : { nextPageToken }) };
   }
 
   /**
