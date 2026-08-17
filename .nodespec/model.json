@@ -1,7 +1,7 @@
 {
   "modelVersion": 1,
   "generatedBy": "nodespec",
-  "modelHash": "33d801aebade8593ce36429d2e010e8a340b7ea523a93b01b160435e7f958872",
+  "modelHash": "f4e1fba1b24e3227c0e6586dd82009242432bbe0f6910ce757eaf18665009d21",
   "nodes": [
     {
       "id": "1c81cf63-c51e-4b0e-b6ad-7d318332d2fe",
@@ -772,6 +772,12 @@
       "path": "packages/shared/src/index.ts",
       "kind": "source",
       "contentHash": "00000000431beb5b"
+    },
+    {
+      "id": "a83c2f51-9d47-4e06-b218-6c74f0a9e5d3",
+      "nodeId": "268a782a-d132-4d5e-8f24-c4a969ad7f17",
+      "path": "firebase.json",
+      "kind": "config"
     },
     {
       "id": "a84602f5-8c0c-4596-bfcb-2600e714b1fb",
