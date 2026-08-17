@@ -129,6 +129,10 @@ const PAYLOAD = {
   groups: ['engineering@company.com', 'platform@company.com'],
 };
 
+// Named so the group cases read clearly and so indexed access does not fight
+// noUncheckedIndexedAccess in every assertion.
+const [GROUP_A, GROUP_B] = PAYLOAD.groups as [string, string];
+
 let domain: FakeDomain;
 let credentials: FakeCredentials;
 
@@ -269,18 +273,18 @@ describe('AC-4: the account is created with a forced password change', () => {
     const result = await run('create-user');
 
     expect(credentials.stashed).toHaveLength(1);
-    expect(credentials.stashed[0].password).toBeTruthy();
-    expect(credentials.stashed[0].requestId).toBe('req-001');
-    expect(credentials.stashed[0].ttlHours).toBeGreaterThan(0);
+    expect(credentials.stashed[0]!.password).toBeTruthy();
+    expect(credentials.stashed[0]!.requestId).toBe('req-001');
+    expect(credentials.stashed[0]!.ttlHours).toBeGreaterThan(0);
 
     // The step output is readable in the console and mirrored to logs, so the
     // password must not be anywhere in it.
-    expect(JSON.stringify(result)).not.toContain(credentials.stashed[0].password);
+    expect(JSON.stringify(result)).not.toContain(credentials.stashed[0]!.password);
   });
 
   it('generates a password meeting the configured length and complexity policy', async () => {
     await run('create-user');
-    const password = credentials.stashed[0].password;
+    const password = credentials.stashed[0]!.password;
 
     expect(password.length).toBeGreaterThanOrEqual(12);
     expect(password).toMatch(/[a-z]/);
@@ -294,7 +298,7 @@ describe('AC-5: a failing group assignment retains the groups already applied', 
     await run('validate-request');
     await run('create-user');
 
-    const [first, second] = PAYLOAD.groups;
+    const [first, second] = [GROUP_A, GROUP_B];
     await run('assign-group', { step: { input: { groupKey: first } } });
 
     domain.failures.set(`addMember:${second}`, { code: 400, message: 'group does not exist' });
@@ -319,9 +323,9 @@ describe('AC-6: verification reads the account back and compares against intent'
 
   it('fails when the account is missing a requested group', async () => {
     await runPhase();
-    domain.memberships.get(PAYLOAD.groups[1])!.delete(PAYLOAD.primaryEmail);
+    domain.memberships.get(GROUP_B)!.delete(PAYLOAD.primaryEmail);
 
-    await expect(run('verify-account')).rejects.toThrow(`not a member of ${PAYLOAD.groups[1]}`);
+    await expect(run('verify-account')).rejects.toThrow(`not a member of ${GROUP_B}`);
   });
 
   it('fails when the org unit does not match what was asked for', async () => {
@@ -381,7 +385,7 @@ describe('REQ-013 AC-1: replaying a step against a satisfied domain mutates noth
   });
 
   it('skips group assignment when the user is already a member', async () => {
-    const groupKey = PAYLOAD.groups[0];
+    const groupKey = GROUP_A;
     await run('create-user');
     await run('assign-group', { step: { input: { groupKey } } });
     const afterFirst = domain.countCalls(`addMember:${groupKey}`);

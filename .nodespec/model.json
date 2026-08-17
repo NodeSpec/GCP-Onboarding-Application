@@ -1,7 +1,7 @@
 {
   "modelVersion": 1,
   "generatedBy": "nodespec",
-  "modelHash": "63a586723d0efeabc1dd72088441b0ebe771489df5649bd3704fe974f32018ea",
+  "modelHash": "2d3d2079ccecebe8a5a82662253b858b460dcc4f2c0f302b09c47b19ab1aa128",
   "nodes": [
     {
       "id": "1c81cf63-c51e-4b0e-b6ad-7d318332d2fe",
@@ -935,7 +935,8 @@
       "id": "f5c8e402-1d76-4b39-8a52-7e03d6194bc8",
       "nodeId": "db8e5409-dc6f-4052-887a-7ba1dd5fb717",
       "path": "services/worker/src/phases/create.test.ts",
-      "kind": "test-plan"
+      "kind": "test-plan",
+      "contentHash": "00000000750129b4"
     },
     {
       "id": "f83cdb84-1369-451c-91fe-13e5eb3f9016",
