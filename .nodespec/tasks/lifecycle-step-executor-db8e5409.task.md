@@ -1169,6 +1169,7 @@ Startup/initialization order based on edge directions and interaction patterns.
 | `services/worker/src/tasks/dispatcher.ts` | source | --- | draft |
 | `.nodespec/tests/req-003.tests.md` - Test plan for requirement: Phase 1 — User creation with attributes and group assignment | test-plan | markdown | draft |
 | `.nodespec/tests/req-019.tests.md` - Test plan for requirement: Credential generation and encryption at rest | test-plan | markdown | draft |
+| `services/worker/Dockerfile` | build | --- | draft |
 | `services/worker/src/phases/update.ts` | source | --- | draft |
 | `services/worker/src/steps/advance.emulator.test.ts` | test-plan | --- | draft |
 | `services/worker/src/phases/delete.test.ts` | test-plan | --- | draft |

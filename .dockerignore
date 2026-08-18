@@ -1,0 +1,13 @@
+# The images build everything from source inside a multi-stage build, so the
+# host's generated and vendored files must not enter the build context. Sending
+# them would bloat the context upload, and a stale host dist could otherwise
+# shadow the fresh compile.
+node_modules
+**/node_modules
+**/dist
+services/api/public
+.git
+.github
+.nodespec
+*.log
+npm-debug.log*

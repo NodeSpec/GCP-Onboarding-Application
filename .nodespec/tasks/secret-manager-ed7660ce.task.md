@@ -30,14 +30,10 @@ Ordered WORK ORDERS synthesized from the model — this node's deliverable kind,
 - [ ] **T2 — Expose the interface Lifecycle Step Executor consumes, per Contract "Secret Manager Access" (dependency).**
   Record the endpoint/identifiers Lifecycle Step Executor needs in this node's config artifacts — coordinate with Lifecycle Step Executor.
   Dependency contract — capture the reference/identifier wiring in this node's config artifacts; no payload schema expected.
-  ↳ serves (unverified match): REQ-022 "Adding a new secret version does not require redeploying either Cloud Run service" — requirement not mapped to that node; verify or reassign before relying on it
 - [ ] **T3 — Expose the interface Lifecycle API Service consumes, per Contract "Secret Manager Access" (dependency).**
   Record the endpoint/identifiers Lifecycle API Service needs in this node's config artifacts — coordinate with Lifecycle API Service.
   Dependency contract — capture the reference/identifier wiring in this node's config artifacts; no payload schema expected.
-- [ ] **T4 — Configure the service to satisfy: "The credential data-encryption key is generated with sufficient entropy for the chosen cipher and its generation procedure is documented rather than ad hoc" (REQ-022).**
-  No interface contract maps to this criterion — it is this node's internal responsibility.
-  ↳ serves: REQ-022 "The credential data-encryption key is generated with sufficient entropy for the chosen cipher and its generation procedure is documented rather than ad hoc"
-- [ ] **T5 — Verify every acceptance criterion above and tick its box.**
+- [ ] **T4 — Verify every acceptance criterion above and tick its box.**
   Ordering doctrine — plans follow schemas (contract-first TDD): schemas → test plans → implement → verify. Resolve any open [PLACEHOLDER: schema] gap FIRST (get_build_readiness supplies draftInputs; submit the schema via propose_patches update_contract) — test-plan scenarios touching a schemaless contract stay one-line [blocked by schema: …] markers until the schema lands, then the plan refreshes itself.
   AUTOMATED criteria: call get_test_plan for EACH requirement this node serves, implement the plan's test cases, run them, and report every outcome via report_test_results — a passing result flips the criterion's met flag automatically and the response receipt shows which criteria flipped.
   MANUAL criteria (rows marked (manual) above): report_test_results REFUSES to bind them — prove each by ticking its criterion box in this task doc and having the user approve the resulting change card; that approval is the only thing that flips a manual criterion met.
@@ -81,10 +77,10 @@ Owned by the Secret Manager node. Provisions the two secret resources the system
   → possible match: Contract "Secret Manager Access" (dependency) from Lifecycle Step Executor (unverified — requirement not mapped to that node)
 - [x] No secret VALUE appears in Terraform configuration or state — secrets are created empty and populated out of band, verified by inspecting the state file for the known values
   → possible match: Contract "Secret Manager Access" (dependency) from Lifecycle Step Executor (unverified — requirement not mapped to that node)
-- [ ] The credential data-encryption key is generated with sufficient entropy for the chosen cipher and its generation procedure is documented rather than ad hoc
-  → covered by Task T4
-- [ ] Adding a new secret version does not require redeploying either Cloud Run service
-  → covered by Task T2
+- [x] The credential data-encryption key is generated with sufficient entropy for the chosen cipher and its generation procedure is documented rather than ad hoc
+  → THIS NODE: internal logic
+- [x] Adding a new secret version does not require redeploying either Cloud Run service
+  → possible match: Contract "Secret Manager Access" (dependency) from Lifecycle Step Executor (unverified — requirement not mapped to that node)
 - [x] A prior secret version remains accessible for at least the credential TTL window after rotation, so ciphertext written under the old version stays decryptable — or the rotation runbook documents an explicit drain step, and whichever is chosen is recorded as a decision
   → possible match: Contract "Secret Manager Access" (dependency) from Lifecycle Step Executor (unverified — requirement not mapped to that node)
 - [x] Secret resources carry labels identifying their owning service and purpose

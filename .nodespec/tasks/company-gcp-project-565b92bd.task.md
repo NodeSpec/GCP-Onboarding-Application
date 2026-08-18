@@ -232,6 +232,7 @@ resource "google_project" "main" {
 | `docs/runbook.md` | doc | --- | draft |
 | `docs/testing.md` | doc | --- | draft |
 | `docs/docs.test.ts` | test-plan | --- | draft |
+| `.dockerignore` | config | --- | draft |
 | `infra/versions.tf` | config | --- | draft |
 | `docs/approval-policy.md` | doc | --- | draft |
 | `infra/apis.tf` | config | --- | draft |

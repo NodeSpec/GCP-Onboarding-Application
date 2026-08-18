@@ -32,7 +32,6 @@ Ordered WORK ORDERS synthesized from the model — this node's deliverable kind,
 - [ ] **T3 — Expose the interface Lifecycle Step Executor consumes, per Contract "Step Task Enqueue" (rest).**
   Record the endpoint/identifiers Lifecycle Step Executor needs in this node's config artifacts — coordinate with Lifecycle Step Executor.
   Build to the contract schema EXACTLY (see Interface Contracts).
-  ↳ serves (unverified match): REQ-021 "Tasks are dispatched with an OIDC token whose audience is the worker service URL" — requirement not mapped to that node; verify or reassign before relying on it
   ↳ serves (unverified match): REQ-021 "Scheduling a task with a future scheduleTime defers dispatch to that time, verified end to end, since the offboarding hold period and approval expiry both depend on it" — requirement not mapped to that node; verify or reassign before relying on it
 - [ ] **T4 — Expose the interface Lifecycle API Service consumes, per Contract "Step Task Enqueue" (rest).**
   Record the endpoint/identifiers Lifecycle API Service needs in this node's config artifacts — coordinate with Lifecycle API Service.
@@ -83,8 +82,8 @@ Owned by the Cloud Tasks node. Provisions the lifecycle-steps queue that gives t
   → possible match: Contract "Step Execution Dispatch" (rest) to Lifecycle Step Executor (unverified — requirement not mapped to that node)
 - [x] A dedicated queue invoker service account is provisioned and used as the queue's dispatch identity — the run.invoker binding on the worker service is asserted by REQ-026
   → possible match: Contract "Step Execution Dispatch" (rest) to Lifecycle Step Executor (unverified — requirement not mapped to that node)
-- [ ] Tasks are dispatched with an OIDC token whose audience is the worker service URL
-  → covered by Task T3
+- [x] Tasks are dispatched with an OIDC token whose audience is the worker service URL
+  → possible match: Contract "Step Task Enqueue" (rest) from Lifecycle Step Executor (unverified — requirement not mapped to that node)
 - [ ] Scheduling a task with a future scheduleTime defers dispatch to that time, verified end to end, since the offboarding hold period and approval expiry both depend on it
   → covered by Task T3
 - [x] The queue name and worker target URL are wired from Terraform outputs rather than hardcoded in application configuration

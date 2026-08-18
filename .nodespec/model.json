@@ -1,7 +1,7 @@
 {
   "modelVersion": 1,
   "generatedBy": "nodespec",
-  "modelHash": "8a468a5d06299214654a1d1a3c74b5f48aa9cda30fbf8d200a35ba256f11a5e2",
+  "modelHash": "a00dc1651139d40c1ff22ecec62226ac67f0454cf76a66921f6551ff557221b6",
   "nodes": [
     {
       "id": "1c81cf63-c51e-4b0e-b6ad-7d318332d2fe",
@@ -795,6 +795,12 @@
       "kind": "config"
     },
     {
+      "id": "3f9c1a7e-2b64-4d05-9e18-7a2c5f0b1d63",
+      "nodeId": "c424e85a-6584-4bb7-a48e-2175ebc6a41b",
+      "path": "services/api/Dockerfile",
+      "kind": "build"
+    },
+    {
       "id": "4038fb45-11ae-474b-8fd2-d6bf72d410e8",
       "nodeId": "db8e5409-dc6f-4052-887a-7ba1dd5fb717",
       "path": "services/worker/src/tasks/dispatcher.ts",
@@ -818,6 +824,12 @@
       "nodeId": "9af301aa-2191-4532-9871-82179a5500c1",
       "path": "services/console/src/RequestDetail.tsx",
       "kind": "source"
+    },
+    {
+      "id": "4a0d2b8f-3c75-4e16-af29-8b3d6a1c2e74",
+      "nodeId": "db8e5409-dc6f-4052-887a-7ba1dd5fb717",
+      "path": "services/worker/Dockerfile",
+      "kind": "build"
     },
     {
       "id": "4b7e19a0-8c53-4d26-91fa-6e0d38b52c74",
@@ -860,6 +872,12 @@
       "nodeId": "c424e85a-6584-4bb7-a48e-2175ebc6a41b",
       "path": "packages/shared/src/credentials.test.ts",
       "kind": "source"
+    },
+    {
+      "id": "5b1e3c90-4d86-4f27-b03a-9c4e7b2d3f85",
+      "nodeId": "565b92bd-2c2c-4a82-be62-b691decdbadf",
+      "path": ".dockerignore",
+      "kind": "config"
     },
     {
       "id": "5c1a8e42-9f03-4b6d-8a71-2e94c0d5f6b3",
