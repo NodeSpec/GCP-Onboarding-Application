@@ -1524,4 +1524,5 @@ Startup/initialization order based on edge directions and interaction patterns.
 | `services/api/src/routes/credential.emulator.test.ts` | source | --- | draft |
 | `services/api/src/routes/lookup.ts` | source | --- | draft |
 | `services/api/src/config.ts` | source | --- | draft |
+| `packages/schemas/src/index.test.ts` | test-plan | --- | draft |
 | `packages/shared/src/stepPlans.test.ts` | test-plan | --- | draft |
