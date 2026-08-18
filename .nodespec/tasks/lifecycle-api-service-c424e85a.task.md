@@ -1505,6 +1505,7 @@ Startup/initialization order based on edge directions and interaction patterns.
 | `services/api/src/routes/admin.emulator.test.ts` | test-plan | --- | draft |
 | `packages/shared/tsconfig.json` | config | --- | draft |
 | `packages/shared/src/credentials.ts` | source | --- | draft |
+| `services/api/src/lookup/workerClient.ts` | source | --- | draft |
 | `packages/shared/src/index.ts` | source | --- | draft |
 | `services/api/src/schemas.test.ts` | test-plan | --- | draft |
 | `services/api/src/logging.ts` | source | --- | draft |

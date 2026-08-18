@@ -1,7 +1,7 @@
 {
   "modelVersion": 1,
   "generatedBy": "nodespec",
-  "modelHash": "3549e1a822cb918685c1f5d9abcf910e9f7acc39ab10a99bc32eee56dd48256b",
+  "modelHash": "c6456dcc7987da901e544e17f65cef9d87d81483cfe69f4738f22930610d96fe",
   "nodes": [
     {
       "id": "1c81cf63-c51e-4b0e-b6ad-7d318332d2fe",
@@ -954,6 +954,12 @@
       "path": "packages/shared/src/credentials.ts",
       "kind": "source",
       "contentHash": "000000000097c819"
+    },
+    {
+      "id": "a4b5c6d7-e8f9-4a0b-1c2d-3e4f5a6b7c8d",
+      "nodeId": "c424e85a-6584-4bb7-a48e-2175ebc6a41b",
+      "path": "services/api/src/lookup/workerClient.ts",
+      "kind": "source"
     },
     {
       "id": "a69dd899-09db-432c-9e71-a6ad6110de25",
