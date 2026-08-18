@@ -1,3 +1,4 @@
+import { fileURLToPath } from 'node:url';
 import { Firestore } from '@google-cloud/firestore';
 import {
   ANONYMOUS_ACTOR,
@@ -184,6 +185,35 @@ app.get('/api/me', async (req, res) => {
     email: identity.email,
     subject: identity.subject,
     roles: await resolver.rolesFor(identity),
+  });
+});
+
+/**
+ * The operator console itself (REQ-011).
+ *
+ * Static assets, built by the console package into this service's public/
+ * directory and served from here rather than from a bucket. That is the point:
+ * the console shares an origin with the API, so the browser's IAP cookie is the
+ * only credential in play and the client never holds a token of its own. A
+ * separate static origin would force one into the browser to reach the API.
+ *
+ * Mounted below iapAuth, so an unauthenticated caller never receives even the
+ * HTML, and below every /api route, so a mistyped endpoint still answers with
+ * the JSON 404 below instead of the console's index page.
+ */
+const consoleAssets = fileURLToPath(new URL('../public/', import.meta.url));
+
+app.use(express.static(consoleAssets, { index: false }));
+
+app.get(/^(?!\/api\/)/, (_req, res, next) => {
+  // Any non-API GET renders the console. Routing is client side, so index.html
+  // is the right answer for every such path; a 404 here would break a link
+  // pasted from an approval notice.
+  res.sendFile('index.html', { root: consoleAssets }, (err?: unknown) => {
+    // Not built into this image. Fall through to the JSON 404 rather than
+    // reporting a 500, which would misdescribe a packaging problem as a fault
+    // in the running service.
+    if (err) next();
   });
 });
 
