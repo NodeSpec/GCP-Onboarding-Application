@@ -239,3 +239,4 @@ resource "google_project" "main" {
 | `package.json` | config | --- | draft |
 | `vitest.config.ts` | config | --- | draft |
 | `README.md` | doc | --- | draft |
+| `infra/infra.test.ts` | test-plan | --- | draft |

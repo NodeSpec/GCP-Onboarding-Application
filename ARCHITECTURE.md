@@ -129,4 +129,5 @@ recommended test types, framework suggestions, and test scenarios.
 - **Lifecycle API Service**: [`services/api/src/routes/requestList.emulator.test.ts`](./services/api/src/routes/requestList.emulator.test.ts)
 - **Cloud Logging: audit sink**: [`packages/shared/src/auditMirror.emulator.test.ts`](./packages/shared/src/auditMirror.emulator.test.ts)
 - **Lifecycle Step Executor**: [`services/worker/src/phases/create.test.ts`](./services/worker/src/phases/create.test.ts)
+- **Company GCP Project**: [`infra/infra.test.ts`](./infra/infra.test.ts)
 - **Lifecycle API Service**: [`packages/schemas/src/index.test.ts`](./packages/schemas/src/index.test.ts)
