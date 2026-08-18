@@ -1,7 +1,7 @@
 {
   "modelVersion": 1,
   "generatedBy": "nodespec",
-  "modelHash": "40c6cec081bd53c22b593cd47c8830545185273e6594be1cec7798da5ed53d2d",
+  "modelHash": "49258436da16a02092c7ea7180528f871f034b4b378dd552453edefec6567bf8",
   "nodes": [
     {
       "id": "1c81cf63-c51e-4b0e-b6ad-7d318332d2fe",
@@ -671,7 +671,8 @@
       "id": "1d7be540-8c92-4a03-b6f1-25de84c930ab",
       "nodeId": "9af301aa-2191-4532-9871-82179a5500c1",
       "path": "services/console/src/main.tsx",
-      "kind": "source"
+      "kind": "source",
+      "contentHash": "000000001a7dfb09"
     },
     {
       "id": "23c255fd-55b1-495a-bbdf-81b50fbea74e",
@@ -947,6 +948,12 @@
       "id": "6d2f9b14-7a58-4c03-9e61-8b4d0f3c5a72",
       "nodeId": "db8e5409-dc6f-4052-887a-7ba1dd5fb717",
       "path": "services/worker/src/workspace/noAdminRoles.test.ts",
+      "kind": "source"
+    },
+    {
+      "id": "6d3f8b21-4a97-4e52-b8c6-1f70d5a9e3c4",
+      "nodeId": "9af301aa-2191-4532-9871-82179a5500c1",
+      "path": "services/console/src/styles.css",
       "kind": "source"
     },
     {

@@ -1,0 +1,512 @@
+/*
+ * The operator console's styling (REQ-011).
+ *
+ * This is an internal console for consequential, mostly irreversible actions,
+ * so it is built to be read quickly rather than to be admired: dense rows, a
+ * consistent status vocabulary, and weight given to the two screens somebody
+ * stakes a decision on, which are the step timeline and the computed diff.
+ *
+ * Everything here is a stylesheet. The markup is already semantic, and the
+ * component tests query by role, label and text, so nothing in this file is
+ * load bearing for behaviour. Two structural facts the tests do rely on are
+ * left alone: the org unit picker is a select, and the diff is a table.
+ *
+ * No web fonts. A font request is a third party dependency on the critical path
+ * of a console people open when something is wrong, and the system stack is
+ * already what the operating system renders best.
+ */
+
+:root {
+  color-scheme: light dark;
+
+  --bg: #f6f7f9;
+  --surface: #ffffff;
+  --surface-alt: #f0f2f5;
+  --border: #d9dee5;
+  --border-strong: #b9c2cd;
+  --text: #16191d;
+  --text-muted: #5b6673;
+  --accent: #1f6feb;
+  --accent-contrast: #ffffff;
+
+  /* The status vocabulary. Used identically wherever a state is shown, so the
+     colours can be learned once and read everywhere after that. */
+  --ok-bg: #e4f5e9;
+  --ok-fg: #14652c;
+  --bad-bg: #fdeaea;
+  --bad-fg: #a4232a;
+  --wait-bg: #fdf3d8;
+  --wait-fg: #8a5d00;
+  --busy-bg: #e5efff;
+  --busy-fg: #14448f;
+  --idle-bg: #eef0f3;
+  --idle-fg: #4a5561;
+
+  --radius: 6px;
+  --gap: 1rem;
+  --mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #0f1115;
+    --surface: #171a20;
+    --surface-alt: #1e222a;
+    --border: #2a2f38;
+    --border-strong: #3a414c;
+    --text: #e6e9ee;
+    --text-muted: #9aa4b1;
+    --accent: #4c8dff;
+    --accent-contrast: #0f1115;
+
+    --ok-bg: #10301c;
+    --ok-fg: #7fd39b;
+    --bad-bg: #3a1618;
+    --bad-fg: #f5949a;
+    --wait-bg: #382c10;
+    --wait-fg: #f0c66b;
+    --busy-bg: #14243f;
+    --busy-fg: #8fb8ff;
+    --idle-bg: #21262e;
+    --idle-fg: #a8b2be;
+  }
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  font-size: 15px;
+  line-height: 1.5;
+}
+
+/* ------------------------------------------------------------------ shell */
+
+main {
+  max-width: 1080px;
+  margin: 0 auto;
+  padding: 0 var(--gap) 4rem;
+}
+
+header {
+  padding: 1.5rem 0 0;
+}
+
+header h1 {
+  font-size: 1.25rem;
+  font-weight: 650;
+  letter-spacing: -0.01em;
+  margin: 0;
+}
+
+/* The identity line. Small, because it is reference rather than content, but
+   never hidden: the console reads who you are from the server and an operator
+   should be able to see the answer it got (AC-8). */
+header > p {
+  color: var(--text-muted);
+  font-size: 0.875rem;
+  margin: 0.25rem 0 1rem;
+}
+
+header > p strong {
+  color: var(--text);
+  font-weight: 600;
+}
+
+/* Navigation as tabs. Only the sections the signed in operator may use are
+   rendered at all (AC-11), so the row is a statement of what you can do. */
+nav[aria-label='sections'] {
+  display: flex;
+  gap: 0.25rem;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 1.5rem;
+}
+
+nav[aria-label='sections'] button {
+  appearance: none;
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  font: inherit;
+  font-weight: 550;
+  margin-bottom: -1px;
+  padding: 0.6rem 0.9rem;
+}
+
+nav[aria-label='sections'] button:hover {
+  background: var(--surface-alt);
+  color: var(--text);
+}
+
+nav[aria-label='sections'] button:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+}
+
+/* ---------------------------------------------------------------- surfaces */
+
+section,
+article {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  margin-bottom: var(--gap);
+  padding: 1.25rem;
+}
+
+/* A section nested inside a request keeps the grouping without stacking two
+   card borders, which reads as clutter on a long detail page. */
+article section {
+  background: none;
+  border: none;
+  border-top: 1px solid var(--border);
+  border-radius: 0;
+  margin: 1.5rem 0 0;
+  padding: 1.25rem 0 0;
+}
+
+h2 {
+  font-size: 1.125rem;
+  margin: 0 0 0.25rem;
+}
+
+h3 {
+  font-size: 0.8125rem;
+  font-weight: 650;
+  letter-spacing: 0.04em;
+  margin: 0 0 0.75rem;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+/* ------------------------------------------------------------------ status */
+
+/*
+ * One badge, used wherever a request or a step reports its state. Driven by
+ * data-status so the vocabulary lives here rather than being spelled out at
+ * each call site.
+ */
+[data-status] {
+  --badge-bg: var(--idle-bg);
+  --badge-fg: var(--idle-fg);
+}
+
+[data-status='succeeded'] {
+  --badge-bg: var(--ok-bg);
+  --badge-fg: var(--ok-fg);
+}
+
+[data-status='failed'],
+[data-status='rejected'] {
+  --badge-bg: var(--bad-bg);
+  --badge-fg: var(--bad-fg);
+}
+
+[data-status='awaiting_approval'],
+[data-status='held'] {
+  --badge-bg: var(--wait-bg);
+  --badge-fg: var(--wait-fg);
+}
+
+[data-status='running'],
+[data-status='ready'],
+[data-status='compensating'] {
+  --badge-bg: var(--busy-bg);
+  --badge-fg: var(--busy-fg);
+}
+
+td[data-status],
+strong[data-status] {
+  color: var(--badge-fg);
+  font-weight: 600;
+}
+
+td[data-status] {
+  white-space: nowrap;
+}
+
+/* ------------------------------------------------------------------ tables */
+
+table {
+  border-collapse: collapse;
+  font-size: 0.9375rem;
+  width: 100%;
+}
+
+th {
+  border-bottom: 1px solid var(--border-strong);
+  color: var(--text-muted);
+  font-size: 0.75rem;
+  font-weight: 650;
+  letter-spacing: 0.04em;
+  padding: 0.5rem 0.75rem;
+  text-align: left;
+  text-transform: uppercase;
+}
+
+td {
+  border-bottom: 1px solid var(--border);
+  padding: 0.6rem 0.75rem;
+  vertical-align: top;
+}
+
+tbody tr:hover {
+  background: var(--surface-alt);
+}
+
+/* Addresses and identifiers are compared character by character far more often
+   than they are read as words. */
+td:nth-child(2) {
+  font-family: var(--mono);
+  font-size: 0.875rem;
+}
+
+/* ------------------------------------------------------------------- diff */
+
+/*
+ * AC-9. This is the screen an approver authorises an irreversible change from,
+ * so the rows that change carry the weight and the rows that do not are
+ * deliberately quiet. Both are shown: the operator asked for both.
+ */
+section[aria-label='computed diff'] tr.unchanged td {
+  color: var(--text-muted);
+}
+
+section[aria-label='computed diff'] tr.changed td:last-child {
+  color: var(--ok-fg);
+  font-weight: 600;
+}
+
+section[aria-label='computed diff'] tr.changed td:nth-child(2) {
+  color: var(--text-muted);
+  text-decoration: line-through;
+}
+
+/* --------------------------------------------------------------- timeline */
+
+/*
+ * AC-5, and the one view the Google admin console cannot offer. A stalled
+ * request should be legible at a glance: which step, what state, how many
+ * attempts, and what the error said.
+ */
+section[aria-label='step timeline'] ol {
+  list-style: none;
+  margin: 0;
+  padding: 0 0 0 1.25rem;
+  position: relative;
+}
+
+/* The rail. */
+section[aria-label='step timeline'] ol::before {
+  background: var(--border);
+  bottom: 0.75rem;
+  content: '';
+  left: 4px;
+  position: absolute;
+  top: 0.75rem;
+  width: 2px;
+}
+
+section[aria-label='step timeline'] li {
+  padding: 0.6rem 0;
+  position: relative;
+}
+
+/* The node, coloured by the step's own state. */
+section[aria-label='step timeline'] li::before {
+  background: var(--badge-bg);
+  border: 2px solid var(--badge-fg);
+  border-radius: 50%;
+  content: '';
+  height: 10px;
+  left: -1.25rem;
+  position: absolute;
+  top: 1rem;
+  width: 10px;
+}
+
+section[aria-label='step timeline'] li strong {
+  font-family: var(--mono);
+  font-size: 0.9375rem;
+}
+
+section[aria-label='step timeline'] li span {
+  color: var(--text-muted);
+  font-size: 0.8125rem;
+}
+
+/* A skipped step happened correctly and did nothing, which is different from
+   both success and failure and should not compete with either for attention. */
+section[aria-label='step timeline'] li[data-status='skipped'] {
+  opacity: 0.65;
+}
+
+section[aria-label='step timeline'] li[data-status='failed'] strong {
+  color: var(--bad-fg);
+}
+
+.step-error {
+  background: var(--bad-bg);
+  border-left: 3px solid var(--bad-fg);
+  border-radius: 0 var(--radius) var(--radius) 0;
+  color: var(--bad-fg);
+  font-family: var(--mono);
+  font-size: 0.8125rem;
+  margin: 0.5rem 0 0;
+  padding: 0.5rem 0.75rem;
+  white-space: pre-wrap;
+}
+
+/* ------------------------------------------------------------------ forms */
+
+label {
+  color: var(--text-muted);
+  display: block;
+  font-size: 0.8125rem;
+  font-weight: 550;
+  margin-bottom: 0.25rem;
+}
+
+/* A checkbox label is a sentence, not a field heading. */
+label:has(input[type='checkbox']) {
+  align-items: center;
+  color: var(--text);
+  display: flex;
+  gap: 0.5rem;
+  margin: 0.75rem 0;
+}
+
+input,
+select,
+textarea {
+  background: var(--surface);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius);
+  color: var(--text);
+  font: inherit;
+  margin-bottom: 0.875rem;
+  max-width: 32rem;
+  padding: 0.45rem 0.6rem;
+  width: 100%;
+}
+
+input[type='checkbox'] {
+  margin: 0;
+  width: auto;
+}
+
+textarea {
+  min-height: 5rem;
+  resize: vertical;
+}
+
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  border-color: var(--accent);
+  outline: 2px solid color-mix(in srgb, var(--accent) 35%, transparent);
+  outline-offset: 0;
+}
+
+/* The filter row reads as one control, not four stacked fields. */
+.filters {
+  align-items: end;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.filters label {
+  margin: 0 0 0.25rem;
+}
+
+.filters input,
+.filters select {
+  margin: 0;
+  min-width: 10rem;
+  width: auto;
+}
+
+/* ---------------------------------------------------------------- buttons */
+
+button {
+  background: var(--surface);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius);
+  color: var(--text);
+  cursor: pointer;
+  font: inherit;
+  font-weight: 550;
+  padding: 0.45rem 0.9rem;
+}
+
+button:hover:not(:disabled) {
+  background: var(--surface-alt);
+}
+
+button:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+button:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+/* A decision is not the same kind of act as "Next", and should not look like
+   it. Approve commits work; reject and cancel end it. */
+section[aria-label='approval'] button:first-of-type {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--accent-contrast);
+  margin-right: 0.5rem;
+}
+
+section[aria-label='approval'] button:last-of-type,
+section[aria-label='cancel request'] button {
+  border-color: var(--bad-fg);
+  color: var(--bad-fg);
+}
+
+.paging {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 1rem;
+}
+
+/* --------------------------------------------------------------- messages */
+
+/*
+ * A refusal from the server is rendered verbatim (AC-7), so it needs somewhere
+ * that reads as the server talking rather than as decoration.
+ */
+[role='alert'] {
+  background: var(--bad-bg);
+  border: 1px solid color-mix(in srgb, var(--bad-fg) 35%, transparent);
+  border-radius: var(--radius);
+  color: var(--bad-fg);
+  margin: 0.5rem 0;
+  padding: 0.6rem 0.85rem;
+}
+
+[role='status'] {
+  color: var(--text-muted);
+  margin: 0.5rem 0;
+}
+
+/* An empty list is a result, not an error, and should not look like one. */
+table + [role='status'] {
+  background: var(--surface-alt);
+  border-radius: var(--radius);
+  padding: 1.5rem;
+  text-align: center;
+}
