@@ -1,7 +1,7 @@
 {
   "modelVersion": 1,
   "generatedBy": "nodespec",
-  "modelHash": "b571932474e3e2cd358fc17d2814788df780f002e006767da5f96791048b1196",
+  "modelHash": "f33d7834eee6c7bb66818126c726fef6f51cdd6c4e9117c633268e684b18a1da",
   "nodes": [
     {
       "id": "1c81cf63-c51e-4b0e-b6ad-7d318332d2fe",
@@ -570,7 +570,8 @@
       "id": "0a21be75-1468-4f74-b708-2341f7ab7692",
       "nodeId": "db8e5409-dc6f-4052-887a-7ba1dd5fb717",
       "path": "services/worker/package.json",
-      "kind": "config"
+      "kind": "config",
+      "contentHash": "0000000030274f16"
     },
     {
       "id": "0a8f5d21-3c6e-4b7a-9d24-1f7e0b3c5a68",
@@ -907,7 +908,8 @@
       "id": "67085527-dde4-4397-8591-9ca00e928eb1",
       "nodeId": "c424e85a-6584-4bb7-a48e-2175ebc6a41b",
       "path": "services/api/package.json",
-      "kind": "config"
+      "kind": "config",
+      "contentHash": "0000000069960714"
     },
     {
       "id": "6878625c-b079-496a-962c-6d05ca92b84a",
@@ -1214,7 +1216,8 @@
       "id": "b2d7c018-5063-4e98-ac42-38db610f9e57",
       "nodeId": "c424e85a-6584-4bb7-a48e-2175ebc6a41b",
       "path": "packages/shared/package.json",
-      "kind": "config"
+      "kind": "config",
+      "contentHash": "0000000043b0cd8f"
     },
     {
       "id": "b5c6d7e8-f9a0-4b1c-2d3e-4f5a6b7c8d9e",
@@ -1301,7 +1304,7 @@
       "nodeId": "565b92bd-2c2c-4a82-be62-b691decdbadf",
       "path": "package.json",
       "kind": "config",
-      "contentHash": "000000000354c28c"
+      "contentHash": "0000000043097236"
     },
     {
       "id": "c48ce6fe-4ea2-4709-9f75-2fb8f0bfbcf3",

@@ -18,6 +18,7 @@
     "@google-cloud/firestore": "^7.10.0",
     "@google-cloud/secret-manager": "^5.6.0",
     "@google-cloud/tasks": "^5.5.0",
+    "@lifecycle/shared": "*",
     "express": "^4.21.2",
     "google-auth-library": "^9.15.0",
     "googleapis": "^144.0.0",
@@ -26,6 +27,7 @@
     "zod": "^3.23.8"
   },
   "devDependencies": {
+    "@lifecycle/test-support": "*",
     "@types/express": "^4.17.21",
     "@types/node": "^22.9.0",
     "@types/nodemailer": "^6.4.16",

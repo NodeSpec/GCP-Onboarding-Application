@@ -12,7 +12,7 @@
     "services/*"
   ],
   "scripts": {
-    "build": "npm run build --workspace @lifecycle/shared && npm run build --workspaces --if-present",
+    "build": "npm run build --workspace @lifecycle/schemas && npm run build --workspace @lifecycle/shared && npm run build --workspace @lifecycle/test-support && npm run build --workspaces --if-present",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:emulator": "firebase emulators:exec --only firestore --project demo-lifecycle 'vitest run --config vitest.emulator.config.ts'",
