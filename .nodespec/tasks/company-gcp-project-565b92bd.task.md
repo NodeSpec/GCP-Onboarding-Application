@@ -234,9 +234,12 @@ resource "google_project" "main" {
 | File | Kind | Language | Status |
 |------|------|----------|--------|
 | `docs/testing.md` | doc | --- | draft |
+| `infra/versions.tf` | config | --- | draft |
+| `infra/apis.tf` | config | --- | draft |
 | `vitest.emulator.config.ts` | config | --- | draft |
 | `.gitignore` | config | --- | draft |
 | `package.json` | config | --- | draft |
+| `infra/outputs.tf` | config | --- | draft |
 | `vitest.config.ts` | config | --- | draft |
 | `README.md` | doc | --- | draft |
 | `infra/infra.test.ts` | test-plan | --- | draft |

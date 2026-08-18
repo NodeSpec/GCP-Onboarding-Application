@@ -234,4 +234,5 @@ Startup/initialization order based on edge directions and interaction patterns.
 |------|------|----------|--------|
 | `packages/shared/src/auditMirror.ts` | source | --- | draft |
 | `packages/shared/src/cloudLoggingAudit.ts` | source | --- | draft |
+| `infra/logging.tf` | config | --- | draft |
 | `packages/shared/src/auditMirror.emulator.test.ts` | test-plan | --- | draft |

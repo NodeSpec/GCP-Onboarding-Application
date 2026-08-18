@@ -193,3 +193,9 @@ Startup/initialization order based on edge directions and interaction patterns.
 - HTTP error responses to External HTTPS Load Balancer ("IAP Authorization Check"): return proper 4xx for validation errors, 401/403 for auth failures, 5xx for internal errors with correlation IDs
 
 **Parent Container:** Company GCP Project (gcp)
+
+## Existing Implementation
+
+| File | Kind | Language | Status |
+|------|------|----------|--------|
+| `infra/iap.tf` | config | --- | draft |

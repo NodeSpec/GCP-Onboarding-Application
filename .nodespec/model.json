@@ -1,7 +1,7 @@
 {
   "modelVersion": 1,
   "generatedBy": "nodespec",
-  "modelHash": "0c74b3af8de823dcd9532aca8836ce1e91e026599d1163c172caaa131b2acb4a",
+  "modelHash": "570cd05cf06fe2c5b07d7bfcf0db8c0126fd6a72fc9a012f40ac42f0c5c1b415",
   "nodes": [
     {
       "id": "1c81cf63-c51e-4b0e-b6ad-7d318332d2fe",
@@ -812,6 +812,12 @@
       "kind": "source"
     },
     {
+      "id": "5c1a8e42-9f03-4b6d-8a71-2e94c0d5f6b3",
+      "nodeId": "565b92bd-2c2c-4a82-be62-b691decdbadf",
+      "path": "infra/versions.tf",
+      "kind": "config"
+    },
+    {
       "id": "5c4f6356-361c-4029-9f54-dcc55813dffc",
       "nodeId": "c424e85a-6584-4bb7-a48e-2175ebc6a41b",
       "path": "services/api/src/roles.ts",
@@ -940,6 +946,12 @@
       "contentHash": "0000000023af8c46"
     },
     {
+      "id": "7e3b0c95-4d18-4a27-b9f6-c281a45e0d73",
+      "nodeId": "565b92bd-2c2c-4a82-be62-b691decdbadf",
+      "path": "infra/apis.tf",
+      "kind": "config"
+    },
+    {
       "id": "81d2fca9-9bf0-4c7d-b3a2-89955a220175",
       "nodeId": "c424e85a-6584-4bb7-a48e-2175ebc6a41b",
       "path": "services/api/src/routes/admin.emulator.test.ts",
@@ -982,6 +994,12 @@
       "path": ".nodespec/tasks/google-workspace-admin-sdk-directory-1c81cf63.task.md",
       "kind": "task",
       "contentHash": "00000000267c573d"
+    },
+    {
+      "id": "9a47f1e6-3c85-4b02-a9d4-61f8e70b25ac",
+      "nodeId": "ed7660ce-7057-4706-90f0-ff653f6ff7e8",
+      "path": "infra/secrets.tf",
+      "kind": "config"
     },
     {
       "id": "9b30f7a2-6d41-48c5-a913-7e2b04f8c651",
@@ -1133,6 +1151,12 @@
       "kind": "test-plan"
     },
     {
+      "id": "b8d25c07-6e41-4f39-a0b2-53c7e14d986f",
+      "nodeId": "4f626e62-3cc8-445a-9fbd-cb36407ad91e",
+      "path": "infra/iap.tf",
+      "kind": "config"
+    },
+    {
       "id": "b94d3062-ae58-4f17-8329-7d85fab0e6f4",
       "nodeId": "565b92bd-2c2c-4a82-be62-b691decdbadf",
       "path": "vitest.emulator.config.ts",
@@ -1169,6 +1193,12 @@
       "nodeId": "c424e85a-6584-4bb7-a48e-2175ebc6a41b",
       "path": "packages/shared/src/stepPlans.test.ts",
       "kind": "test-plan"
+    },
+    {
+      "id": "c39e7b18-0d54-4a86-91f7-2b46ca08d5e7",
+      "nodeId": "6da6f1e9-97b5-4c0b-8ba5-0b81f3bc5e4b",
+      "path": "infra/logging.tf",
+      "kind": "config"
     },
     {
       "id": "c3d4e5f6-7a8b-9c0d-1e2f-a3b4c5d6e7f8",
@@ -1286,6 +1316,12 @@
       "kind": "test-plan"
     },
     {
+      "id": "d41c96a3-8b70-4e25-a6f8-17e903b4d2c9",
+      "nodeId": "565b92bd-2c2c-4a82-be62-b691decdbadf",
+      "path": "infra/outputs.tf",
+      "kind": "config"
+    },
+    {
       "id": "d4c7a915-3f28-4b61-9e50-7a2b8c1d6e39",
       "nodeId": "db8e5409-dc6f-4052-887a-7ba1dd5fb717",
       "path": "services/worker/src/workspace/passwordPolicy.test.ts",
@@ -1342,6 +1378,12 @@
       "nodeId": "db8e5409-dc6f-4052-887a-7ba1dd5fb717",
       "path": "services/worker/src/workspace/retry.test.ts",
       "kind": "test-plan"
+    },
+    {
+      "id": "e57f2a91-4c68-4d03-b81a-96de4c705832",
+      "nodeId": "893dd4cf-9fd3-4c98-9de2-33b57dacad7e",
+      "path": "infra/tasks.tf",
+      "kind": "config"
     },
     {
       "id": "e5f6a7b8-9c0d-1e2f-3a4b-c5d6e7f8a9b0",

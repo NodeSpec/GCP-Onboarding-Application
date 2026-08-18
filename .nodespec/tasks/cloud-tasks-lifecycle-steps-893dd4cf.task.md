@@ -418,3 +418,9 @@ Startup/initialization order based on edge directions and interaction patterns.
 - HTTP errors from Lifecycle Step Executor ("Step Execution Dispatch"): handle 4xx (client error), 5xx (server error), timeouts, and connection refused
 
 **Parent Container:** Company GCP Project (gcp)
+
+## Existing Implementation
+
+| File | Kind | Language | Status |
+|------|------|----------|--------|
+| `infra/tasks.tf` | config | --- | draft |

@@ -216,3 +216,9 @@ Startup/initialization order based on edge directions and interaction patterns.
 - Lifecycle API Service (initiates Secret Manager Access against this node (dependency))
 
 **Parent Container:** Company GCP Project (gcp)
+
+## Existing Implementation
+
+| File | Kind | Language | Status |
+|------|------|----------|--------|
+| `infra/secrets.tf` | config | --- | draft |
