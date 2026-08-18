@@ -1186,6 +1186,7 @@ Startup/initialization order based on edge directions and interaction patterns.
 | `services/worker/src/steps/approvalExpiry.emulator.test.ts` | source | --- | draft |
 | `services/worker/src/phases/createCollision.emulator.test.ts` | source | --- | draft |
 | `services/worker/src/steps/handler.ts` | source | --- | draft |
+| `services/worker/src/routes/lookup.test.ts` | test-plan | --- | draft |
 | `services/worker/src/phases/update.test.ts` | test-plan | --- | draft |
 | `services/worker/src/steps/duplicateDelivery.emulator.test.ts` | source | --- | draft |
 | `services/worker/src/index.ts` | source | --- | draft |
