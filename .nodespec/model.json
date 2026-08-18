@@ -1,7 +1,7 @@
 {
   "modelVersion": 1,
   "generatedBy": "nodespec",
-  "modelHash": "747aa6cff6e719573530deb9de6c947f55f8142655d15c665033efd137993c52",
+  "modelHash": "ec3ac09561a0ab50af7178a45b99d2baf7ed009e2c83794784f26b0d7c19fe16",
   "nodes": [
     {
       "id": "1c81cf63-c51e-4b0e-b6ad-7d318332d2fe",
@@ -1306,7 +1306,7 @@
       "nodeId": "c424e85a-6584-4bb7-a48e-2175ebc6a41b",
       "path": "services/api/src/config.ts",
       "kind": "source",
-      "contentHash": "000000002561ef96"
+      "contentHash": "000000003dbc7bd0"
     },
     {
       "id": "f9b520e8-3a74-4c61-8d05-1e73b8c94a2f",

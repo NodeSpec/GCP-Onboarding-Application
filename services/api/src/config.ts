@@ -45,6 +45,41 @@ const schema = z
           .filter(Boolean),
       ),
 
+    /**
+     * The relay sending identity and the group that receives its bounces.
+     * Both are protected from lifecycle targeting unconditionally (REQ-031
+     * AC-2): without them this system cannot notify anyone, so a deployment
+     * that could delete one is one request away from breaking its own
+     * onboarding path. Optional because a deployment may not have wired the
+     * relay yet (REQ-028); an unset value simply protects nothing extra.
+     */
+    SMTP_SENDER: z.string().email().optional(),
+    RETURN_PATH_GROUP: z.string().email().optional(),
+
+    /**
+     * Comma-separated addresses that may never be targeted by a lifecycle
+     * request (REQ-031).
+     *
+     * Several Workspace users are load-bearing for this application itself,
+     * most pointedly the no-reply account whose credential sends every welcome
+     * letter. Deleting it would stop onboarding for everyone with no obvious
+     * cause: the letters simply stop arriving. Break-glass administrator
+     * accounts and the Return-Path monitoring group have the same property.
+     *
+     * Added to the two above rather than replacing them, so a tenant can
+     * protect its own break-glass accounts without waiting for a release
+     * (AC-3) and without being able to unprotect the notification path.
+     */
+    PROTECTED_ACCOUNTS: z
+      .string()
+      .default('')
+      .transform((raw) =>
+        raw
+          .split(',')
+          .map((email) => email.trim().toLowerCase())
+          .filter(Boolean),
+      ),
+
     AUTH_MODE: AuthMode.default('iap'),
     IAP_AUDIENCE: z.string().optional(),
     IAP_CLOCK_SKEW_SECONDS: z.coerce.number().int().nonnegative().default(30),
