@@ -1520,6 +1520,7 @@ Startup/initialization order based on edge directions and interaction patterns.
 | `services/api/src/protectedAccounts.ts` | source | --- | draft |
 | `services/api/src/routes/cancel.emulator.test.ts` | test-plan | --- | draft |
 | `packages/shared/src/stepPlans.ts` | source | --- | draft |
+| `services/api/src/routes/requestList.emulator.test.ts` | test-plan | --- | draft |
 | `packages/shared/src/transitions.ts` | source | --- | draft |
 | `services/api/src/routes/credential.emulator.test.ts` | source | --- | draft |
 | `services/api/src/routes/lookup.ts` | source | --- | draft |

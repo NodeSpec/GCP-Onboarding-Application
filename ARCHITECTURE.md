@@ -119,6 +119,7 @@ recommended test types, framework suggestions, and test scenarios.
 - **Lifecycle API Service**: [`packages/shared/src/requestFactory.test.ts`](./packages/shared/src/requestFactory.test.ts)
 - **Lifecycle Step Executor**: [`services/worker/src/workspace/retry.test.ts`](./services/worker/src/workspace/retry.test.ts)
 - **Lifecycle API Service**: [`services/api/src/routes/cancel.emulator.test.ts`](./services/api/src/routes/cancel.emulator.test.ts)
+- **Lifecycle API Service**: [`services/api/src/routes/requestList.emulator.test.ts`](./services/api/src/routes/requestList.emulator.test.ts)
 - **Lifecycle Step Executor**: [`services/worker/src/phases/create.test.ts`](./services/worker/src/phases/create.test.ts)
 - **Lifecycle API Service**: [`packages/schemas/src/index.test.ts`](./packages/schemas/src/index.test.ts)
 - **Lifecycle API Service**: [`packages/shared/src/stepPlans.test.ts`](./packages/shared/src/stepPlans.test.ts)
