@@ -212,3 +212,9 @@ Startup/initialization order based on edge directions and interaction patterns.
 - HTTP errors from Lifecycle API Service ("IAP-Protected HTTPS Ingress"): handle 4xx (client error), 5xx (server error), timeouts, and connection refused
 
 **Parent Container:** Company GCP Project (gcp)
+
+## Existing Implementation
+
+| File | Kind | Language | Status |
+|------|------|----------|--------|
+| `infra/loadbalancer.tf` | config | --- | draft |

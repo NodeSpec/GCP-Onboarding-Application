@@ -119,3 +119,9 @@ gcloud run services add-iam-policy-binding my-service --region us-central1 \
 **Contains:**
 - Operator Console UI [react] (frontend-app)
 - Lifecycle API Service [nodejs] (backend-service)
+
+## Existing Implementation
+
+| File | Kind | Language | Status |
+|------|------|----------|--------|
+| `infra/cloudrun.tf` | config | --- | draft |

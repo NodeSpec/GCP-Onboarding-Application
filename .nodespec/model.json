@@ -1,7 +1,7 @@
 {
   "modelVersion": 1,
   "generatedBy": "nodespec",
-  "modelHash": "79ad5e1640ca61549920a89657cac69407b6017dd6f566cb0a4be21a8c6af315",
+  "modelHash": "0ee4da9e533c0dc89624a4e249ac76b6cd4bb86fcc42165a65e24acaed94b996",
   "nodes": [
     {
       "id": "1c81cf63-c51e-4b0e-b6ad-7d318332d2fe",
@@ -1353,6 +1353,12 @@
       "kind": "test-plan"
     },
     {
+      "id": "d75e3810-2b46-4a09-8c37-14f9be026a5d",
+      "nodeId": "a7ee091d-3d58-4624-96ed-8292a596f6d1",
+      "path": "infra/cloudrun.tf",
+      "kind": "config"
+    },
+    {
       "id": "d7e8f9a0-b1c2-4d3e-4f5a-6b7c8d9e0f1a",
       "nodeId": "c424e85a-6584-4bb7-a48e-2175ebc6a41b",
       "path": "services/api/src/routes/protectedAdmission.emulator.test.ts",
@@ -1436,6 +1442,12 @@
       "path": ".nodespec/tasks/company-gcp-project-565b92bd.task.md",
       "kind": "task",
       "contentHash": "000000001a0f5273"
+    },
+    {
+      "id": "e94a6c27-5138-4b70-a2d6-73819fc0e451",
+      "nodeId": "d9e456a0-b079-4914-b8fc-f48f42fa7a7f",
+      "path": "infra/loadbalancer.tf",
+      "kind": "config"
     },
     {
       "id": "eb01c689-4c8f-4510-985a-69242309c3e0",
