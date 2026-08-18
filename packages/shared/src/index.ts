@@ -7,3 +7,5 @@ export * from './policy.js';
 export * from './requestFactory.js';
 export * from './dispatcher.js';
 export * from './credentials.js';
+export * from './auditMirror.js';
+export * from './cloudLoggingAudit.js';

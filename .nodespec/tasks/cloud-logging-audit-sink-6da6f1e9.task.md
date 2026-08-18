@@ -228,3 +228,11 @@ Startup/initialization order based on edge directions and interaction patterns.
 - Lifecycle API Service (initiates Audit Log Sink against this node (dependency))
 
 **Parent Container:** Company GCP Project (gcp)
+
+## Existing Implementation
+
+| File | Kind | Language | Status |
+|------|------|----------|--------|
+| `packages/shared/src/auditMirror.ts` | source | --- | draft |
+| `packages/shared/src/cloudLoggingAudit.ts` | source | --- | draft |
+| `packages/shared/src/auditMirror.emulator.test.ts` | test-plan | --- | draft |

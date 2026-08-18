@@ -1,7 +1,7 @@
 {
   "modelVersion": 1,
   "generatedBy": "nodespec",
-  "modelHash": "9515abaa9315a76e160ebaff34c87bc1948c9c049d3e1f2c126c7afc4b144524",
+  "modelHash": "eb797d63b2f09469697a1af77492b8b42b8eab5f0a850e927a43b6956cd94ddb",
   "nodes": [
     {
       "id": "1c81cf63-c51e-4b0e-b6ad-7d318332d2fe",
@@ -824,6 +824,12 @@
       "kind": "source"
     },
     {
+      "id": "5e2b04a7-83c1-4f39-b6d2-91ac74e05f38",
+      "nodeId": "6da6f1e9-97b5-4c0b-8ba5-0b81f3bc5e4b",
+      "path": "packages/shared/src/auditMirror.ts",
+      "kind": "source"
+    },
+    {
       "id": "5f26207f-5dbf-4b77-aee0-50d6f6600b67",
       "nodeId": "c424e85a-6584-4bb7-a48e-2175ebc6a41b",
       "path": "packages/shared/src/dispatcher.test.ts",
@@ -991,6 +997,12 @@
       "contentHash": "00000000212fccd0"
     },
     {
+      "id": "9c4d1b83-2e70-4a56-b8f1-05d379e2ca64",
+      "nodeId": "6da6f1e9-97b5-4c0b-8ba5-0b81f3bc5e4b",
+      "path": "packages/shared/src/cloudLoggingAudit.ts",
+      "kind": "source"
+    },
+    {
       "id": "9ff4b387-6d62-4f4e-a080-c8b24497b3d2",
       "nodeId": "db8e5409-dc6f-4052-887a-7ba1dd5fb717",
       "path": "services/worker/src/steps/handler.ts",
@@ -1039,7 +1051,7 @@
       "nodeId": "c424e85a-6584-4bb7-a48e-2175ebc6a41b",
       "path": "packages/shared/src/index.ts",
       "kind": "source",
-      "contentHash": "000000004a23391c"
+      "contentHash": "00000000583b0443"
     },
     {
       "id": "a7b8c9d0-1e2f-3a4b-5c6d-7e8f9a0b1c2d",
@@ -1396,6 +1408,12 @@
       "nodeId": "db8e5409-dc6f-4052-887a-7ba1dd5fb717",
       "path": "services/worker/src/logging.ts",
       "kind": "source"
+    },
+    {
+      "id": "f0e5a927-6c34-4b81-90d2-73eb4c1985af",
+      "nodeId": "6da6f1e9-97b5-4c0b-8ba5-0b81f3bc5e4b",
+      "path": "packages/shared/src/auditMirror.emulator.test.ts",
+      "kind": "test-plan"
     },
     {
       "id": "f1a2b3c4-5d6e-7f8a-9b0c-d1e2f3a4b5c6",

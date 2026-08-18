@@ -10,7 +10,7 @@ component inventory, connection topology, and links to per-component task docume
 | Google Workspace (Admin SDK Directory) | external-service | --- | --- | [`.nodespec/tasks/google-workspace-admin-sdk-directory-1c81cf63.task.md`](./.nodespec/tasks/google-workspace-admin-sdk-directory-1c81cf63.task.md) | --- |
 | Firestore: lifecycle state and audit | database | gcp-firestore | Company GCP Project | [`.nodespec/tasks/firestore-lifecycle-state-and-audit-268a782a.task.md`](./.nodespec/tasks/firestore-lifecycle-state-and-audit-268a782a.task.md) | --- |
 | Identity-Aware Proxy | auth-provider | gcp-identity-aware-proxy | Company GCP Project | [`.nodespec/tasks/identity-aware-proxy-4f626e62.task.md`](./.nodespec/tasks/identity-aware-proxy-4f626e62.task.md) | --- |
-| Cloud Logging: audit sink | logging | gcp-cloud-logging | Company GCP Project | [`.nodespec/tasks/cloud-logging-audit-sink-6da6f1e9.task.md`](./.nodespec/tasks/cloud-logging-audit-sink-6da6f1e9.task.md) | --- |
+| Cloud Logging: audit sink | logging | gcp-cloud-logging | Company GCP Project | [`.nodespec/tasks/cloud-logging-audit-sink-6da6f1e9.task.md`](./.nodespec/tasks/cloud-logging-audit-sink-6da6f1e9.task.md) | [`packages/shared/src/auditMirror.emulator.test.ts`](./packages/shared/src/auditMirror.emulator.test.ts) |
 | Cloud Tasks: lifecycle-steps | queue | gcp-cloud-tasks | Company GCP Project | [`.nodespec/tasks/cloud-tasks-lifecycle-steps-893dd4cf.task.md`](./.nodespec/tasks/cloud-tasks-lifecycle-steps-893dd4cf.task.md) | --- |
 | Operator Console UI | frontend-app | react | Cloud Run: lifecycle-api | [`.nodespec/tasks/operator-console-ui-9af301aa.task.md`](./.nodespec/tasks/operator-console-ui-9af301aa.task.md) | [`services/console/src/console.test.tsx`](./services/console/src/console.test.tsx) |
 | Lifecycle API Service | backend-service | nodejs | Cloud Run: lifecycle-api | [`.nodespec/tasks/lifecycle-api-service-c424e85a.task.md`](./.nodespec/tasks/lifecycle-api-service-c424e85a.task.md) | [`services/api/src/middleware/iapAuth.test.ts`](./services/api/src/middleware/iapAuth.test.ts) |
@@ -127,5 +127,6 @@ recommended test types, framework suggestions, and test scenarios.
 - **Lifecycle Step Executor**: [`services/worker/src/workspace/retry.test.ts`](./services/worker/src/workspace/retry.test.ts)
 - **Lifecycle API Service**: [`services/api/src/routes/cancel.emulator.test.ts`](./services/api/src/routes/cancel.emulator.test.ts)
 - **Lifecycle API Service**: [`services/api/src/routes/requestList.emulator.test.ts`](./services/api/src/routes/requestList.emulator.test.ts)
+- **Cloud Logging: audit sink**: [`packages/shared/src/auditMirror.emulator.test.ts`](./packages/shared/src/auditMirror.emulator.test.ts)
 - **Lifecycle Step Executor**: [`services/worker/src/phases/create.test.ts`](./services/worker/src/phases/create.test.ts)
 - **Lifecycle API Service**: [`packages/schemas/src/index.test.ts`](./packages/schemas/src/index.test.ts)
