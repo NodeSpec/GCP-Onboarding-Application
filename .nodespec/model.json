@@ -1,7 +1,7 @@
 {
   "modelVersion": 1,
   "generatedBy": "nodespec",
-  "modelHash": "fd751c20f0358fece97d6ef607b70460328be5aeee4454878af122f68cb6fccd",
+  "modelHash": "9515abaa9315a76e160ebaff34c87bc1948c9c049d3e1f2c126c7afc4b144524",
   "nodes": [
     {
       "id": "1c81cf63-c51e-4b0e-b6ad-7d318332d2fe",
@@ -726,10 +726,10 @@
       "contentHash": "0000000023265dc4"
     },
     {
-      "id": "3a1f44c2-282f-449d-9e81-43913f139c3e",
+      "id": "3ba1e7c5-9d06-4f28-b13a-70e5c2894fd1",
       "nodeId": "db8e5409-dc6f-4052-887a-7ba1dd5fb717",
-      "path": "services/worker/src/notify/sender.ts",
-      "kind": "source"
+      "path": "services/worker/src/notify/relay.test.ts",
+      "kind": "test-plan"
     },
     {
       "id": "3c3da20e-2412-457c-abb4-cca5be7fe009",
@@ -854,7 +854,7 @@
       "nodeId": "db8e5409-dc6f-4052-887a-7ba1dd5fb717",
       "path": "services/worker/src/config.ts",
       "kind": "source",
-      "contentHash": "000000004e22f32e"
+      "contentHash": "000000005120d263"
     },
     {
       "id": "68f6c792-db80-4e36-a4a9-3c6bdaa6004d",
@@ -1145,6 +1145,12 @@
       "path": "services/worker/src/routes/tasks.ts",
       "kind": "source",
       "contentHash": "000000007f65a93f"
+    },
+    {
+      "id": "c1f7a930-58e2-4b6d-9a04-6bd35e10f8c7",
+      "nodeId": "db8e5409-dc6f-4052-887a-7ba1dd5fb717",
+      "path": "services/worker/src/notify/sender.ts",
+      "kind": "source"
     },
     {
       "id": "c2d3e4f5-a6b7-4c8d-9e0f-1a2b3c4d5e6f",

@@ -1167,7 +1167,7 @@ Startup/initialization order based on edge directions and interaction patterns.
 | `services/worker/tsconfig.json` | config | --- | draft |
 | `services/worker/src/notify/approvers.ts` | source | --- | draft |
 | `services/worker/src/phases/notify.ts` | source | --- | draft |
-| `services/worker/src/notify/sender.ts` | source | --- | draft |
+| `services/worker/src/notify/relay.test.ts` | test-plan | --- | draft |
 | `services/worker/src/notify/notify.emulator.test.ts` | source | --- | draft |
 | `services/worker/src/tasks/dispatcher.ts` | source | --- | draft |
 | `.nodespec/tests/req-003.tests.md` - Test plan for requirement: Phase 1 — User creation with attributes and group assignment | test-plan | markdown | draft |
@@ -1193,6 +1193,7 @@ Startup/initialization order based on edge directions and interaction patterns.
 | `services/worker/src/workspace/passwordReset.test.ts` | source | --- | draft |
 | `packages/shared/src/stepPlans.test.ts` | test-plan | --- | draft |
 | `services/worker/src/routes/tasks.ts` | source | --- | draft |
+| `services/worker/src/notify/sender.ts` | source | --- | draft |
 | `services/worker/src/phases/update.emulator.test.ts` | test-plan | --- | draft |
 | `services/worker/src/phases/create.ts` | source | --- | draft |
 | `services/worker/src/notify/resend.emulator.test.ts` | source | --- | draft |

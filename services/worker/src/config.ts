@@ -2,7 +2,8 @@ import { z } from 'zod';
 
 /**
  * Validated worker configuration. As in the API service, nothing reads
- * process.env directly and validation runs before any real use.
+ * process.env directly and the service exits at startup rather than failing on
+ * the first task.
  *
  * QUEUE_INVOKER_SA and API_SERVICE_SA are the two identities this service will
  * admit, each confined to its own routes. A wrong value here should stop the
@@ -29,6 +30,11 @@ const schema = z.object({
   SMTP_HOST: z.string().min(1).default('smtp-relay.gmail.com'),
   SMTP_PORT: z.coerce.number().int().positive().default(587),
   SMTP_SENDER: z.string().email(),
+  // The envelope sender, and therefore where asynchronous bounces land
+  // (REQ-028 AC-6). Optional because the service must still start without it;
+  // absent, bounces return to the no-reply account, which is a mailbox nobody
+  // reads. That is the honest default rather than a good one.
+  SMTP_RETURN_PATH: z.string().email().optional(),
   SMTP_CREDENTIAL_SECRET: z.string().min(1),
   CREDENTIAL_KEY_SECRET: z.string().min(1),
 
