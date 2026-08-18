@@ -104,7 +104,7 @@ Terraform sets all of these on both Cloud Run services. The table is here so you
 | `PROTECTED_ACCOUNTS` | api | Comma separated extra addresses no request may target |
 | `CONSOLE_BASE_URL` | worker | Where approval notices link to |
 | `WORKSPACE_CUSTOMER_ID` | worker | Workspace customer id, or `my_customer` |
-| `WORKSPACE_MODE` | worker | `live`, or `dry-run` to log Workspace calls without making them |
+| `WORKSPACE_MODE` | worker | Accepts `live` and `dry-run`, but only `live` is implemented. See the note under Running locally. |
 | `SMTP_HOST`, `SMTP_PORT` | worker | Relay endpoint, `smtp-relay.gmail.com` and `587` |
 | `SMTP_SENDER` | api, worker | The no reply address letters are sent from. Protected automatically. |
 | `SMTP_RETURN_PATH` | worker | Envelope sender, so bounces reach a monitored group |
@@ -140,7 +140,9 @@ gcloud emulators firestore start --host-port=localhost:8090
 export FIRESTORE_EMULATOR_HOST=localhost:8090
 ```
 
-Workspace calls have no emulator. Point local development at a test tenant, or run the worker with `WORKSPACE_MODE=dry-run`, which logs the calls it would make and returns believable responses without changing anything.
+Workspace calls have no emulator, so point local development at a test tenant.
+
+`WORKSPACE_MODE=dry-run` is **not implemented**, and this is worth stating plainly because the name promises otherwise. The value is validated at startup and printed in one log line, and nothing reads it after that. Setting it changes nothing: the worker still makes live Workspace calls. Do not rely on it as a safety net. Either point at a tenant you are willing to have modified, or do not run the worker.
 
 ### Verifying before you deploy
 
@@ -168,165 +170,47 @@ cd infra && terraform init && terraform validate
 
 Order matters, because the application needs values that only exist after the infrastructure does, and the Workspace side needs the service account identity that only exists after the apply.
 
-`docs/deployment.md` and `docs/workspace-admin-setup.md` are the full references. This is the path through them.
+**[docs/deployment.md](./docs/deployment.md) is the runbook.** It is copy and paste from an empty project to a working console, with one variables block at the top and a troubleshooting section covering everything that commonly goes wrong. [docs/workspace-admin-setup.md](./docs/workspace-admin-setup.md) covers the tenant side in the same way. This section is the map, not the commands.
 
-### 0. Before you touch anything
+### The path
 
-Terraform enables every API the system needs, but it cannot enable the API it needs to do that:
+1. **Install the tools and enable the APIs.** Cloud Shell no longer ships Terraform, so it is installed into your home directory. Every API is enabled with `gcloud` up front rather than left to Terraform, because `gcloud` blocks until each one is live and Terraform does not, which otherwise fails the first apply.
 
-```bash
-export PROJECT_ID=your-project-id
-export PROJECT_NUMBER=$(gcloud projects describe "$PROJECT_ID" --format='value(projectNumber)')
-export REGION=us-central1
+2. **Build and push the images.** Both are referenced by immutable digest; Terraform refuses a mutable tag at plan time. The console has no deployment of its own, it is built into the API image and served behind IAP, which is what keeps the browser's IAP cookie the only credential in play.
 
-gcloud services enable cloudresourcemanager.googleapis.com --project "$PROJECT_ID"
-```
+3. **Write `infra/terraform.tfvars`.** Your deployment values, ignored by git and never tracked. Four of them are specific to your organisation. Note `audit_bucket_locked`: locking the audit retention policy is **IRREVERSIBLE**, so set it false for a scratch project you intend to delete.
 
-Then confirm app passwords are available in your Workspace tenant, under **Security > Authentication > 2-step verification**. If they are disabled, the SMTP relay design does not work and the notification path has to change before you build anything on it. This is the one check worth doing first, because discovering it late invalidates several later steps.
+4. **Run `terraform apply`.** About 65 resources. On Cloud Shell use `-parallelism=3`, because the default concurrency provokes transient network failures against Google's APIs.
 
-### 1. Build and push the images
+5. **Point DNS at the load balancer.** The managed certificate cannot issue until the record resolves, and the console is unreachable until it does. Fifteen minutes to an hour is normal.
 
-Both images are pinned by digest. Terraform rejects a tag at plan time, because a tag is a mutable pointer and the same state would then describe different running code depending on when it was applied.
+6. **Do the Workspace side.** A custom admin role carrying only what the four phases need, assigned to the worker service account and to nothing else, with Domain-Wide Delegation confirmed absent. Terraform cannot do any of this, because Workspace admin roles are not GCP resources.
 
-```bash
-REGISTRY="${REGION}-docker.pkg.dev/${PROJECT_ID}/lifecycle"
-gcloud artifacts repositories create lifecycle \
-  --repository-format=docker --location="$REGION" --project "$PROJECT_ID"
-gcloud auth configure-docker "${REGION}-docker.pkg.dev"
+7. **Populate the secrets.** Both are created empty on purpose: a value passed through a Terraform variable is written to state in plaintext. Neither needs a redeploy, now or on any future rotation.
 
-npm ci
-npm run build          # also builds the console into services/api/public
+8. **Grant operator access.** Add people to the operator group. Membership gets someone past IAP; a role binding decides what they may do once there. Someone in the group with no binding is authenticated and authorized for nothing, which is the right state for a person who should be able to look but not act.
 
-docker build -f services/api/Dockerfile    -t "$REGISTRY/api:build"    .
-docker build -f services/worker/Dockerfile -t "$REGISTRY/worker:build" .
-docker push "$REGISTRY/api:build"
-docker push "$REGISTRY/worker:build"
+### Three things that catch people out
 
-export API_DIGEST=$(gcloud artifacts docker images describe "$REGISTRY/api:build" --format='value(image_summary.digest)')
-export WORKER_DIGEST=$(gcloud artifacts docker images describe "$REGISTRY/worker:build" --format='value(image_summary.digest)')
-echo "$REGISTRY/api@$API_DIGEST"
-echo "$REGISTRY/worker@$WORKER_DIGEST"
-```
+**Workspace licences.** The create phase provisions a real user, which consumes a seat. A dedicated no-reply sending account consumes another. On a small tenant those compete, so either buy a spare seat or send from your own admin address and keep the spare free for the lifecycle to use.
 
-The console has no deployment of its own. It is built into the API image and served by the API service behind IAP, which is what keeps the browser's IAP cookie the only credential involved.
+**Custom admin roles are gated by Workspace edition.** Check that **Account > Admin roles > Create new role** exists before you start. If it does not, prebuilt roles work but grant more than least privilege, and that difference is worth recording rather than leaving implicit.
 
-### 2. Write `infra/terraform.tfvars`
-
-```hcl
-project_id     = "your-project-id"
-project_number = "123456789012"
-region         = "us-central1"
-
-domain            = "lifecycle.example.com"
-operator_group    = "lifecycle-operators@example.com"
-iap_support_email = "you@example.com"
-
-api_image    = "us-central1-docker.pkg.dev/your-project-id/lifecycle/api@sha256:..."
-worker_image = "us-central1-docker.pkg.dev/your-project-id/lifecycle/worker@sha256:..."
-
-smtp_sender      = "no-reply@example.com"
-smtp_return_path = "lifecycle-bounces@example.com"
-
-bootstrap_admins = ["you@example.com"]
-
-# Locking is IRREVERSIBLE. Leave it true for a real deployment. Set it false
-# for a scratch project you intend to delete, or you will pin seven years of
-# logs to a project nobody can remove.
-audit_bucket_locked = true
-```
-
-### 3. Apply
-
-```bash
-cd infra
-terraform init
-terraform plan -out=tfplan
-terraform apply tfplan
-terraform output
-```
-
-The managed TLS certificate will sit in `PROVISIONING` until DNS resolves. That is expected and the next step fixes it.
-
-### 4. Point DNS at the load balancer
-
-```bash
-terraform output -raw console_ip
-```
-
-Create an A record for your domain against that address, then wait for the certificate:
-
-```bash
-watch -n 60 "gcloud compute ssl-certificates describe lifecycle-console-cert \
-  --global --project $PROJECT_ID --format='value(managed.status)'"
-```
-
-Fifteen minutes to an hour is normal. Several hours happens.
-
-### 5. Do the Workspace side
-
-Terraform cannot do any of this, because Workspace admin roles are not GCP resources. Follow `docs/workspace-admin-setup.md`; the shape of it is:
-
-1. Create the no reply account. No admin role, enrolled in 2-step verification, belonging to no person. Generate its app password.
-2. Configure the SMTP relay to accept it as a sender **and permit any recipient**, since welcome letters go to personal addresses outside the domain. A relay restricted to internal recipients accepts the connection and refuses every letter that matters.
-3. Configure SPF, DKIM and DMARC, then send one real letter to a real external address and confirm it lands in the inbox rather than spam.
-4. Create the custom admin role carrying only Users read/create/update/delete, Groups read/update, Org Units read, and Data Transfer if you use Drive transfer. **No role-management privilege of any kind.**
-5. Assign it to the worker service account by email, under **Account > Admin roles > Assign service accounts**:
-
-   ```bash
-   terraform output -raw worker_service_account
-   ```
-
-6. Confirm **Security > API controls > Manage Domain Wide Delegation** contains no entry for that service account. There should be nothing to remove; check anyway.
-
-### 6. Populate the secrets
-
-Both were created empty, deliberately: a value passed through a Terraform variable is written to state in plaintext.
-
-```bash
-openssl rand -base64 32 | tr -d '\n' | \
-  gcloud secrets versions add credential-encryption-key --data-file=- --project "$PROJECT_ID"
-
-printf '%s' "$APP_PASSWORD" | \
-  gcloud secrets versions add notification-smtp-credentials --data-file=- --project "$PROJECT_ID"
-```
-
-Neither needs a redeploy, now or on any future rotation.
-
-### 7. Grant operator access
-
-```bash
-gcloud identity groups memberships add \
-  --group-email="lifecycle-operators@example.com" \
-  --member-email="colleague@example.com"
-```
-
-Reaching the application and being allowed to do anything in it are separate decisions. Group membership gets someone past IAP; a role binding decides what they can do once there. Someone in the group with no binding is authenticated and authorized for nothing, which is the right state for a person who should be able to look but not act.
-
-Role bindings can be individual or by group. A group binding grants its roles to every member, resolved through the worker's directory lookup.
+**The operator group must exist before you apply.** IAP validates it and refuses a group it cannot find.
 
 ### Live test walkthrough
 
-Run these in order. Each one depends on the last, and each is checking a specific claim rather than a general "does it work".
+Run these in order. Each one checks a specific claim rather than a general "does it work". `docs/deployment.md` has the exact commands.
 
-**The platform refuses a direct request.** This one should FAIL, and a success means ingress is misconfigured and the perimeter is bypassable:
+**The platform refuses a direct request.** Expected to fail: a 404, a 403 or a connection failure all pass, and 404 is the usual answer because ingress is restricted to the load balancer. **A 200 is a finding**, and means the perimeter is bypassable.
 
-```bash
-curl -s -o /dev/null -w '%{http_code}\n' "$(terraform output -raw api_service_url)"
-# Expect 403 or a connection failure. A 200 is a finding.
-```
-
-**The perimeter asks for authentication:**
-
-```bash
-curl -s -o /dev/null -w '%{http_code}\n' "https://lifecycle.example.com"
-# Expect a redirect into the Google sign-in flow.
-```
+**The perimeter asks for authentication.** The console URL should redirect into the Google sign-in flow.
 
 **An account outside the operator group is refused.** Sign in from a private window as someone not in the group. They should be stopped at the perimeter and never reach the application. This is the one worth doing deliberately; it is easy to assume and cheap to check.
 
 **A member of the group reaches the console.** Sign in as your bootstrap admin. The console should name you and list your roles.
 
-**The directory pickers work.** Open the new-request form. If the target-user search returns results and the group and org-unit pickers populate, the Workspace grant is live and the whole read path is working. If they are empty, the custom admin role is not assigned correctly; go back to step 5.
+**The directory pickers work.** Open the new-request form. If the target-user search returns results and the group and org-unit pickers populate, the Workspace grant is live and the whole read path works. If they are empty, the custom admin role is not assigned correctly.
 
 **Onboarding, end to end.** Submit a create request against a test address. Watch the step timeline: validate, create, apply attributes, one step per group, verify. Then check the account exists in the Admin console with `changePasswordAtNextLogin` set.
 
@@ -340,24 +224,13 @@ curl -s -o /dev/null -w '%{http_code}\n' "https://lifecycle.example.com"
 
 **Cancellation and compensation.** Submit another delete, let it suspend, then cancel it. The request should move to `compensating` rather than `cancelled`, and reach `cancelled` only once the account is unsuspended. Confirm the account is usable again.
 
-**Protected accounts.** Submit a delete request against your no reply sending account. Expect a 409 with `protected_account`, and confirm no request document was written. Try it as an admin too; protection is not a permission level.
+**Protected accounts.** Submit a delete request against your sending account. Expect a 409 with `protected_account`, and confirm no request document was written. Try it as an admin too; protection is not a permission level.
 
-**The audit mirror.** Wait five minutes for the scheduled sweep, then confirm entries are arriving:
+**The audit mirror.** Wait five minutes for the scheduled sweep, then confirm entries are arriving in the `lifecycle-audit` log.
 
-```bash
-gcloud logging read 'logName="projects/'"$PROJECT_ID"'/logs/lifecycle-audit"' \
-  --limit 5 --project "$PROJECT_ID"
-```
+**The retention lock.** Confirm it refuses to be weakened by attempting to shorten the bucket's retention. A success means the bucket was not locked.
 
-**The retention lock.** Confirm it refuses to be weakened:
-
-```bash
-gcloud logging buckets update lifecycle-audit --location=global \
-  --retention-days=1 --project "$PROJECT_ID"
-# Expect a refusal. A success means the bucket was not locked.
-```
-
-When something does not behave as described here, `docs/runbook.md` is organised by symptom.
+When something does not behave as described here, [docs/runbook.md](./docs/runbook.md) is organised by symptom.
 
 ## How a request flows
 
@@ -384,6 +257,61 @@ If anything fails partway, the request stops with the error recorded against the
 * Temporary passwords are stored encrypted, never as plain text, and are readable exactly once.
 * Passwords, tokens and credentials are stripped from every log.
 * Audit records are mirrored to a Cloud Logging bucket with a locked retention policy that no runtime identity can shorten.
+
+## Extending the system
+
+Underneath the four phases this is a durable approval and audit engine, and Google Workspace is its first adapter. That is what makes it extensible, and it is also what makes some extensions dangerous. This section covers what fits, what needs care, and what would quietly dismantle the security model above.
+
+### The four extension points
+
+| Point | Where | What it gives you |
+|---|---|---|
+| Step handler registry | `services/worker/src/steps/handler.ts` | A new kind of step, executed with the existing retry, idempotency and audit guarantees |
+| Step plan | `packages/shared/src/stepPlans.ts` | A new phase, or new steps within one |
+| Scheduled dispatch | `packages/shared/src/dispatcher.ts` | `enqueueStep` already accepts `scheduleAt`, so future dated work needs no new machinery |
+| Notification sender | `services/worker/src/notify/` | A new delivery channel, without a second delivery path |
+
+Anything registered through these inherits the properties the rest of the system already proves: at least once delivery, a pre mutation state read so a replay changes nothing, an audit event written in the same transaction as the change, and approval gating from the snapshotted policy.
+
+### Extensions that fit cleanly
+
+**Future dated requests.** Somebody starts on the 14th and leaves on the 30th, and both are known weeks ahead. `scheduleAt` already reaches Cloud Tasks, so this is holding the first dispatch rather than new infrastructure.
+
+**Role templates.** A named bundle of groups, org unit and title, expanded into a payload before the plan is built. This is where onboarding consistency actually comes from, and it turns the scope reading of "roles" in `docs/architecture.md` into data rather than prose.
+
+**Bulk onboarding.** Fan a cohort out into one request per person. The per target concurrency guard already prevents two requests racing the same account, and separate step plans mean one failure does not stall the rest.
+
+**More offboarding steps.** Mailbox delegation to the manager, calendar handover, forwarding, group ownership transfer, licence reclamation. Each is a step handler and each inherits the two party approval already required before deletion.
+
+**Drift detection.** The verify step already compares intended state against live Workspace. Generalised and run on a schedule, using the Cloud Scheduler job that drives the audit mirror, it catches changes made by hand in the admin console.
+
+**A preview mode.** Phase 3 computes a full diff before it mutates anything. Exposing that for every phase gives an operator a real what if, and would make `WORKSPACE_MODE=dry-run` mean something.
+
+**Additional notification channels.** Approvals reach people faster in chat than in mail. The sender interface exists precisely so a channel is a new implementation rather than a second delivery path.
+
+### Extensions that need care
+
+**Inbound HRIS or IdP integration.** The highest value addition, and the one most likely to be built wrongly. A webhook endpoint on the API service would be an unauthenticated route, which the system does not have and a test asserts it does not gain. Do it as an authenticated ingestion path instead: a separate Cloud Run service with its own caller identity, or a Pub/Sub subscription, writing requests through the same admission logic. The approval layer then becomes the human checkpoint on an automated pipeline, which is the point.
+
+**Targets outside Google.** The handler registry does not care that a step talks to Workspace. Each new system is a new credential in Secret Manager and a new blast radius, so add them one at a time with their own least privilege grant, not one shared administrative token.
+
+**Org unit scoped roles.** Roles are global today. Scoping them so an operator may onboard into one part of the domain and not another is a change to the role resolver, and it has to fail closed: an unrecognised scope grants nothing.
+
+**Emergency offboarding.** Deletion requires two party approval, which is correct in normal operation and wrong during an incident. An immediate suspend path is defensible if it is time boxed, audited identically, and still requires justification after the fact. A permanent bypass is not.
+
+### What would break the security model
+
+Each of these is enforced by a test, and that is deliberate. If a change requires deleting one of these assertions, the change is the problem.
+
+* **Do not give the API service Workspace credentials.** The separation between the operator facing surface and the only identity that can mutate the directory is the primary control. New Workspace capability belongs in the worker, reached as a step or as a read only lookup.
+* **Do not configure Domain-Wide Delegation, for any feature.** It lets the application act as any user in the domain, including super admins. A feature that appears to need it needs a design conversation instead. A repository wide scan fails the build if it appears in code or in infrastructure.
+* **Do not add role management privilege to the custom admin role.** It would let the service account grant itself Super Admin. Every other privilege in that list is bounded by the list; that one is not.
+* **Do not add a load balancer backend without IAP.** There is exactly one backend service and it has IAP enabled, asserted so that a second one fails rather than quietly opening a second way in.
+* **Do not let the console enforce anything.** Hiding a control is presentation. Every new action needs its own server side role check, because the API is reachable without the console.
+* **Do not mutate Workspace outside the step executor.** A direct call from a route skips idempotency, error classification, approval gating and the audit write that shares its transaction.
+* **Do not broaden the runtime identities.** They hold `logging.logWriter` and not `logging.admin` so that the identities producing audit records cannot remove them.
+* **Do not trust client supplied identity.** It comes from the verified IAP assertion and nowhere else.
+* **Do not add a secret bearing field without adding it to the redaction filter.** The filter matches known key names, so a new name is a new leak until it is listed.
 
 ## Specification
 
