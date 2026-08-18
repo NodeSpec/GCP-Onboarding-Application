@@ -1,7 +1,7 @@
 {
   "modelVersion": 1,
   "generatedBy": "nodespec",
-  "modelHash": "d3899939e8d2c61e5fc7138916e8b61c219ae7491a91375feec2b92040187b1b",
+  "modelHash": "fb7e6304e830e9730e5c1a90379c06de05ebdb651a6084f804da19d4ccc23714",
   "nodes": [
     {
       "id": "1c81cf63-c51e-4b0e-b6ad-7d318332d2fe",
@@ -450,30 +450,30 @@
       "kind": "rest",
       "name": "IAP-Protected HTTPS Ingress",
       "transport": "http",
-      "schemaHash": "68ddabb25a7c32168877b989d95dfaa901e53af4f5effda80a5ab84a49e5f6b7",
-      "contentHash": "241c8dc518be3a8863189d16c528aa126ee9aa9bca28315e2a116480b8d92b13"
+      "schemaHash": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a",
+      "contentHash": "f1e9730dad7c1a3deedbb55bfd0eaa1149fc8acff8e50a046a5f9fbbc37092a6"
     },
     {
       "id": "2d1ac511-c493-4853-a06d-791039d9d125",
       "kind": "nosql",
       "name": "Lifecycle State Store",
       "transport": "grpc",
-      "schemaHash": "e90dba2d06d1e77f512dda11b135488905137e3b7a8a0b902f6ce30e589a09fb",
-      "contentHash": "3e83db20a93b99b0c8d13ead2f99254b50943126b915c2b14a24ae60a96d0dd4"
+      "schemaHash": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a",
+      "contentHash": "a412a8e1cff64c0e4cd362fe328f99edf7baf4e97348d616010066d76cb8a6fd"
     },
     {
       "id": "549c47dd-706d-415b-9ecb-540e7abcba87",
       "kind": "dependency",
       "name": "Audit Log Sink",
-      "schemaHash": "4fec97139264670b63df1633d2ebe99c2712ad598020a8caff07795cd9c24ebb",
-      "contentHash": "0890a350bd2bb632595529eeaaa646f4f859bbbb88b65f8bb5d001f07bd5916f"
+      "schemaHash": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a",
+      "contentHash": "a08e8d8f134432b0fe19cce807a9691368167014b164542f1c24f95a56f84495"
     },
     {
       "id": "5f755698-2229-4e06-b396-4951dcde0310",
       "kind": "dependency",
       "name": "Secret Manager Access",
-      "schemaHash": "fbb095294b917f944af7bded6981a54539732e81616f1115c0b73779745cdf50",
-      "contentHash": "122ec443bc86def465361bcba36d8148a514d17e8abdca40d7f67ff7dafcb088"
+      "schemaHash": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a",
+      "contentHash": "bcc5074581e5265b09a894b9010a23ca1b31376c25f0b91ed6c8bf4d7acd9ed4"
     },
     {
       "id": "64630b22-a7d6-481a-b1e0-943b2818a1b5",
@@ -481,8 +481,8 @@
       "name": "Step Execution Dispatch",
       "transport": "http",
       "specFormat": "openapi",
-      "schemaHash": "785a475c9dd887f93be011e0f3160f1e4305a6812c22b11a835425b2c6b65f87",
-      "contentHash": "069c73e36ed4d7ed44e4136165493f1fbe1deef092dfcc6ed456eb143b3da578"
+      "schemaHash": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a",
+      "contentHash": "2541c26ae47ef7b86fa9d311d0104781e9b73ac0f71ae2ff2ff756ae9ee7d3f1"
     },
     {
       "id": "6d424a68-fc73-41d0-b753-e5129b42f98e",
@@ -490,8 +490,8 @@
       "name": "Google Admin SDK Directory API",
       "transport": "http",
       "specFormat": "openapi",
-      "schemaHash": "87db262c75d5259703f811aaba2a9905a5c8612df82f550e4b93f4dd1c78d9b3",
-      "contentHash": "ffcf25740ee2e402b2096fecf9a9353ed672f60d8a6ae86d7ea35fd8f7a1832e"
+      "schemaHash": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a",
+      "contentHash": "d1e161f5f44cb0ffab8137018e7b16445a3eb295534b0612dbcac337880121af"
     },
     {
       "id": "bc06a1f8-4548-4d5b-9cd2-22dd2cc1451e",
@@ -499,24 +499,24 @@
       "name": "Lifecycle Operator API",
       "transport": "http",
       "specFormat": "openapi",
-      "schemaHash": "bcd3ea9c8044da9a7ed636b6bbaf04a8c84d494e132125a92709cef77106865b",
-      "contentHash": "435134f330d369096f27d11f21c8e9d1633716d5a59862b13ff38b6165ce0faf"
+      "schemaHash": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a",
+      "contentHash": "f33bd7009c027ba23f0993594da64d2c82b604217d2514375a302a6bac151f14"
     },
     {
       "id": "bd261973-438e-4074-953c-dc47040d00c6",
       "kind": "rest",
       "name": "Step Task Enqueue",
       "transport": "http",
-      "schemaHash": "ac95629867fe0ecc2773b0bba3110b2ba48c6dadaeb46d5b57bd14184de6e1a3",
-      "contentHash": "302a24fad310793ae2dad39288ee89c8c52261368de623a8e5d792e12c3ae53b"
+      "schemaHash": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a",
+      "contentHash": "9aff4848cf8f67735b4a44c1957af97dc235c6b8d35d81e0bd5f280c5a0234c0"
     },
     {
       "id": "bf89f832-e413-46b0-b8ec-0fde4e6885cd",
       "kind": "rest",
       "name": "IAP Authorization Check",
       "transport": "http",
-      "schemaHash": "3d471230aaffb96d8722aa6e3cc7be82e794c5f8bf710f0b255b8d033874fe8f",
-      "contentHash": "c8caad09f66eec3a5a120258c8ff511e15c19b50a78fb8b96c31652e377c6c38"
+      "schemaHash": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a",
+      "contentHash": "ff040c6091e70bafd413727c578d6e86477b642c396ce173cf8aea79a44bd6f8"
     },
     {
       "id": "c0c560b0-7381-44d7-ad17-16b9c9880213",
@@ -524,8 +524,8 @@
       "name": "Directory Lookup (read-only)",
       "transport": "http",
       "specFormat": "openapi",
-      "schemaHash": "52284c90565833172c630042a24f86889cdad1d738634e1453ea57cd01a5bd14",
-      "contentHash": "e62827fe3fed0ce6df148b160a434c898df194ea2fe5506e07b58f6a20f71f0f"
+      "schemaHash": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a",
+      "contentHash": "03e7e0e4e1c0437f7a6cb0cb1b72fb474addbaa9996d161340ed9fd8664088aa"
     },
     {
       "id": "d75b233d-3dac-41cf-9f66-353f731be545",
@@ -533,16 +533,16 @@
       "name": "IAP Assertion Verification (JWK Set)",
       "transport": "http",
       "specFormat": "oauth_oidc",
-      "schemaHash": "867f748ce3b02cb2cb1a26764783ce968d32dfbb164464b74f3deffc067d54f8",
-      "contentHash": "f96a1427f4837edcb5ce8905e3761a73be8d01393f8e904655eba4aa50c7865b"
+      "schemaHash": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a",
+      "contentHash": "07398ddca6147dc32233b7d6571f67c25d6597af97fe9838b908bad61d7818c8"
     },
     {
       "id": "d9f6025d-0d89-4f0d-9c91-f78aa993603c",
       "kind": "rest",
       "name": "Welcome Letter Delivery",
       "transport": "http",
-      "schemaHash": "355d2ab982ed5a84d3563b978f71747791efe839bb3ccc08946ea1c613a93ba2",
-      "contentHash": "1e94c1186ad6a3d60f75996f45ce88cbf0b06cced021d8482e4c13a9893cc835"
+      "schemaHash": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a",
+      "contentHash": "ebf53baefc39bf1a09453ba48ca92e3e9df13a22d3760f3b16d4355e32a9f277"
     }
   ],
   "artifacts": [
@@ -550,8 +550,7 @@
       "id": "0617a178-7a8d-4783-bfa2-e9becddec7f8",
       "nodeId": "d9e456a0-b079-4914-b8fc-f48f42fa7a7f",
       "path": ".nodespec/tasks/external-https-load-balancer-d9e456a0.task.md",
-      "kind": "task",
-      "contentHash": "000000004ade8f87"
+      "kind": "task"
     },
     {
       "id": "0760517b-c1c4-4ca0-9815-01cd9b0446b8",
@@ -563,15 +562,13 @@
       "id": "08477a37-c62d-4cf1-bd6e-c528e0da1556",
       "nodeId": "c424e85a-6584-4bb7-a48e-2175ebc6a41b",
       "path": "packages/shared/src/model.ts",
-      "kind": "source",
-      "contentHash": "000000000f95a223"
+      "kind": "source"
     },
     {
       "id": "0a21be75-1468-4f74-b708-2341f7ab7692",
       "nodeId": "db8e5409-dc6f-4052-887a-7ba1dd5fb717",
       "path": "services/worker/package.json",
-      "kind": "config",
-      "contentHash": "0000000030274f16"
+      "kind": "config"
     },
     {
       "id": "0a8f5d21-3c6e-4b7a-9d24-1f7e0b3c5a68",
@@ -595,8 +592,7 @@
       "id": "0bcdd3bc-c4fd-4554-b616-b6ee6ec5a3b8",
       "nodeId": "c424e85a-6584-4bb7-a48e-2175ebc6a41b",
       "path": "packages/shared/src/logging.ts",
-      "kind": "source",
-      "contentHash": "0000000078aa44c8"
+      "kind": "source"
     },
     {
       "id": "0c83b6f5-1e79-4a24-8f56-d3719ba0c4e2",
@@ -644,8 +640,7 @@
       "id": "1a2b7c94-3d58-4e61-9072-5f9c8d1e4a30",
       "nodeId": "c424e85a-6584-4bb7-a48e-2175ebc6a41b",
       "path": "packages/schemas/src/index.ts",
-      "kind": "source",
-      "contentHash": "000000007cf41e78"
+      "kind": "source"
     },
     {
       "id": "1b30aa33-c945-4448-a9b7-4a7ae469d123",
@@ -663,8 +658,7 @@
       "id": "1c91b278-14fc-4343-aa3c-49c182dc3a6f",
       "nodeId": "268a782a-d132-4d5e-8f24-c4a969ad7f17",
       "path": ".nodespec/tasks/firestore-lifecycle-state-and-audit-268a782a.task.md",
-      "kind": "task",
-      "contentHash": "000000002ed79ccf"
+      "kind": "task"
     },
     {
       "id": "1c9d4a77-58b6-4e30-9c1f-2b8a0d6f4e91",
@@ -688,15 +682,13 @@
       "id": "23e52777-960d-46b8-bd79-93d151596279",
       "nodeId": "c424e85a-6584-4bb7-a48e-2175ebc6a41b",
       "path": "services/api/src/index.ts",
-      "kind": "source",
-      "contentHash": "000000004ca29c2e"
+      "kind": "source"
     },
     {
       "id": "2b3c8d05-4e69-4f72-8183-6a0d9e2f5b41",
       "nodeId": "c424e85a-6584-4bb7-a48e-2175ebc6a41b",
       "path": "services/api/src/authz.ts",
-      "kind": "source",
-      "contentHash": "000000005fb4ede0"
+      "kind": "source"
     },
     {
       "id": "2b58a0d7-9c14-4e36-a870-63f1d95e2b04",
@@ -708,8 +700,7 @@
       "id": "2c68e4b1-a039-47f5-9d82-6b71fc3e850a",
       "nodeId": "565b92bd-2c2c-4a82-be62-b691decdbadf",
       "path": "docs/docs.test.ts",
-      "kind": "test-plan",
-      "contentHash": "000000002d5cf5d1"
+      "kind": "test-plan"
     },
     {
       "id": "2d61cf24-e8e0-4eac-95bb-3ed60c7434aa",
@@ -727,22 +718,19 @@
       "id": "32a6af8e-e959-4d04-b912-a0b13bfb2608",
       "nodeId": "db8e5409-dc6f-4052-887a-7ba1dd5fb717",
       "path": "services/worker/src/phases/notify.ts",
-      "kind": "source",
-      "contentHash": "00000000443b09a6"
+      "kind": "source"
     },
     {
       "id": "330aa1e9-7fa7-490f-a1ba-a447bf2502d8",
       "nodeId": "c424e85a-6584-4bb7-a48e-2175ebc6a41b",
       "path": "packages/shared/src/transitions.test.ts",
-      "kind": "test-plan",
-      "contentHash": "00000000240c47ab"
+      "kind": "test-plan"
     },
     {
       "id": "34377226-914f-402f-8e00-45e9c6dc9dfa",
       "nodeId": "c424e85a-6584-4bb7-a48e-2175ebc6a41b",
       "path": "packages/shared/src/store.ts",
-      "kind": "source",
-      "contentHash": "000000000fff1ea5"
+      "kind": "source"
     },
     {
       "id": "349a3527-bf14-442e-befe-2c8c65d888b8",
@@ -754,8 +742,7 @@
       "id": "373bb3c3-5923-4647-9305-878740703da0",
       "nodeId": "ed7660ce-7057-4706-90f0-ff653f6ff7e8",
       "path": ".nodespec/tasks/secret-manager-ed7660ce.task.md",
-      "kind": "task",
-      "contentHash": "0000000023265dc4"
+      "kind": "task"
     },
     {
       "id": "3ba1e7c5-9d06-4f28-b13a-70e5c2894fd1",
@@ -773,8 +760,7 @@
       "id": "3c4d9e16-5f70-4a83-9294-7b1e0f306c52",
       "nodeId": "c424e85a-6584-4bb7-a48e-2175ebc6a41b",
       "path": "services/api/src/routes/requests.ts",
-      "kind": "source",
-      "contentHash": "000000006160a29f"
+      "kind": "source"
     },
     {
       "id": "3e7a1c94-6b52-4d08-9f31-8c4d2e6b0a57",
@@ -798,15 +784,13 @@
       "id": "3f9c1a7e-2b64-4d05-9e18-7a2c5f0b1d63",
       "nodeId": "c424e85a-6584-4bb7-a48e-2175ebc6a41b",
       "path": "services/api/Dockerfile",
-      "kind": "build",
-      "contentHash": "000000005db51756"
+      "kind": "build"
     },
     {
       "id": "4038fb45-11ae-474b-8fd2-d6bf72d410e8",
       "nodeId": "db8e5409-dc6f-4052-887a-7ba1dd5fb717",
       "path": "services/worker/src/tasks/dispatcher.ts",
-      "kind": "source",
-      "contentHash": "000000001db322a2"
+      "kind": "source"
     },
     {
       "id": "43d99e01-5a83-4f43-94c5-7f4b255de8d8",
@@ -830,8 +814,7 @@
       "id": "4a0d2b8f-3c75-4e16-af29-8b3d6a1c2e74",
       "nodeId": "db8e5409-dc6f-4052-887a-7ba1dd5fb717",
       "path": "services/worker/Dockerfile",
-      "kind": "build",
-      "contentHash": "00000000152cfdaf"
+      "kind": "build"
     },
     {
       "id": "4b7e19a0-8c53-4d26-91fa-6e0d38b52c74",
@@ -915,36 +898,31 @@
       "id": "5fd17eaa-fbe2-43fa-83a2-ae296012fb27",
       "nodeId": "e730eb23-4b12-43a4-b260-8758b3025114",
       "path": ".nodespec/tasks/cloud-run-lifecycle-worker-e730eb23.task.md",
-      "kind": "task",
-      "contentHash": "000000000d687d5e"
+      "kind": "task"
     },
     {
       "id": "6239f69c-600e-4e07-8c27-0c7cb446e4aa",
       "nodeId": "db8e5409-dc6f-4052-887a-7ba1dd5fb717",
       "path": "services/worker/src/auth/taskAuth.ts",
-      "kind": "source",
-      "contentHash": "000000000ce7992e"
+      "kind": "source"
     },
     {
       "id": "67085527-dde4-4397-8591-9ca00e928eb1",
       "nodeId": "c424e85a-6584-4bb7-a48e-2175ebc6a41b",
       "path": "services/api/package.json",
-      "kind": "config",
-      "contentHash": "0000000069960714"
+      "kind": "config"
     },
     {
       "id": "6878625c-b079-496a-962c-6d05ca92b84a",
       "nodeId": "db8e5409-dc6f-4052-887a-7ba1dd5fb717",
       "path": "services/worker/src/config.ts",
-      "kind": "source",
-      "contentHash": "000000002d0ed820"
+      "kind": "source"
     },
     {
       "id": "68f6c792-db80-4e36-a4a9-3c6bdaa6004d",
       "nodeId": "c424e85a-6584-4bb7-a48e-2175ebc6a41b",
       "path": "services/api/src/middleware/iapAuth.ts",
-      "kind": "source",
-      "contentHash": "0000000040048368"
+      "kind": "source"
     },
     {
       "id": "6a1d828b-94ee-4307-bcb3-c9dde24d8f8e",
@@ -968,8 +946,7 @@
       "id": "6d2f9b14-7a58-4c03-9e61-8b4d0f3c5a72",
       "nodeId": "db8e5409-dc6f-4052-887a-7ba1dd5fb717",
       "path": "services/worker/src/workspace/noAdminRoles.test.ts",
-      "kind": "source",
-      "contentHash": "000000005041a036"
+      "kind": "source"
     },
     {
       "id": "6ef6583b-4078-48df-a707-beab36fe91eb",
@@ -981,8 +958,7 @@
       "id": "6f14a83b-2c95-4e07-9d68-30ab5c7f21e9",
       "nodeId": "9af301aa-2191-4532-9871-82179a5500c1",
       "path": "services/console/src/App.tsx",
-      "kind": "source",
-      "contentHash": "000000006cd0112e"
+      "kind": "source"
     },
     {
       "id": "6f8b204d-c317-4a95-8e70-1d94e6a37b58",
@@ -1024,8 +1000,7 @@
       "id": "7c0bb8ce-04db-4651-b75a-5bad75c9ffc1",
       "nodeId": "e601237a-48ea-4941-95f4-6fb53c7c6736",
       "path": ".nodespec/tasks/email-delivery-service-e601237a.task.md",
-      "kind": "task",
-      "contentHash": "000000007c555ea4"
+      "kind": "task"
     },
     {
       "id": "7c5f2ae3-9d42-4018-b6ca-3e58f102da94",
@@ -1037,8 +1012,7 @@
       "id": "7c7eeedf-75e9-4ca5-8428-e9d724a1b94a",
       "nodeId": "4f626e62-3cc8-445a-9fbd-cb36407ad91e",
       "path": ".nodespec/tasks/identity-aware-proxy-4f626e62.task.md",
-      "kind": "task",
-      "contentHash": "0000000023af8c46"
+      "kind": "task"
     },
     {
       "id": "7e3b0c95-4d18-4a27-b9f6-c281a45e0d73",
@@ -1062,8 +1036,7 @@
       "id": "84fe5a85-b4d5-42a6-95f6-3860624baece",
       "nodeId": "893dd4cf-9fd3-4c98-9de2-33b57dacad7e",
       "path": ".nodespec/tasks/cloud-tasks-lifecycle-steps-893dd4cf.task.md",
-      "kind": "task",
-      "contentHash": "0000000077d4329d"
+      "kind": "task"
     },
     {
       "id": "8a2560b9-2585-4393-aad7-85f352f2de65",
@@ -1099,8 +1072,7 @@
       "id": "968b0da4-033c-442e-8156-3bd27cff349c",
       "nodeId": "1c81cf63-c51e-4b0e-b6ad-7d318332d2fe",
       "path": ".nodespec/tasks/google-workspace-admin-sdk-directory-1c81cf63.task.md",
-      "kind": "task",
-      "contentHash": "00000000267c573d"
+      "kind": "task"
     },
     {
       "id": "9a47f1e6-3c85-4b02-a9d4-61f8e70b25ac",
@@ -1118,8 +1090,7 @@
       "id": "9c1f4a83-2d76-4e50-b1a9-6f3c8e0d5b27",
       "nodeId": "db8e5409-dc6f-4052-887a-7ba1dd5fb717",
       "path": "services/worker/src/phases/createCollision.emulator.test.ts",
-      "kind": "source",
-      "contentHash": "00000000212fccd0"
+      "kind": "source"
     },
     {
       "id": "9c4d1b83-2e70-4a56-b8f1-05d379e2ca64",
@@ -1137,8 +1108,7 @@
       "id": "9ff4b387-6d62-4f4e-a080-c8b24497b3d2",
       "nodeId": "db8e5409-dc6f-4052-887a-7ba1dd5fb717",
       "path": "services/worker/src/steps/handler.ts",
-      "kind": "source",
-      "contentHash": "000000005d5d861d"
+      "kind": "source"
     },
     {
       "id": "a0b1c2d3-e4f5-4a6b-7c8d-9e0f1a2b3c4d",
@@ -1156,8 +1126,7 @@
       "id": "a1b34e70-9c26-4f85-b0d7-e284f1690c53",
       "nodeId": "268a782a-d132-4d5e-8f24-c4a969ad7f17",
       "path": "infra/firestore.tf",
-      "kind": "config",
-      "contentHash": "000000005ea3a3ad"
+      "kind": "config"
     },
     {
       "id": "a1d5e762-8b30-4f97-b3c8-5e0d9f4a2c71",
@@ -1175,8 +1144,7 @@
       "id": "a2e864ce-457a-42a8-b945-b5895739e1f8",
       "nodeId": "c424e85a-6584-4bb7-a48e-2175ebc6a41b",
       "path": "packages/shared/src/credentials.ts",
-      "kind": "source",
-      "contentHash": "0000000050aff1db"
+      "kind": "source"
     },
     {
       "id": "a3f5619c-8e27-4b40-9d61-05c8a7e2f4b8",
@@ -1194,8 +1162,7 @@
       "id": "a69dd899-09db-432c-9e71-a6ad6110de25",
       "nodeId": "c424e85a-6584-4bb7-a48e-2175ebc6a41b",
       "path": "packages/shared/src/index.ts",
-      "kind": "source",
-      "contentHash": "00000000583b0443"
+      "kind": "source"
     },
     {
       "id": "a83c2f51-9d47-4e06-b218-6c74f0a9e5d3",
@@ -1219,15 +1186,13 @@
       "id": "ac2c40e9-50ed-48a4-98b2-03a80c66aa34",
       "nodeId": "db8e5409-dc6f-4052-887a-7ba1dd5fb717",
       "path": "services/worker/src/index.ts",
-      "kind": "source",
-      "contentHash": "000000006c9b7c9f"
+      "kind": "source"
     },
     {
       "id": "b1c2d3e4-f5a6-4b7c-8d9e-0f1a2b3c4d5e",
       "nodeId": "db8e5409-dc6f-4052-887a-7ba1dd5fb717",
       "path": "services/worker/src/workspace/noDelegation.test.ts",
-      "kind": "test-plan",
-      "contentHash": "00000000069f3d94"
+      "kind": "test-plan"
     },
     {
       "id": "b2c847f0-91d3-4e56-a80b-6f4e21597c3d",
@@ -1239,8 +1204,7 @@
       "id": "b2d7c018-5063-4e98-ac42-38db610f9e57",
       "nodeId": "c424e85a-6584-4bb7-a48e-2175ebc6a41b",
       "path": "packages/shared/package.json",
-      "kind": "config",
-      "contentHash": "0000000043b0cd8f"
+      "kind": "config"
     },
     {
       "id": "b5c6d7e8-f9a0-4b1c-2d3e-4f5a6b7c8d9e",
@@ -1258,8 +1222,7 @@
       "id": "b7c41e93-5a2d-4f18-9e60-3d8a1c72f4b5",
       "nodeId": "db8e5409-dc6f-4052-887a-7ba1dd5fb717",
       "path": "services/worker/src/auth/taskAuth.test.ts",
-      "kind": "test-plan",
-      "contentHash": "000000006087e62c"
+      "kind": "test-plan"
     },
     {
       "id": "b7d41c92-8e35-4f60-9a17-2c6d0f8e5b31",
@@ -1295,15 +1258,13 @@
       "id": "c05e7f3a-4b81-4d26-9e73-8a1f60d2b95c",
       "nodeId": "c424e85a-6584-4bb7-a48e-2175ebc6a41b",
       "path": "packages/shared/src/store.emulator.test.ts",
-      "kind": "test-plan",
-      "contentHash": "000000004ab12495"
+      "kind": "test-plan"
     },
     {
       "id": "c13bea30-e1ef-4de2-bdb3-8946a34bd9d2",
       "nodeId": "db8e5409-dc6f-4052-887a-7ba1dd5fb717",
       "path": "services/worker/src/routes/tasks.ts",
-      "kind": "source",
-      "contentHash": "00000000489f60af"
+      "kind": "source"
     },
     {
       "id": "c1f7a930-58e2-4b6d-9a04-6bd35e10f8c7",
@@ -1321,15 +1282,13 @@
       "id": "c39e7b18-0d54-4a86-91f7-2b46ca08d5e7",
       "nodeId": "6da6f1e9-97b5-4c0b-8ba5-0b81f3bc5e4b",
       "path": "infra/logging.tf",
-      "kind": "config",
-      "contentHash": "0000000046870275"
+      "kind": "config"
     },
     {
       "id": "c3f8a129-6174-4a09-bd53-49ec721fa068",
       "nodeId": "565b92bd-2c2c-4a82-be62-b691decdbadf",
       "path": "package.json",
-      "kind": "config",
-      "contentHash": "0000000043097236"
+      "kind": "config"
     },
     {
       "id": "c48ce6fe-4ea2-4709-9f75-2fb8f0bfbcf3",
@@ -1353,15 +1312,13 @@
       "id": "c52ea038-7d14-4b69-a023-9f16b8d4e7c2",
       "nodeId": "c424e85a-6584-4bb7-a48e-2175ebc6a41b",
       "path": "packages/shared/src/requestFactory.ts",
-      "kind": "source",
-      "contentHash": "00000000472466a1"
+      "kind": "source"
     },
     {
       "id": "c58244ee-bd8f-4e31-a567-bbd2c278f651",
       "nodeId": "db8e5409-dc6f-4052-887a-7ba1dd5fb717",
       "path": "services/worker/src/phases/create.ts",
-      "kind": "source",
-      "contentHash": "0000000033dafbff"
+      "kind": "source"
     },
     {
       "id": "c6d7e8f9-a0b1-4c2d-3e4f-5a6b7c8d9e0f",
@@ -1397,8 +1354,7 @@
       "id": "ca41c646-797e-4357-8e5a-164978cd4219",
       "nodeId": "db8e5409-dc6f-4052-887a-7ba1dd5fb717",
       "path": "services/worker/src/steps/advance.ts",
-      "kind": "source",
-      "contentHash": "0000000035fa78cd"
+      "kind": "source"
     },
     {
       "id": "cb7512ae-c48a-4a32-baaa-e6a3af710dbe",
@@ -1410,15 +1366,13 @@
       "id": "ccb09e58-761c-4da2-ad6a-597034dc3bc5",
       "nodeId": "db8e5409-dc6f-4052-887a-7ba1dd5fb717",
       "path": "services/worker/src/workspace/directoryClient.ts",
-      "kind": "source",
-      "contentHash": "0000000023f1c009"
+      "kind": "source"
     },
     {
       "id": "ceeaf1e6-c9fc-478a-8720-e9169693274c",
       "nodeId": "c424e85a-6584-4bb7-a48e-2175ebc6a41b",
       "path": ".nodespec/tasks/lifecycle-api-service-c424e85a.task.md",
-      "kind": "task",
-      "contentHash": "000000003f78f0cf"
+      "kind": "task"
     },
     {
       "id": "d1e2f3a4-b5c6-4d7e-8f9a-0b1c2d3e4f5a",
@@ -1454,8 +1408,7 @@
       "id": "d4e5f6a7-8b9c-0d1e-2f3a-b4c5d6e7f8a9",
       "nodeId": "db8e5409-dc6f-4052-887a-7ba1dd5fb717",
       "path": "services/worker/src/phases/offboarding.emulator.test.ts",
-      "kind": "test-plan",
-      "contentHash": "000000007104ab63"
+      "kind": "test-plan"
     },
     {
       "id": "d63fb149-8e25-4c7a-b134-0a27c95df8e3",
@@ -1479,15 +1432,13 @@
       "id": "d84c0f2b-6a37-4e19-9b58-c1027fa63de4",
       "nodeId": "565b92bd-2c2c-4a82-be62-b691decdbadf",
       "path": "vitest.config.ts",
-      "kind": "config",
-      "contentHash": "000000003c633117"
+      "kind": "config"
     },
     {
       "id": "dc658fc7-51f2-4753-9b4e-df6fbd47599f",
       "nodeId": "6da6f1e9-97b5-4c0b-8ba5-0b81f3bc5e4b",
       "path": ".nodespec/tasks/cloud-logging-audit-sink-6da6f1e9.task.md",
-      "kind": "task",
-      "contentHash": "0000000002d3546e"
+      "kind": "task"
     },
     {
       "id": "e1a7043c-95d8-4b62-a30f-7c46b9018e52",
@@ -1505,15 +1456,13 @@
       "id": "e450c6c4-8770-4557-8151-154e18ea979d",
       "nodeId": "db8e5409-dc6f-4052-887a-7ba1dd5fb717",
       "path": ".nodespec/tasks/lifecycle-step-executor-db8e5409.task.md",
-      "kind": "task",
-      "contentHash": "00000000049cfc1a"
+      "kind": "task"
     },
     {
       "id": "e4b8d215-7c93-4a06-b52f-8e1d94c30a67",
       "nodeId": "db8e5409-dc6f-4052-887a-7ba1dd5fb717",
       "path": "services/worker/src/workspace/retry.test.ts",
-      "kind": "test-plan",
-      "contentHash": "000000001816e745"
+      "kind": "test-plan"
     },
     {
       "id": "e57f2a91-4c68-4d03-b81a-96de4c705832",
@@ -1525,15 +1474,13 @@
       "id": "e5f6a7b8-9c0d-1e2f-3a4b-c5d6e7f8a9b0",
       "nodeId": "c424e85a-6584-4bb7-a48e-2175ebc6a41b",
       "path": "services/api/src/routes/cancel.emulator.test.ts",
-      "kind": "test-plan",
-      "contentHash": "0000000028bce886"
+      "kind": "test-plan"
     },
     {
       "id": "e6f8b230-9a41-4d75-8c16-3b0e5d2f7a94",
       "nodeId": "db8e5409-dc6f-4052-887a-7ba1dd5fb717",
       "path": "services/worker/src/phases/credentialExposure.emulator.test.ts",
-      "kind": "source",
-      "contentHash": "000000006e7f2368"
+      "kind": "source"
     },
     {
       "id": "e719d34a-5b28-4c91-b7f0-4a68d2915c73",
@@ -1545,8 +1492,7 @@
       "id": "e7a4c136-8b25-4d90-a3f7-52d1096be714",
       "nodeId": "c424e85a-6584-4bb7-a48e-2175ebc6a41b",
       "path": "packages/shared/src/stepPlans.ts",
-      "kind": "source",
-      "contentHash": "0000000020e56a13"
+      "kind": "source"
     },
     {
       "id": "e8f9a0b1-c2d3-4e4f-5a6b-7c8d9e0f1a2b",
@@ -1558,36 +1504,31 @@
       "id": "e9153a25-3a71-4ecd-a3fe-77950e450ea4",
       "nodeId": "565b92bd-2c2c-4a82-be62-b691decdbadf",
       "path": ".nodespec/tasks/company-gcp-project-565b92bd.task.md",
-      "kind": "task",
-      "contentHash": "000000001a0f5273"
+      "kind": "task"
     },
     {
       "id": "e94a6c27-5138-4b70-a2d6-73819fc0e451",
       "nodeId": "d9e456a0-b079-4914-b8fc-f48f42fa7a7f",
       "path": "infra/loadbalancer.tf",
-      "kind": "config",
-      "contentHash": "0000000031ca79d5"
+      "kind": "config"
     },
     {
       "id": "eb01c689-4c8f-4510-985a-69242309c3e0",
       "nodeId": "c424e85a-6584-4bb7-a48e-2175ebc6a41b",
       "path": "packages/shared/src/transitions.ts",
-      "kind": "source",
-      "contentHash": "000000007339a7ff"
+      "kind": "source"
     },
     {
       "id": "edbc5de9-85f2-456f-a35c-fbfd3d3cf1db",
       "nodeId": "a7ee091d-3d58-4624-96ed-8292a596f6d1",
       "path": ".nodespec/tasks/cloud-run-lifecycle-api-a7ee091d.task.md",
-      "kind": "task",
-      "contentHash": "000000007da11ab7"
+      "kind": "task"
     },
     {
       "id": "edcbb588-8e46-425b-8a45-c50c30e59fbb",
       "nodeId": "9af301aa-2191-4532-9871-82179a5500c1",
       "path": ".nodespec/tasks/operator-console-ui-9af301aa.task.md",
-      "kind": "task",
-      "contentHash": "0000000056331e95"
+      "kind": "task"
     },
     {
       "id": "ef41d39d-b1f3-432d-9a29-53bbd6b76b80",
@@ -1611,8 +1552,7 @@
       "id": "f2186192-700c-4d99-8590-cb2aac591885",
       "nodeId": "565b92bd-2c2c-4a82-be62-b691decdbadf",
       "path": "README.md",
-      "kind": "doc",
-      "contentHash": "0000000001302d05"
+      "kind": "doc"
     },
     {
       "id": "f27d1a00-5bb9-4392-8008-33332460a094",
@@ -1624,8 +1564,7 @@
       "id": "f2a2048d-473a-454f-b09f-7e2053fbfd5e",
       "nodeId": "db8e5409-dc6f-4052-887a-7ba1dd5fb717",
       "path": "services/worker/src/steps/executor.ts",
-      "kind": "source",
-      "contentHash": "000000002669d026"
+      "kind": "source"
     },
     {
       "id": "f2a9c817-5d43-4e06-b8e1-9c2f7a0d3b65",
@@ -1655,8 +1594,7 @@
       "id": "f83cdb84-1369-451c-91fe-13e5eb3f9016",
       "nodeId": "c424e85a-6584-4bb7-a48e-2175ebc6a41b",
       "path": "services/api/src/config.ts",
-      "kind": "source",
-      "contentHash": "000000003dbc7bd0"
+      "kind": "source"
     },
     {
       "id": "f9a0b1c2-d3e4-4f5a-6b7c-8d9e0f1a2b3c",

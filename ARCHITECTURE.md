@@ -7,17 +7,17 @@ component inventory, connection topology, and links to per-component task docume
 
 | Component | Role | Technology | Parent | Task Document | Test Plan |
 |-----------|------|------------|--------|---------------|-----------|
-| Google Workspace (Admin SDK Directory) | external-service | --- | --- | [`.nodespec/tasks/google-workspace-admin-sdk-directory-1c81cf63.task.md`](./.nodespec/tasks/google-workspace-admin-sdk-directory-1c81cf63.task.md) | --- |
-| Firestore: lifecycle state and audit | database | gcp-firestore | Company GCP Project | [`.nodespec/tasks/firestore-lifecycle-state-and-audit-268a782a.task.md`](./.nodespec/tasks/firestore-lifecycle-state-and-audit-268a782a.task.md) | --- |
-| Identity-Aware Proxy | auth-provider | gcp-identity-aware-proxy | Company GCP Project | [`.nodespec/tasks/identity-aware-proxy-4f626e62.task.md`](./.nodespec/tasks/identity-aware-proxy-4f626e62.task.md) | --- |
-| Cloud Logging: audit sink | logging | gcp-cloud-logging | Company GCP Project | [`.nodespec/tasks/cloud-logging-audit-sink-6da6f1e9.task.md`](./.nodespec/tasks/cloud-logging-audit-sink-6da6f1e9.task.md) | [`packages/shared/src/auditMirror.emulator.test.ts`](./packages/shared/src/auditMirror.emulator.test.ts) |
-| Cloud Tasks: lifecycle-steps | queue | gcp-cloud-tasks | Company GCP Project | [`.nodespec/tasks/cloud-tasks-lifecycle-steps-893dd4cf.task.md`](./.nodespec/tasks/cloud-tasks-lifecycle-steps-893dd4cf.task.md) | --- |
-| Operator Console UI | frontend-app | react | Cloud Run: lifecycle-api | [`.nodespec/tasks/operator-console-ui-9af301aa.task.md`](./.nodespec/tasks/operator-console-ui-9af301aa.task.md) | [`services/console/src/console.test.tsx`](./services/console/src/console.test.tsx) |
-| Lifecycle API Service | backend-service | nodejs | Cloud Run: lifecycle-api | [`.nodespec/tasks/lifecycle-api-service-c424e85a.task.md`](./.nodespec/tasks/lifecycle-api-service-c424e85a.task.md) | [`services/api/src/middleware/iapAuth.test.ts`](./services/api/src/middleware/iapAuth.test.ts) |
-| External HTTPS Load Balancer | load-balancer | gcp-cloud-load-balancing | Company GCP Project | [`.nodespec/tasks/external-https-load-balancer-d9e456a0.task.md`](./.nodespec/tasks/external-https-load-balancer-d9e456a0.task.md) | --- |
-| Lifecycle Step Executor | worker | nodejs | Cloud Run: lifecycle-worker | [`.nodespec/tasks/lifecycle-step-executor-db8e5409.task.md`](./.nodespec/tasks/lifecycle-step-executor-db8e5409.task.md) | [`services/worker/src/workspace/directoryClient.test.ts`](./services/worker/src/workspace/directoryClient.test.ts) |
-| Email Delivery Service | external-service | --- | --- | [`.nodespec/tasks/email-delivery-service-e601237a.task.md`](./.nodespec/tasks/email-delivery-service-e601237a.task.md) | --- |
-| Secret Manager | secret-manager | gcp-secret-manager | Company GCP Project | [`.nodespec/tasks/secret-manager-ed7660ce.task.md`](./.nodespec/tasks/secret-manager-ed7660ce.task.md) | --- |
+| Google Workspace (Admin SDK Directory) | external-service | --- | --- | --- | --- |
+| Firestore: lifecycle state and audit | database | gcp-firestore | Company GCP Project | --- | --- |
+| Identity-Aware Proxy | auth-provider | gcp-identity-aware-proxy | Company GCP Project | --- | --- |
+| Cloud Logging: audit sink | logging | gcp-cloud-logging | Company GCP Project | --- | --- |
+| Cloud Tasks: lifecycle-steps | queue | gcp-cloud-tasks | Company GCP Project | --- | --- |
+| Operator Console UI | frontend-app | react | Cloud Run: lifecycle-api | --- | --- |
+| Lifecycle API Service | backend-service | nodejs | Cloud Run: lifecycle-api | --- | --- |
+| External HTTPS Load Balancer | load-balancer | gcp-cloud-load-balancing | Company GCP Project | --- | --- |
+| Lifecycle Step Executor | worker | nodejs | Cloud Run: lifecycle-worker | --- | --- |
+| Email Delivery Service | external-service | --- | --- | --- | --- |
+| Secret Manager | secret-manager | gcp-secret-manager | Company GCP Project | --- | --- |
 
 ## Containment Hierarchy
 
@@ -56,82 +56,3 @@ component inventory, connection topology, and links to per-component task docume
 | Operator Console UI | Lifecycle API Service | rest | Lifecycle Operator API |
 | Lifecycle API Service | Firestore: lifecycle state and audit | nosql | Lifecycle State Store |
 | Lifecycle API Service | Lifecycle Step Executor | rest | Directory Lookup (read-only) |
-
-## Task Documents
-
-Each component has a task document containing the full implementation context:
-requirements, contracts, technology guidance, and connected components.
-Use these as the primary brief when implementing or modifying a component.
-
-- **External HTTPS Load Balancer**: [`.nodespec/tasks/external-https-load-balancer-d9e456a0.task.md`](./.nodespec/tasks/external-https-load-balancer-d9e456a0.task.md)
-- **Firestore: lifecycle state and audit**: [`.nodespec/tasks/firestore-lifecycle-state-and-audit-268a782a.task.md`](./.nodespec/tasks/firestore-lifecycle-state-and-audit-268a782a.task.md)
-- **Secret Manager**: [`.nodespec/tasks/secret-manager-ed7660ce.task.md`](./.nodespec/tasks/secret-manager-ed7660ce.task.md)
-- **Cloud Run: lifecycle-worker**: [`.nodespec/tasks/cloud-run-lifecycle-worker-e730eb23.task.md`](./.nodespec/tasks/cloud-run-lifecycle-worker-e730eb23.task.md)
-- **Email Delivery Service**: [`.nodespec/tasks/email-delivery-service-e601237a.task.md`](./.nodespec/tasks/email-delivery-service-e601237a.task.md)
-- **Identity-Aware Proxy**: [`.nodespec/tasks/identity-aware-proxy-4f626e62.task.md`](./.nodespec/tasks/identity-aware-proxy-4f626e62.task.md)
-- **Cloud Tasks: lifecycle-steps**: [`.nodespec/tasks/cloud-tasks-lifecycle-steps-893dd4cf.task.md`](./.nodespec/tasks/cloud-tasks-lifecycle-steps-893dd4cf.task.md)
-- **Google Workspace (Admin SDK Directory)**: [`.nodespec/tasks/google-workspace-admin-sdk-directory-1c81cf63.task.md`](./.nodespec/tasks/google-workspace-admin-sdk-directory-1c81cf63.task.md)
-- **Lifecycle API Service**: [`.nodespec/tasks/lifecycle-api-service-c424e85a.task.md`](./.nodespec/tasks/lifecycle-api-service-c424e85a.task.md)
-- **Cloud Logging: audit sink**: [`.nodespec/tasks/cloud-logging-audit-sink-6da6f1e9.task.md`](./.nodespec/tasks/cloud-logging-audit-sink-6da6f1e9.task.md)
-- **Lifecycle Step Executor**: [`.nodespec/tasks/lifecycle-step-executor-db8e5409.task.md`](./.nodespec/tasks/lifecycle-step-executor-db8e5409.task.md)
-- **Company GCP Project**: [`.nodespec/tasks/company-gcp-project-565b92bd.task.md`](./.nodespec/tasks/company-gcp-project-565b92bd.task.md)
-- **Cloud Run: lifecycle-api**: [`.nodespec/tasks/cloud-run-lifecycle-api-a7ee091d.task.md`](./.nodespec/tasks/cloud-run-lifecycle-api-a7ee091d.task.md)
-- **Operator Console UI**: [`.nodespec/tasks/operator-console-ui-9af301aa.task.md`](./.nodespec/tasks/operator-console-ui-9af301aa.task.md)
-
-## Test Plans
-
-Each requirement has a test plan documenting acceptance criteria assessments,
-recommended test types, framework suggestions, and test scenarios.
-
-- **Lifecycle Step Executor**: [`services/worker/src/workspace/directoryClient.test.ts`](./services/worker/src/workspace/directoryClient.test.ts)
-- **Lifecycle API Service**: [`services/api/src/middleware/iapAuth.test.ts`](./services/api/src/middleware/iapAuth.test.ts)
-- **Lifecycle API Service**: [`.nodespec/tests/req-007.tests.md`](./.nodespec/tests/req-007.tests.md)
-- **Lifecycle Step Executor**: [`services/worker/src/notify/templates.test.ts`](./services/worker/src/notify/templates.test.ts)
-- **Lifecycle Step Executor**: [`.nodespec/tests/req-008.tests.md`](./.nodespec/tests/req-008.tests.md)
-- **Lifecycle Step Executor**: [`.nodespec/tests/req-016.tests.md`](./.nodespec/tests/req-016.tests.md)
-- **Lifecycle API Service**: [`.nodespec/tests/req-010.tests.md`](./.nodespec/tests/req-010.tests.md)
-- **Company GCP Project**: [`docs/docs.test.ts`](./docs/docs.test.ts)
-- **Lifecycle API Service**: [`.nodespec/tests/req-012.tests.md`](./.nodespec/tests/req-012.tests.md)
-- **Lifecycle API Service**: [`packages/shared/src/transitions.test.ts`](./packages/shared/src/transitions.test.ts)
-- **Lifecycle API Service**: [`.nodespec/tests/req-002.tests.md`](./.nodespec/tests/req-002.tests.md)
-- **Lifecycle Step Executor**: [`services/worker/src/notify/relay.test.ts`](./services/worker/src/notify/relay.test.ts)
-- **Lifecycle Step Executor**: [`.nodespec/tests/req-003.tests.md`](./.nodespec/tests/req-003.tests.md)
-- **Lifecycle Step Executor**: [`.nodespec/tests/req-019.tests.md`](./.nodespec/tests/req-019.tests.md)
-- **Lifecycle Step Executor**: [`services/worker/src/steps/advance.emulator.test.ts`](./services/worker/src/steps/advance.emulator.test.ts)
-- **Lifecycle Step Executor**: [`services/worker/src/phases/delete.test.ts`](./services/worker/src/phases/delete.test.ts)
-- **Lifecycle API Service**: [`packages/shared/src/dispatcher.test.ts`](./packages/shared/src/dispatcher.test.ts)
-- **Lifecycle API Service**: [`.nodespec/tests/req-001.tests.md`](./.nodespec/tests/req-001.tests.md)
-- **Lifecycle API Service**: [`services/api/src/roles.test.ts`](./services/api/src/roles.test.ts)
-- **Lifecycle API Service**: [`packages/shared/src/keyRotation.test.ts`](./packages/shared/src/keyRotation.test.ts)
-- **Lifecycle Step Executor**: [`.nodespec/tests/req-013.tests.md`](./.nodespec/tests/req-013.tests.md)
-- **Lifecycle API Service**: [`services/api/src/routes/admin.emulator.test.ts`](./services/api/src/routes/admin.emulator.test.ts)
-- **Lifecycle Step Executor**: [`services/worker/src/notify/singlePath.test.ts`](./services/worker/src/notify/singlePath.test.ts)
-- **Lifecycle API Service**: [`services/api/src/lookup/groupMemberships.test.ts`](./services/api/src/lookup/groupMemberships.test.ts)
-- **Lifecycle Step Executor**: [`services/worker/src/routes/lookup.test.ts`](./services/worker/src/routes/lookup.test.ts)
-- **Lifecycle Step Executor**: [`services/worker/src/phases/update.test.ts`](./services/worker/src/phases/update.test.ts)
-- **Company GCP Project**: [`infra/hcl.test.ts`](./infra/hcl.test.ts)
-- **Operator Console UI**: [`services/console/src/console.test.tsx`](./services/console/src/console.test.tsx)
-- **Lifecycle Step Executor**: [`services/worker/src/workspace/noDelegation.test.ts`](./services/worker/src/workspace/noDelegation.test.ts)
-- **Lifecycle API Service**: [`services/api/src/protectedAccounts.test.ts`](./services/api/src/protectedAccounts.test.ts)
-- **Lifecycle Step Executor**: [`services/worker/src/auth/taskAuth.test.ts`](./services/worker/src/auth/taskAuth.test.ts)
-- **Lifecycle Step Executor**: [`packages/shared/src/stepPlans.test.ts`](./packages/shared/src/stepPlans.test.ts)
-- **Lifecycle API Service**: [`packages/shared/src/store.emulator.test.ts`](./packages/shared/src/store.emulator.test.ts)
-- **Lifecycle API Service**: [`packages/shared/src/stepPlans.test.ts`](./packages/shared/src/stepPlans.test.ts)
-- **Lifecycle API Service**: [`services/api/src/routes/authorization.emulator.test.ts`](./services/api/src/routes/authorization.emulator.test.ts)
-- **Lifecycle API Service**: [`services/api/src/routes/lookup.test.ts`](./services/api/src/routes/lookup.test.ts)
-- **Lifecycle API Service**: [`packages/shared/src/logging.test.ts`](./packages/shared/src/logging.test.ts)
-- **Lifecycle Step Executor**: [`.nodespec/tests/req-005.tests.md`](./.nodespec/tests/req-005.tests.md)
-- **Lifecycle API Service**: [`services/api/src/config.test.ts`](./services/api/src/config.test.ts)
-- **Lifecycle Step Executor**: [`services/worker/src/steps/executor.emulator.test.ts`](./services/worker/src/steps/executor.emulator.test.ts)
-- **Lifecycle API Service**: [`packages/test-support/src/index.ts`](./packages/test-support/src/index.ts)
-- **Lifecycle Step Executor**: [`services/worker/src/phases/offboarding.emulator.test.ts`](./services/worker/src/phases/offboarding.emulator.test.ts)
-- **Lifecycle API Service**: [`packages/shared/src/requestFactory.test.ts`](./packages/shared/src/requestFactory.test.ts)
-- **Lifecycle API Service**: [`services/api/src/routes/protectedAdmission.emulator.test.ts`](./services/api/src/routes/protectedAdmission.emulator.test.ts)
-- **Lifecycle API Service**: [`services/api/src/routeCoverage.test.ts`](./services/api/src/routeCoverage.test.ts)
-- **Lifecycle Step Executor**: [`services/worker/src/workspace/retry.test.ts`](./services/worker/src/workspace/retry.test.ts)
-- **Lifecycle API Service**: [`services/api/src/routes/cancel.emulator.test.ts`](./services/api/src/routes/cancel.emulator.test.ts)
-- **Lifecycle API Service**: [`services/api/src/routes/requestList.emulator.test.ts`](./services/api/src/routes/requestList.emulator.test.ts)
-- **Cloud Logging: audit sink**: [`packages/shared/src/auditMirror.emulator.test.ts`](./packages/shared/src/auditMirror.emulator.test.ts)
-- **Lifecycle Step Executor**: [`services/worker/src/phases/create.test.ts`](./services/worker/src/phases/create.test.ts)
-- **Company GCP Project**: [`infra/infra.test.ts`](./infra/infra.test.ts)
-- **Lifecycle API Service**: [`packages/schemas/src/index.test.ts`](./packages/schemas/src/index.test.ts)
