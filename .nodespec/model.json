@@ -1,7 +1,7 @@
 {
   "modelVersion": 1,
   "generatedBy": "nodespec",
-  "modelHash": "f3d84c8a78358600ca2c2c9331af1deb1f8b806ed91d5bae10d31941989cef21",
+  "modelHash": "59ed9f365e55452dc5b6e3a0559b9245a4018114c39f3da0cf280c38bbe08522",
   "nodes": [
     {
       "id": "1c81cf63-c51e-4b0e-b6ad-7d318332d2fe",
@@ -1138,6 +1138,12 @@
       "path": ".nodespec/tasks/lifecycle-api-service-c424e85a.task.md",
       "kind": "task",
       "contentHash": "000000003f78f0cf"
+    },
+    {
+      "id": "d1e2f3a4-b5c6-4d7e-8f9a-0b1c2d3e4f5a",
+      "nodeId": "db8e5409-dc6f-4052-887a-7ba1dd5fb717",
+      "path": "services/worker/src/routes/lookup.ts",
+      "kind": "source"
     },
     {
       "id": "d3a17f60-9e24-4b83-a175-6c02f8194e39",
