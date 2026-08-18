@@ -1,32 +1,29 @@
 import { fileURLToPath } from 'node:url';
+import react from '@vitejs/plugin-react';
 import { defineConfig } from 'vitest/config';
 
-/**
- * One test run across every workspace package.
- *
- * The aliases point @lifecycle/shared at its TypeScript SOURCE rather than its
- * built dist. Without them a unit test run would depend on the shared package
- * having been compiled first, which makes a fast feedback loop conditional on a
- * build step and produces a confusing 'file does not exist' failure the first
- * time someone clones the repository.
- */
-
 const sharedSrc = fileURLToPath(new URL('./packages/shared/src', import.meta.url));
+const schemasSrc = fileURLToPath(new URL('./packages/schemas/src', import.meta.url));
 
 export default defineConfig({
+  // The console tests render real components, so JSX has to be transformed.
+  // Everything else in the repo is plain TypeScript and unaffected.
+  plugins: [react()],
   resolve: {
     alias: [
-      // Subpath imports carrying the ESM .js extension, e.g.
-      // '@lifecycle/shared/logging.js'.
       { find: /^@lifecycle\/shared\/(.*)\.js$/, replacement: `${sharedSrc}/$1.ts` },
-      // Subpath imports without an extension.
       { find: /^@lifecycle\/shared\/(.*)$/, replacement: `${sharedSrc}/$1.ts` },
-      // The barrel.
       { find: /^@lifecycle\/shared$/, replacement: `${sharedSrc}/index.ts` },
+      // The console imports the schemas package directly, so client and server
+      // validate with the same code rather than two copies of the same rules.
+      { find: /^@lifecycle\/schemas$/, replacement: `${schemasSrc}/index.ts` },
     ],
   },
   test: {
-    include: ['packages/**/*.test.ts', 'services/**/*.test.ts'],
+    include: ['packages/**/*.test.ts', 'services/**/*.test.ts', 'services/**/*.test.tsx'],
+    // The emulator suite has its own config and its own command; it must not
+    // run here, where there is no emulator listening.
+    exclude: ['**/node_modules/**', '**/*.emulator.test.ts'],
     environment: 'node',
   },
 });

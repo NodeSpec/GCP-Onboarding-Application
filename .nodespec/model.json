@@ -1,7 +1,7 @@
 {
   "modelVersion": 1,
   "generatedBy": "nodespec",
-  "modelHash": "982a24c4c398a7b53118c19ece9572d943ec99b913431a49312f68e3f27f303b",
+  "modelHash": "fd751c20f0358fece97d6ef607b70460328be5aeee4454878af122f68cb6fccd",
   "nodes": [
     {
       "id": "1c81cf63-c51e-4b0e-b6ad-7d318332d2fe",
@@ -1121,15 +1121,15 @@
       "kind": "test-plan"
     },
     {
-      "id": "b8d2f6e0-1a45-4c93-b7e8-5d3f0c9a6b24",
-      "nodeId": "565b92bd-2c2c-4a82-be62-b691decdbadf",
-      "path": "vitest.config.ts",
-      "kind": "config"
-    },
-    {
       "id": "b94d3062-ae58-4f17-8329-7d85fab0e6f4",
       "nodeId": "565b92bd-2c2c-4a82-be62-b691decdbadf",
       "path": "vitest.emulator.config.ts",
+      "kind": "config"
+    },
+    {
+      "id": "b95e1d70-4c28-4a63-8f01-3d6ea2947bc5",
+      "nodeId": "565b92bd-2c2c-4a82-be62-b691decdbadf",
+      "path": ".gitignore",
       "kind": "config"
     },
     {
@@ -1293,9 +1293,9 @@
       "kind": "test-plan"
     },
     {
-      "id": "d8b31f04-2c65-4e17-91a3-5f0be7c294a1",
+      "id": "d84c0f2b-6a37-4e19-9b58-c1027fa63de4",
       "nodeId": "565b92bd-2c2c-4a82-be62-b691decdbadf",
-      "path": ".gitignore",
+      "path": "vitest.config.ts",
       "kind": "config"
     },
     {
