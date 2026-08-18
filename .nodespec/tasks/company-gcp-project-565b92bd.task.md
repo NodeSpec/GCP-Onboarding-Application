@@ -239,7 +239,9 @@ resource "google_project" "main" {
 | `vitest.emulator.config.ts` | config | --- | draft |
 | `.gitignore` | config | --- | draft |
 | `package.json` | config | --- | draft |
+| `infra/iam.tf` | config | --- | draft |
 | `infra/outputs.tf` | config | --- | draft |
 | `vitest.config.ts` | config | --- | draft |
 | `README.md` | doc | --- | draft |
 | `infra/infra.test.ts` | test-plan | --- | draft |
+| `infra/variables.tf` | config | --- | draft |

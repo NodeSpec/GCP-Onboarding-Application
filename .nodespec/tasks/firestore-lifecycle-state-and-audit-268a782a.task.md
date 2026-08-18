@@ -508,4 +508,5 @@ Startup/initialization order based on edge directions and interaction patterns.
 
 | File | Kind | Language | Status |
 |------|------|----------|--------|
+| `infra/firestore.tf` | config | --- | draft |
 | `firebase.json` | config | --- | draft |
