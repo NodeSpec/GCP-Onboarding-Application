@@ -1519,6 +1519,7 @@ Startup/initialization order based on edge directions and interaction patterns.
 | `services/api/src/routes/lookup.test.ts` | test-plan | --- | draft |
 | `packages/shared/src/logging.test.ts` | test-plan | --- | draft |
 | `services/api/src/config.test.ts` | test-plan | --- | draft |
+| `packages/test-support/src/index.ts` | test-plan | --- | draft |
 | `packages/shared/src/requestFactory.test.ts` | test-plan | --- | draft |
 | `services/api/src/routes/protectedAdmission.emulator.test.ts` | test-plan | --- | draft |
 | `services/api/src/protectedAccounts.ts` | source | --- | draft |

@@ -118,6 +118,7 @@ recommended test types, framework suggestions, and test scenarios.
 - **Lifecycle API Service**: [`services/api/src/config.test.ts`](./services/api/src/config.test.ts)
 - **Lifecycle Step Executor**: [`services/worker/src/credentials/credentialStore.test.ts`](./services/worker/src/credentials/credentialStore.test.ts)
 - **Lifecycle Step Executor**: [`services/worker/src/steps/executor.emulator.test.ts`](./services/worker/src/steps/executor.emulator.test.ts)
+- **Lifecycle API Service**: [`packages/test-support/src/index.ts`](./packages/test-support/src/index.ts)
 - **Lifecycle Step Executor**: [`services/worker/src/phases/offboarding.emulator.test.ts`](./services/worker/src/phases/offboarding.emulator.test.ts)
 - **Lifecycle API Service**: [`packages/shared/src/requestFactory.test.ts`](./packages/shared/src/requestFactory.test.ts)
 - **Lifecycle API Service**: [`services/api/src/routes/protectedAdmission.emulator.test.ts`](./services/api/src/routes/protectedAdmission.emulator.test.ts)
