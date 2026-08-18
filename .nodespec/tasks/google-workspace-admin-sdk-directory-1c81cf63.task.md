@@ -228,3 +228,9 @@ Startup/initialization order based on edge directions and interaction patterns.
 
 **Errors this node MUST emit to consumers:**
 - HTTP error responses to Lifecycle Step Executor ("Google Admin SDK Directory API"): return proper 4xx for validation errors, 401/403 for auth failures, 5xx for internal errors with correlation IDs
+
+## Existing Implementation
+
+| File | Kind | Language | Status |
+|------|------|----------|--------|
+| `docs/workspace-admin-setup.md` | doc | --- | draft |

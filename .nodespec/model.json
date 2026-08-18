@@ -1,7 +1,7 @@
 {
   "modelVersion": 1,
   "generatedBy": "nodespec",
-  "modelHash": "bc97187e666325e16c0c2e0f8c8bbaba7541083948478f048b0bad5823862c22",
+  "modelHash": "cf6638fe971b3cbe3308480571a56105b861a6906e9e67540e84473716c3beea",
   "nodes": [
     {
       "id": "1c81cf63-c51e-4b0e-b6ad-7d318332d2fe",
@@ -757,12 +757,6 @@
       "contentHash": "000000006160a29f"
     },
     {
-      "id": "3d7f81a4-6c25-4b93-a017-e5924f8b06d1",
-      "nodeId": "565b92bd-2c2c-4a82-be62-b691decdbadf",
-      "path": "docs/approval-policy.md",
-      "kind": "doc"
-    },
-    {
       "id": "3e7a1c94-6b52-4d08-9f31-8c4d2e6b0a57",
       "nodeId": "db8e5409-dc6f-4052-887a-7ba1dd5fb717",
       "path": "services/worker/src/notify/notify.emulator.test.ts",
@@ -900,6 +894,12 @@
       "kind": "test-plan"
     },
     {
+      "id": "6b19d0c3-4a87-4f52-b83e-91c7e0524fa6",
+      "nodeId": "565b92bd-2c2c-4a82-be62-b691decdbadf",
+      "path": "docs/approval-policy.md",
+      "kind": "doc"
+    },
+    {
       "id": "6d2f9b14-7a58-4c03-9e61-8b4d0f3c5a72",
       "nodeId": "db8e5409-dc6f-4052-887a-7ba1dd5fb717",
       "path": "services/worker/src/workspace/noAdminRoles.test.ts",
@@ -999,6 +999,12 @@
       "nodeId": "9af301aa-2191-4532-9871-82179a5500c1",
       "path": "services/console/vite.config.ts",
       "kind": "config"
+    },
+    {
+      "id": "8e2a5f14-b70c-4d96-a385-27f4c1b0938e",
+      "nodeId": "565b92bd-2c2c-4a82-be62-b691decdbadf",
+      "path": "docs/deployment.md",
+      "kind": "doc"
     },
     {
       "id": "8e3f7a92-4c15-4b60-9d28-6a0f5c3e1b47",
@@ -1266,6 +1272,12 @@
       "nodeId": "c424e85a-6584-4bb7-a48e-2175ebc6a41b",
       "path": "services/api/src/routes/admin.ts",
       "kind": "source"
+    },
+    {
+      "id": "c507b8e9-3f61-4a24-b0d7-4e8926a15f30",
+      "nodeId": "1c81cf63-c51e-4b0e-b6ad-7d318332d2fe",
+      "path": "docs/workspace-admin-setup.md",
+      "kind": "doc"
     },
     {
       "id": "c52ea038-7d14-4b69-a023-9f16b8d4e7c2",

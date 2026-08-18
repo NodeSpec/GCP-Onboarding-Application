@@ -236,10 +236,11 @@ resource "google_project" "main" {
 | `docs/runbook.md` | doc | --- | draft |
 | `docs/testing.md` | doc | --- | draft |
 | `docs/docs.test.ts` | test-plan | --- | draft |
-| `docs/approval-policy.md` | doc | --- | draft |
 | `infra/versions.tf` | config | --- | draft |
+| `docs/approval-policy.md` | doc | --- | draft |
 | `infra/apis.tf` | config | --- | draft |
 | `docs/architecture.md` | doc | --- | draft |
+| `docs/deployment.md` | doc | --- | draft |
 | `infra/hcl.test.ts` | test-plan | --- | draft |
 | `infra/hcl.ts` | source | --- | draft |
 | `vitest.emulator.config.ts` | config | --- | draft |
