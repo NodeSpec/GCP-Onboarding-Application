@@ -313,15 +313,63 @@ describe('REQ-031 AC-7: protected accounts are documented with how to amend them
 // =============================================================== house style
 
 describe('house style', () => {
-  it.each([...REQUIRED, 'testing.md'])('%s uses no em dashes', (name) => {
+  /** Everything a reader outside the team sees, not just docs/. */
+  const PROSE = [
+    ...REQUIRED.map((name) => join(DOCS, name)),
+    join(DOCS, 'testing.md'),
+    join(REPO, 'README.md'),
+    join(REPO, 'ARCHITECTURE.md'),
+  ];
+
+  it.each(PROSE)('%s uses no em dashes', (path) => {
     // A stated constraint on the documentation, and the kind of thing that
     // drifts one paragraph at a time without something checking.
-    expect(read(name)).not.toContain('—');
+    expect(readFileSync(path, 'utf8')).not.toContain('—');
   });
 
-  it('no document names the customer by their former placeholder name', () => {
-    for (const name of REQUIRED) {
-      expect(read(name).toLowerCase()).not.toContain('dark wolf');
+  it.each(PROSE)('%s does not name the customer by their former placeholder name', (path) => {
+    expect(readFileSync(path, 'utf8').toLowerCase()).not.toContain('dark wolf');
+  });
+});
+
+describe('the README is a usable entry point for a live deployment', () => {
+  const readme = () => readFileSync(join(REPO, 'README.md'), 'utf8');
+
+  it('covers the build, the apply, the Workspace side and the secrets', () => {
+    // The four things that have to happen in order, and the order is the part
+    // people get wrong: the Workspace grant needs a service account that only
+    // exists after the apply.
+    expect(readme()).toMatch(/Build and push the images/i);
+    expect(readme()).toMatch(/terraform apply/);
+    expect(readme()).toMatch(/Do the Workspace side/i);
+    expect(readme()).toMatch(/Populate the secrets/i);
+  });
+
+  it('gives a live test walkthrough rather than only a deployment recipe', () => {
+    expect(readme()).toMatch(/[Ll]ive test walkthrough/);
+    // The check that is easy to assume and cheap to make: somebody outside the
+    // operator group being turned away at the perimeter.
+    expect(readme()).toMatch(/outside the operator group is refused/i);
+    // And the one whose success is the finding.
+    expect(readme()).toMatch(/should FAIL|A 200 is a finding/);
+  });
+
+  it('warns about the irreversible audit retention lock', () => {
+    expect(readme()).toMatch(/IRREVERSIBLE|irreversible/);
+    expect(readme()).toContain('audit_bucket_locked');
+  });
+
+  it('lists the configuration the services actually read', () => {
+    // Added since the table was written, and the kind of thing that silently
+    // stops being listed.
+    for (const variable of [
+      'BOOTSTRAP_ADMINS',
+      'PROTECTED_ACCOUNTS',
+      'SMTP_RETURN_PATH',
+      'AUDIT_LOG_NAME',
+      'AUDIT_LOG_VIEW',
+    ]) {
+      expect(readme(), `${variable} is not documented`).toContain(variable);
     }
   });
 });
