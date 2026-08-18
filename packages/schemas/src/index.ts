@@ -263,3 +263,75 @@ export const submitRequestSchema = z
     payload: z.record(z.unknown()),
   })
   .strict();
+
+/**
+ * One form field, derived from the phase schema rather than described a second
+ * time (REQ-011 AC-1).
+ *
+ * The console renders its forms from this. Deriving it matters: a field added
+ * to a payload schema appears in the console automatically, and one removed
+ * disappears, so the two cannot drift into disagreeing about what a phase
+ * accepts. Validation goes through `validatePayload` — the very function the
+ * API calls — so client and server reach identical verdicts by construction
+ * rather than by two implementations being kept in step.
+ */
+export interface PhaseField {
+  name: string;
+  kind: 'string' | 'number' | 'boolean' | 'string[]';
+  required: boolean;
+  /** True where an explicit null is meaningful — "clear this attribute". */
+  nullable: boolean;
+}
+
+/** Unwraps the .refine() wrappers a phase schema may carry. */
+function baseObject(schema: z.ZodTypeAny): z.ZodObject<z.ZodRawShape> | null {
+  let current: z.ZodTypeAny = schema;
+  // ZodEffects wraps the object once per .refine(); walk down to the object.
+  while (current instanceof z.ZodEffects) current = current._def.schema as z.ZodTypeAny;
+  return current instanceof z.ZodObject ? (current as z.ZodObject<z.ZodRawShape>) : null;
+}
+
+/** Strips optional/nullable/default wrappers to reach the value type. */
+function describe(field: z.ZodTypeAny): { kind: PhaseField['kind']; required: boolean; nullable: boolean } {
+  let current = field;
+  let required = true;
+  let nullable = false;
+
+  for (;;) {
+    if (current instanceof z.ZodOptional) {
+      required = false;
+      current = current._def.innerType as z.ZodTypeAny;
+    } else if (current instanceof z.ZodDefault) {
+      required = false;
+      current = current._def.innerType as z.ZodTypeAny;
+    } else if (current instanceof z.ZodNullable) {
+      nullable = true;
+      current = current._def.innerType as z.ZodTypeAny;
+    } else {
+      break;
+    }
+  }
+
+  const kind: PhaseField['kind'] =
+    current instanceof z.ZodArray
+      ? 'string[]'
+      : current instanceof z.ZodNumber
+        ? 'number'
+        : current instanceof z.ZodBoolean
+          ? 'boolean'
+          : 'string';
+
+  return { kind, required, nullable };
+}
+
+/** The fields a phase accepts, in declaration order. */
+export function phaseFields(phase: Phase): PhaseField[] {
+  const schema = schemaForPhase(phase);
+  const object = schema ? baseObject(schema) : null;
+  if (!object) return [];
+
+  return Object.entries(object.shape).map(([name, field]) => ({
+    name,
+    ...describe(field as z.ZodTypeAny),
+  }));
+}
