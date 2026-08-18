@@ -18,8 +18,18 @@ import { config } from '../config.js';
  * reach. Nothing is signed here and no credential is held.
  */
 
+/**
+ * The metadata endpoint that mints an identity token for the runtime identity.
+ *
+ * The path segment is service-accountS, plural. Singular reads perfectly
+ * naturally and is wrong: the metadata server answers 404 for it, which this
+ * client reports as LookupUnavailable, which fails every role resolution that
+ * consults group membership. No test catches a mistake here, because every
+ * suite injects a fake token source and this constant is only read where a real
+ * metadata server exists, which is to say in a deployed GCP runtime.
+ */
 const METADATA_IDENTITY_URL =
-  'http://metadata.google.internal/computeMetadata/v1/instance/service-account/default/identity';
+  'http://metadata.google.internal/computeMetadata/v1/instance/service-accounts/default/identity';
 
 /** How long before expiry a cached token is considered spent. */
 const REFRESH_MARGIN_MS = 5 * 60 * 1000;
