@@ -1171,6 +1171,7 @@ Startup/initialization order based on edge directions and interaction patterns.
 | `.nodespec/tests/req-019.tests.md` - Test plan for requirement: Credential generation and encryption at rest | test-plan | markdown | draft |
 | `services/worker/src/phases/update.ts` | source | --- | draft |
 | `services/worker/src/steps/advance.emulator.test.ts` | test-plan | --- | draft |
+| `services/worker/src/phases/delete.test.ts` | test-plan | --- | draft |
 | `services/worker/src/auth/taskAuth.ts` | source | --- | draft |
 | `services/worker/src/config.ts` | source | --- | draft |
 | `services/worker/src/workspace/noAdminRoles.test.ts` | source | --- | draft |
@@ -1185,7 +1186,6 @@ Startup/initialization order based on edge directions and interaction patterns.
 | `services/worker/src/steps/duplicateDelivery.emulator.test.ts` | source | --- | draft |
 | `services/worker/src/index.ts` | source | --- | draft |
 | `services/worker/src/workspace/noDelegation.test.ts` | test-plan | --- | draft |
-| `services/worker/src/phases/delete.test.ts` | test-plan | --- | draft |
 | `services/worker/src/auth/taskAuth.test.ts` | test-plan | --- | draft |
 | `services/worker/src/workspace/passwordReset.test.ts` | source | --- | draft |
 | `packages/shared/src/stepPlans.test.ts` | test-plan | --- | draft |
