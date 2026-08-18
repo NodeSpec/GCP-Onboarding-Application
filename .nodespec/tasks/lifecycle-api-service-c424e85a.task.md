@@ -1493,10 +1493,12 @@ Startup/initialization order based on edge directions and interaction patterns.
 | `services/api/src/middleware/iapAuth.ts` | source | --- | draft |
 | `.nodespec/tests/req-001.tests.md` - Test plan for requirement: Lifecycle request creation and step-plan persistence | test-plan | markdown | draft |
 | `services/api/src/roles.test.ts` | test-plan | --- | draft |
+| `packages/shared/src/keyRotation.test.ts` | test-plan | --- | draft |
 | `services/api/src/routes/roleBindings.ts` | source | --- | draft |
 | `services/api/tsconfig.json` | config | --- | draft |
 | `services/api/src/routes/audit.emulator.test.ts` | source | --- | draft |
 | `services/api/src/routes/admin.emulator.test.ts` | test-plan | --- | draft |
+| `services/api/src/lookup/groupMemberships.test.ts` | test-plan | --- | draft |
 | `packages/shared/tsconfig.json` | config | --- | draft |
 | `packages/shared/src/credentials.ts` | source | --- | draft |
 | `services/api/src/lookup/workerClient.ts` | source | --- | draft |
@@ -1516,6 +1518,7 @@ Startup/initialization order based on edge directions and interaction patterns.
 | `packages/test-support/src/index.ts` | test-plan | --- | draft |
 | `packages/shared/src/requestFactory.test.ts` | test-plan | --- | draft |
 | `services/api/src/routes/protectedAdmission.emulator.test.ts` | test-plan | --- | draft |
+| `services/api/src/routeCoverage.test.ts` | test-plan | --- | draft |
 | `services/api/src/protectedAccounts.ts` | source | --- | draft |
 | `services/api/src/routes/cancel.emulator.test.ts` | test-plan | --- | draft |
 | `packages/shared/src/stepPlans.ts` | source | --- | draft |

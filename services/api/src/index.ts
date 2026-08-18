@@ -16,6 +16,7 @@ import { logger } from './logging.js';
 import { createIapAuth } from './middleware/iapAuth.js';
 import { adminRoutes } from './routes/admin.js';
 import { ProtectedAccounts } from './protectedAccounts.js';
+import { WorkerGroupMemberships } from './lookup/groupMemberships.js';
 import { lookupRoutes } from './routes/lookup.js';
 import { requestRoutes } from './routes/requests.js';
 import { roleBindingRoutes } from './routes/roleBindings.js';
@@ -116,21 +117,30 @@ async function loadPolicy(): Promise<ApprovalPolicy> {
 const dispatcher = createDispatcher();
 
 /**
- * Roles come from the binding store now, not from the provisional resolver that
+ * Roles come from the binding store, not from the provisional resolver that
  * granted 'requester' to everyone and left the approve and reject routes
  * unreachable. An operator with no binding is authenticated and authorized for
  * nothing (REQ-012 AC-2); BOOTSTRAP_ADMINS is the only way into an empty store.
  *
- * No GroupMembershipProvider is supplied, so only individual bindings resolve
- * here. The group path itself is built and tested; what is missing is the
- * membership source, which the worker's lookup surface can now supply
- * (REQ-029). Until it is wired, a 'group' binding grants nothing in a deployed
- * environment even though it resolves correctly in test.
+ * Group membership now comes from the worker's read-only lookup surface
+ * (REQ-029), so a 'group' binding grants in a deployed environment what it has
+ * always granted in test (REQ-012 AC-7). Before this was wired, the group path
+ * resolved correctly against a fake and against nothing in production, which is
+ * the worst shape a permission check can have.
  *
- * Caching is left off: it would trade revocation latency for read volume, and
- * read volume is not this service's problem.
+ * The resolver's OWN cache stays off. Role bindings are edited through this
+ * application and invalidated on the exact subject that changed, and a cache
+ * here would sit in front of that and make a revocation take effect whenever an
+ * entry happened to expire. The Directory round trip is cached one level down,
+ * inside the membership provider, where the only thing it can make stale is
+ * Workspace group membership.
  */
-const resolver = new BindingRoleResolver(store, { bootstrapAdmins: config.BOOTSTRAP_ADMINS });
+const groupMemberships = new WorkerGroupMemberships();
+
+const resolver = new BindingRoleResolver(store, {
+  bootstrapAdmins: config.BOOTSTRAP_ADMINS,
+  groups: groupMemberships,
+});
 
 /**
  * Every role refusal is audited with the identity that was refused, what was
@@ -167,6 +177,10 @@ app.use(
 );
 app.use(
   '/api/role-bindings',
+  // Editing a binding needs no membership invalidation. The membership cache
+  // maps an operator to the groups they are IN, which a binding edit does not
+  // change, and the bindings themselves are read fresh on every resolution.
+  // Changing what a group grants therefore takes effect immediately.
   roleBindingRoutes({ store, resolver, onChanged: (subject) => resolver.invalidate(subject) }),
 );
 app.use('/api/admin', adminRoutes({ store, dispatcher, resolver }));

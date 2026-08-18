@@ -1,7 +1,7 @@
 {
   "modelVersion": 1,
   "generatedBy": "nodespec",
-  "modelHash": "1ee0b7f5ab0bfa35ea167ec317ba29a1bc56e7e7d50ea1945dc75ad3e9901630",
+  "modelHash": "1f33954458ebe6881b301d1d023c7a371f7534a0c94b3d9f95c3fe7aff55ec15",
   "nodes": [
     {
       "id": "1c81cf63-c51e-4b0e-b6ad-7d318332d2fe",
@@ -676,7 +676,7 @@
       "nodeId": "c424e85a-6584-4bb7-a48e-2175ebc6a41b",
       "path": "services/api/src/index.ts",
       "kind": "source",
-      "contentHash": "000000001d467a67"
+      "contentHash": "000000004ca29c2e"
     },
     {
       "id": "2b3c8d05-4e69-4f72-8183-6a0d9e2f5b41",
@@ -920,6 +920,12 @@
       "contentHash": "000000006cd0112e"
     },
     {
+      "id": "6f8b204d-c317-4a95-8e70-1d94e6a37b58",
+      "nodeId": "c424e85a-6584-4bb7-a48e-2175ebc6a41b",
+      "path": "packages/shared/src/keyRotation.test.ts",
+      "kind": "test-plan"
+    },
+    {
       "id": "73ef538f-595b-46ec-b343-890a39a6a018",
       "nodeId": "c424e85a-6584-4bb7-a48e-2175ebc6a41b",
       "path": "services/api/src/routes/roleBindings.ts",
@@ -1049,6 +1055,12 @@
       "nodeId": "6da6f1e9-97b5-4c0b-8ba5-0b81f3bc5e4b",
       "path": "packages/shared/src/cloudLoggingAudit.ts",
       "kind": "source"
+    },
+    {
+      "id": "9d5c26f8-71b3-4e04-8a97-c3b1e5470f29",
+      "nodeId": "c424e85a-6584-4bb7-a48e-2175ebc6a41b",
+      "path": "services/api/src/lookup/groupMemberships.test.ts",
+      "kind": "test-plan"
     },
     {
       "id": "9ff4b387-6d62-4f4e-a080-c8b24497b3d2",
@@ -1425,6 +1437,12 @@
       "path": ".nodespec/tasks/cloud-logging-audit-sink-6da6f1e9.task.md",
       "kind": "task",
       "contentHash": "0000000002d3546e"
+    },
+    {
+      "id": "e1a7043c-95d8-4b62-a30f-7c46b9018e52",
+      "nodeId": "c424e85a-6584-4bb7-a48e-2175ebc6a41b",
+      "path": "services/api/src/routeCoverage.test.ts",
+      "kind": "test-plan"
     },
     {
       "id": "e2f3a4b5-c6d7-4e8f-9a0b-1c2d3e4f5a6b",
