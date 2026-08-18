@@ -42,7 +42,6 @@ Ordered WORK ORDERS synthesized from the model — this node's deliverable kind,
 - [ ] **T8 — Expose the interface External HTTPS Load Balancer consumes, per Contract "IAP-Protected HTTPS Ingress" (rest).**
   Record the endpoint/identifiers External HTTPS Load Balancer needs in this node's config artifacts — coordinate with External HTTPS Load Balancer.
   Build to the contract schema EXACTLY (see Interface Contracts).
-  ↳ serves (unverified match): REQ-031 "The protected-account list is documented in the runbook alongside how to amend it, since an over-broad list silently blocks legitimate offboarding" — requirement not mapped to that node; verify or reassign before relying on it
   ↳ serves (unverified match): REQ-007 "Each deployed Cloud Run service rejects a direct request to its *.run.app URL, proving the load balancer is the only ingress path into the system" — requirement not mapped to that node; verify or reassign before relying on it
 - [ ] **T9 — Expose the interface Operator Console UI consumes, per Contract "Lifecycle Operator API" (rest).**
   Record the endpoint/identifiers Operator Console UI needs in this node's config artifacts — coordinate with Operator Console UI.
@@ -190,8 +189,8 @@ The list is configuration, not code, so a tenant can protect its own break-glass
   → possible match: Contract "Audit Log Sink" (dependency) to Cloud Logging: audit sink (unverified — requirement not mapped to that node)
 - [x] An operator with the admin role is refused just as a requester is — protection is not a permission level that can be escalated past
   → possible match: Contract "Lifecycle Operator API" (rest) from Operator Console UI (unverified — requirement not mapped to that node)
-- [ ] The protected-account list is documented in the runbook alongside how to amend it, since an over-broad list silently blocks legitimate offboarding
-  → covered by Task T8
+- [x] The protected-account list is documented in the runbook alongside how to amend it, since an over-broad list silently blocks legitimate offboarding
+  → possible match: Contract "IAP-Protected HTTPS Ingress" (rest) from External HTTPS Load Balancer (unverified — requirement not mapped to that node)
 
 ### REQ-007: IAP protection with server-side JWT assertion verification
 Category: technical | Status: in-progress
