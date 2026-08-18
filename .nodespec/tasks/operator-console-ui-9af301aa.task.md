@@ -883,5 +883,6 @@ Startup/initialization order based on edge directions and interaction patterns.
 | `services/console/package.json` | config | --- | draft |
 | `services/console/vite.config.ts` | config | --- | draft |
 | `services/console/src/identity.tsx` | source | --- | draft |
+| `services/console/src/console.test.tsx` | test-plan | --- | draft |
 | `services/console/index.html` | source | --- | draft |
 | `services/console/src/RequestForm.tsx` | source | --- | draft |
