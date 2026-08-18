@@ -1,7 +1,7 @@
 {
   "modelVersion": 1,
   "generatedBy": "nodespec",
-  "modelHash": "eb797d63b2f09469697a1af77492b8b42b8eab5f0a850e927a43b6956cd94ddb",
+  "modelHash": "7d8ffa8db0079bd0732b91f1eacd277cb90d78daf23fe992b4d1816f72dee9d4",
   "nodes": [
     {
       "id": "1c81cf63-c51e-4b0e-b6ad-7d318332d2fe",
@@ -860,7 +860,7 @@
       "nodeId": "db8e5409-dc6f-4052-887a-7ba1dd5fb717",
       "path": "services/worker/src/config.ts",
       "kind": "source",
-      "contentHash": "000000005120d263"
+      "contentHash": "000000002d0ed820"
     },
     {
       "id": "68f6c792-db80-4e36-a4a9-3c6bdaa6004d",
@@ -1082,7 +1082,7 @@
       "nodeId": "db8e5409-dc6f-4052-887a-7ba1dd5fb717",
       "path": "services/worker/src/index.ts",
       "kind": "source",
-      "contentHash": "0000000023f22893"
+      "contentHash": "000000006c9b7c9f"
     },
     {
       "id": "b1c2d3e4-f5a6-4b7c-8d9e-0f1a2b3c4d5e",
@@ -1156,7 +1156,7 @@
       "nodeId": "db8e5409-dc6f-4052-887a-7ba1dd5fb717",
       "path": "services/worker/src/routes/tasks.ts",
       "kind": "source",
-      "contentHash": "000000007f65a93f"
+      "contentHash": "00000000489f60af"
     },
     {
       "id": "c1f7a930-58e2-4b6d-9a04-6bd35e10f8c7",

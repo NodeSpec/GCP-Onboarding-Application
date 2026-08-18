@@ -1,6 +1,12 @@
 import { Firestore } from '@google-cloud/firestore';
 import express from 'express';
-import { CredentialStore, LifecycleStore, SecretManagerKeyProvider } from '@lifecycle/shared';
+import {
+  AuditMirror,
+  CloudLoggingAuditWriter,
+  CredentialStore,
+  LifecycleStore,
+  SecretManagerKeyProvider,
+} from '@lifecycle/shared';
 import { requireCaller } from './auth/taskAuth.js';
 import { config } from './config.js';
 import { logger } from './logging.js';
@@ -51,6 +57,26 @@ const dispatcher = createDispatcher();
 const sender = new SmtpNotificationSender();
 useNotificationSender(sender);
 
+/**
+ * The audit trail's second copy (REQ-018 AC-1), swept on a schedule.
+ *
+ * Built only when a log name is configured. An unconfigured deployment starts
+ * and runs; what it does NOT do is claim to have a tamper-evident copy — the
+ * sweep route answers 'not_configured' and logs a warning, which is the
+ * difference between a missing control and a control that silently does
+ * nothing.
+ */
+const auditMirror = config.AUDIT_LOG_NAME
+  ? new AuditMirror(
+      db,
+      new CloudLoggingAuditWriter({
+        logName: config.AUDIT_LOG_NAME,
+        projectId: config.GCP_PROJECT_ID,
+        ...(config.AUDIT_LOG_VIEW ? { readResourceNames: [config.AUDIT_LOG_VIEW] } : {}),
+      }),
+    )
+  : null;
+
 const app = express();
 app.disable('x-powered-by');
 app.use(express.json({ limit: '256kb' }));
@@ -70,6 +96,9 @@ app.use(
     advance: (requestId, completedStepId) =>
       advance({ store, dispatcher }, requestId, completedStepId),
     notifyApprovers: (params) => notifyApprovers({ store, sender }, params),
+    // Supplied only when the mirror is configured, so the route can say so
+    // rather than reporting a sweep that never happened (REQ-018).
+    ...(auditMirror ? { sweepAuditMirror: () => auditMirror.sweep() } : {}),
   }),
 );
 

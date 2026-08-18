@@ -35,6 +35,13 @@ const notifyBody = z.object({
 export interface TaskRouteDeps extends ExecutorDeps {
   /** Sends the approver notice for a halted step (REQ-032). */
   notifyApprovers: (params: { requestId: string; stepId: string }) => Promise<unknown>;
+  /**
+   * Carries committed audit events into the tamper-evident log (REQ-018 AC-1).
+   * Optional, so a deployment without the audit sink provisioned still starts;
+   * the route then says it is not configured rather than reporting a sweep that
+   * never happened.
+   */
+  sweepAuditMirror?: () => Promise<{ mirrored: number; more: boolean }>;
 }
 
 export function taskRoutes(deps: TaskRouteDeps): Router {
@@ -101,6 +108,41 @@ export function taskRoutes(deps: TaskRouteDeps): Router {
       // adding the missing binding is exactly the fix, and a later attempt
       // should then succeed rather than the whole request needing re-raising.
       logger.error({ err, ...parsed.data }, 'approver notification failed');
+      res.status(500).json({ status: 'retry' });
+    }
+  });
+
+  /**
+   * The audit mirror sweep (REQ-018 AC-1), driven on a schedule rather than by
+   * a request.
+   *
+   * It runs here, on the worker, for the same reason the approver notice does:
+   * this is where scheduled background work already lives, and the API service
+   * has no business growing a second one. The sweep is idempotent — the log
+   * deduplicates on the audit eventId — so a redelivery costs nothing and a
+   * failure is always safe to retry.
+   *
+   * A sweep that reports more remaining returns 200 rather than 500. The
+   * backlog is not a failure, and driving it with retries would conflate
+   * "there is more to do" with "this did not work"; the next scheduled firing
+   * takes the next batch.
+   */
+  router.post('/mirror-audit', async (_req, res) => {
+    if (!deps.sweepAuditMirror) {
+      // Said out loud. A silent 200 here would let a deployment run for months
+      // believing it had a second copy of the audit trail.
+      logger.warn('audit mirror sweep requested but no mirror is configured');
+      res.status(200).json({ status: 'not_configured' });
+      return;
+    }
+
+    try {
+      const outcome = await deps.sweepAuditMirror();
+      res.status(200).json({ status: 'ok', ...outcome });
+    } catch (err) {
+      // The watermark does not advance past a batch the log refused, so a
+      // retry re-sends the same events and the mirror catches up.
+      logger.error({ err }, 'audit mirror sweep failed');
       res.status(500).json({ status: 'retry' });
     }
   });

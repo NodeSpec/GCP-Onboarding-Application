@@ -40,6 +40,14 @@ const schema = z.object({
 
   CONSOLE_BASE_URL: z.string().url(),
 
+  // The log the audit mirror writes to, which a Terraform sink routes into the
+  // locked-retention bucket (REQ-018). Optional so a deployment can start
+  // before the sink exists; the sweep route then reports 'not_configured'
+  // rather than silently doing nothing. AUDIT_LOG_VIEW is the bucket view
+  // reconciliation reads back through, once entries no longer land in _Default.
+  AUDIT_LOG_NAME: z.string().min(1).optional(),
+  AUDIT_LOG_VIEW: z.string().min(1).optional(),
+
   LOG_LEVEL: z.enum(['fatal', 'error', 'warn', 'info', 'debug', 'trace']).default('info'),
 });
 
