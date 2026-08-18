@@ -103,9 +103,35 @@ export class CredentialUnrecoverableError extends Error {
   }
 }
 
+/** Injectable so rotation behaviour can be exercised without a GCP project. */
+export interface SecretAccessor {
+  accessSecretVersion(request: { name: string }): Promise<[{ name?: string | null; payload?: { data?: unknown } | null }, ...unknown[]]>;
+}
+
+export interface KeyProviderOptions {
+  accessor?: SecretAccessor;
+  /**
+   * How long a resolution of `latest` may be reused, in milliseconds.
+   *
+   * NOT unbounded, and that is the whole point of this option existing
+   * (REQ-014 AC-6). See the note on `access` below.
+   */
+  latestTtlMs?: number;
+  now?: () => number;
+}
+
+/**
+ * Ten minutes. Long enough that the hot path is not a Secret Manager call,
+ * short enough to be irrelevant beside the 72 hour rotation drain window the
+ * runbook prescribes.
+ */
+const LATEST_TTL_MS = 10 * 60 * 1000;
+
 /** Reads the key from Secret Manager, base64 encoded, latest version. */
 export class SecretManagerKeyProvider implements KeyProvider {
-  private readonly secrets = new SecretManagerServiceClient();
+  private readonly secrets: SecretAccessor;
+  private readonly latestTtlMs: number;
+  private readonly now: () => number;
   /**
    * Keyed by version resource name, plus 'latest'. A single cached key was
    * enough while only the current version was ever read; decrypting historic
@@ -113,7 +139,7 @@ export class SecretManagerKeyProvider implements KeyProvider {
    * Bounded in practice by how many rotations a short-lived Cloud Run instance
    * can span, which is one or two.
    */
-  private readonly cache = new Map<string, ResolvedKey>();
+  private readonly cache = new Map<string, { resolved: ResolvedKey; expiresAt: number }>();
 
   /**
    * The secret resource name is passed in rather than read from a module-level
@@ -121,11 +147,16 @@ export class SecretManagerKeyProvider implements KeyProvider {
    * reaching into either one from here would have tied the shared package to
    * whichever service happened to be importing it.
    */
-  constructor(private readonly secretName: string) {}
+  constructor(
+    private readonly secretName: string,
+    options: KeyProviderOptions = {},
+  ) {
+    this.secrets = options.accessor ?? (new SecretManagerServiceClient() as unknown as SecretAccessor);
+    this.latestTtlMs = options.latestTtlMs ?? LATEST_TTL_MS;
+    this.now = options.now ?? (() => Date.now());
+  }
 
   async resolve(): Promise<ResolvedKey> {
-    // Cached for the instance lifetime. A rotation is picked up when Cloud Run
-    // replaces the instance, or on the next cold start, without a redeploy.
     return this.access('latest');
   }
 
@@ -137,9 +168,23 @@ export class SecretManagerKeyProvider implements KeyProvider {
     return this.access(version);
   }
 
+  /**
+   * A CONCRETE version is immutable, so it is cached forever. `latest` is a
+   * moving pointer and expires (REQ-014 AC-6).
+   *
+   * The difference is not a performance nicety, it is a correctness one. A
+   * warm instance holding `latest` indefinitely keeps encrypting under the key
+   * it read at startup and STAMPING NEW RECORDS WITH THAT VERSION. Follow the
+   * runbook's rotation, which disables the previous version after the drain
+   * window, and those records name a disabled version: the ciphertext is
+   * intact and no longer decryptable, so the operator can never retrieve the
+   * password and the failure surfaces long after the rotation that caused it.
+   *
+   * Bounding the pointer's lifetime is what keeps the drain window meaningful.
+   */
   private async access(versionRef: string): Promise<ResolvedKey> {
     const cached = this.cache.get(versionRef);
-    if (cached) return cached;
+    if (cached && cached.expiresAt > this.now()) return cached.resolved;
 
     // A bare 'latest' needs the secret prefix; a recorded version is already a
     // full resource name.
@@ -158,10 +203,15 @@ export class SecretManagerKeyProvider implements KeyProvider {
     }
 
     const resolved: ResolvedKey = { key, version: version.name ?? 'unknown' };
-    this.cache.set(versionRef, resolved);
+
+    this.cache.set(versionRef, {
+      resolved,
+      expiresAt: versionRef === 'latest' ? this.now() + this.latestTtlMs : Infinity,
+    });
     // Also cache under the concrete version, so a later read of the same
-    // version resolved through 'latest' does not re-fetch.
-    if (version.name) this.cache.set(version.name, resolved);
+    // version resolved through 'latest' does not re-fetch. Immutable, so no
+    // expiry: version N's material is version N's material forever.
+    if (version.name) this.cache.set(version.name, { resolved, expiresAt: Infinity });
     return resolved;
   }
 }

@@ -1,7 +1,7 @@
 {
   "modelVersion": 1,
   "generatedBy": "nodespec",
-  "modelHash": "dd63f8e18cf76b33a9d4688d3f18954fa76c46fd68a0b5fdd4c231a6c3c0f20f",
+  "modelHash": "69fa3992da36716c57287fefd0ada0952c4a8fbe48153a6ae491345487f4984b",
   "nodes": [
     {
       "id": "1c81cf63-c51e-4b0e-b6ad-7d318332d2fe",
@@ -604,6 +604,12 @@
       "kind": "source"
     },
     {
+      "id": "0f3d81b5-6a27-4e94-b8c1-59d7e2604fa3",
+      "nodeId": "c424e85a-6584-4bb7-a48e-2175ebc6a41b",
+      "path": "packages/schemas/package.json",
+      "kind": "config"
+    },
+    {
       "id": "0f5b5098-35a3-4fcb-998f-f04c64afdd05",
       "nodeId": "db8e5409-dc6f-4052-887a-7ba1dd5fb717",
       "path": "services/worker/src/notify/templates.test.ts",
@@ -647,6 +653,12 @@
       "kind": "config"
     },
     {
+      "id": "1c7e492a-38b6-4d05-9f83-2ae610b7d548",
+      "nodeId": "c424e85a-6584-4bb7-a48e-2175ebc6a41b",
+      "path": "packages/schemas/tsconfig.json",
+      "kind": "config"
+    },
+    {
       "id": "1c91b278-14fc-4343-aa3c-49c182dc3a6f",
       "nodeId": "268a782a-d132-4d5e-8f24-c4a969ad7f17",
       "path": ".nodespec/tasks/firestore-lifecycle-state-and-audit-268a782a.task.md",
@@ -684,6 +696,12 @@
       "path": "services/api/src/authz.ts",
       "kind": "source",
       "contentHash": "000000005fb4ede0"
+    },
+    {
+      "id": "2b58a0d7-9c14-4e36-a870-63f1d95e2b04",
+      "nodeId": "c424e85a-6584-4bb7-a48e-2175ebc6a41b",
+      "path": "packages/test-support/package.json",
+      "kind": "config"
     },
     {
       "id": "2c68e4b1-a039-47f5-9d82-6b71fc3e850a",
@@ -761,6 +779,12 @@
       "nodeId": "db8e5409-dc6f-4052-887a-7ba1dd5fb717",
       "path": "services/worker/src/notify/notify.emulator.test.ts",
       "kind": "source"
+    },
+    {
+      "id": "3e91c76b-4d82-4a10-95f7-08b2ae63d491",
+      "nodeId": "c424e85a-6584-4bb7-a48e-2175ebc6a41b",
+      "path": "packages/test-support/tsconfig.json",
+      "kind": "config"
     },
     {
       "id": "3f82d5b7-9c14-4a6e-8b02-71fd3ac6e295",
@@ -1110,7 +1134,7 @@
       "nodeId": "c424e85a-6584-4bb7-a48e-2175ebc6a41b",
       "path": "packages/shared/src/credentials.ts",
       "kind": "source",
-      "contentHash": "000000000097c819"
+      "contentHash": "0000000050aff1db"
     },
     {
       "id": "a3f5619c-8e27-4b40-9d61-05c8a7e2f4b8",
@@ -1130,12 +1154,6 @@
       "path": "packages/shared/src/index.ts",
       "kind": "source",
       "contentHash": "00000000583b0443"
-    },
-    {
-      "id": "a7b8c9d0-1e2f-3a4b-5c6d-7e8f9a0b1c2d",
-      "nodeId": "c424e85a-6584-4bb7-a48e-2175ebc6a41b",
-      "path": "services/api/src/schemas.test.ts",
-      "kind": "test-plan"
     },
     {
       "id": "a83c2f51-9d47-4e06-b218-6c74f0a9e5d3",
@@ -1373,13 +1391,6 @@
       "nodeId": "db8e5409-dc6f-4052-887a-7ba1dd5fb717",
       "path": "services/worker/src/routes/lookup.ts",
       "kind": "source"
-    },
-    {
-      "id": "d3a17f60-9e24-4b83-a175-6c02f8194e39",
-      "nodeId": "db8e5409-dc6f-4052-887a-7ba1dd5fb717",
-      "path": "services/worker/src/credentials/credentialStore.test.ts",
-      "kind": "test-plan",
-      "contentHash": "0000000073ce04ab"
     },
     {
       "id": "d3c1b4df-6ea5-45ee-ba20-a73a26c9ac35",

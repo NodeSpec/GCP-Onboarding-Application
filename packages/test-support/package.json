@@ -1,0 +1,32 @@
+{
+  "name": "@lifecycle/test-support",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Emulator fixtures shared by every suite that talks to Firestore. Test-only: nothing here is imported by production code.",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "@google-cloud/firestore": "^7.10.0",
+    "@lifecycle/shared": "*"
+  },
+  "devDependencies": {
+    "@types/express": "^5.0.0",
+    "@types/node": "^22.9.0",
+    "express": "^4.21.2",
+    "typescript": "^5.6.3"
+  }
+}

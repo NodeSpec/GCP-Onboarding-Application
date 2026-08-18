@@ -1474,17 +1474,21 @@ Startup/initialization order based on edge directions and interaction patterns.
 | `services/api/src/middleware/iapAuth.test.ts` | test-plan | --- | draft |
 | `.nodespec/tests/req-007.tests.md` - Test plan for requirement: IAP protection with server-side JWT assertion verification | test-plan | markdown | draft |
 | `packages/shared/src/logging.ts` | source | --- | draft |
+| `packages/schemas/package.json` | config | --- | draft |
 | `packages/shared/src/dispatcher.ts` | source | --- | draft |
 | `.nodespec/tests/req-010.tests.md` - Test plan for requirement: Audit event model, operator-action auditing and log redaction | test-plan | markdown | draft |
 | `packages/schemas/src/index.ts` | source | --- | draft |
+| `packages/schemas/tsconfig.json` | config | --- | draft |
 | `services/api/src/index.ts` | source | --- | draft |
 | `services/api/src/authz.ts` | source | --- | draft |
+| `packages/test-support/package.json` | config | --- | draft |
 | `.nodespec/tests/req-012.tests.md` - Test plan for requirement: Operator role model derived from verified identity | test-plan | markdown | draft |
 | `packages/shared/src/transitions.test.ts` | test-plan | --- | draft |
 | `packages/shared/src/store.ts` | source | --- | draft |
 | `.nodespec/tests/req-002.tests.md` - Test plan for requirement: Optional two-party approval on any step | test-plan | markdown | draft |
 | `services/api/src/tasks/dispatcher.ts` | source | --- | draft |
 | `services/api/src/routes/requests.ts` | source | --- | draft |
+| `packages/test-support/tsconfig.json` | config | --- | draft |
 | `services/api/src/lookup/groupMemberships.ts` | source | --- | draft |
 | `packages/shared/src/credentials.test.ts` | source | --- | draft |
 | `services/api/src/roles.ts` | source | --- | draft |
@@ -1504,7 +1508,6 @@ Startup/initialization order based on edge directions and interaction patterns.
 | `packages/shared/src/credentials.ts` | source | --- | draft |
 | `services/api/src/lookup/workerClient.ts` | source | --- | draft |
 | `packages/shared/src/index.ts` | source | --- | draft |
-| `services/api/src/schemas.test.ts` | test-plan | --- | draft |
 | `services/api/src/logging.ts` | source | --- | draft |
 | `packages/shared/package.json` | config | --- | draft |
 | `services/api/src/protectedAccounts.test.ts` | test-plan | --- | draft |
