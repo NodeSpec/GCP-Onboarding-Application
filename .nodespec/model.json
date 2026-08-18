@@ -1,7 +1,7 @@
 {
   "modelVersion": 1,
   "generatedBy": "nodespec",
-  "modelHash": "cabdbddcc9f039b0b2705adbfcbd095d27b406ef79e2bc663a241dc3de6e6d96",
+  "modelHash": "b6a30647c192084a36cf66e897cd6d10481bba606a52997c2723b723afdd81a4",
   "nodes": [
     {
       "id": "1c81cf63-c51e-4b0e-b6ad-7d318332d2fe",
@@ -999,6 +999,12 @@
       "contentHash": "000000007c555ea4"
     },
     {
+      "id": "7c5f2ae3-9d42-4018-b6ca-3e58f102da94",
+      "nodeId": "db8e5409-dc6f-4052-887a-7ba1dd5fb717",
+      "path": "services/worker/src/phases/update.emulator.test.ts",
+      "kind": "source"
+    },
+    {
       "id": "7c7eeedf-75e9-4ca5-8428-e9d724a1b94a",
       "nodeId": "4f626e62-3cc8-445a-9fbd-cb36407ad91e",
       "path": ".nodespec/tasks/identity-aware-proxy-4f626e62.task.md",
@@ -1283,12 +1289,6 @@
       "nodeId": "6da6f1e9-97b5-4c0b-8ba5-0b81f3bc5e4b",
       "path": "infra/logging.tf",
       "kind": "config"
-    },
-    {
-      "id": "c3d4e5f6-7a8b-9c0d-1e2f-a3b4c5d6e7f8",
-      "nodeId": "db8e5409-dc6f-4052-887a-7ba1dd5fb717",
-      "path": "services/worker/src/phases/update.emulator.test.ts",
-      "kind": "test-plan"
     },
     {
       "id": "c3f8a129-6174-4a09-bd53-49ec721fa068",
