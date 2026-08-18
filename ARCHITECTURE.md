@@ -106,6 +106,7 @@ recommended test types, framework suggestions, and test scenarios.
 - **Lifecycle Step Executor**: [`services/worker/src/phases/update.test.ts`](./services/worker/src/phases/update.test.ts)
 - **Lifecycle API Service**: [`services/api/src/schemas.test.ts`](./services/api/src/schemas.test.ts)
 - **Lifecycle Step Executor**: [`services/worker/src/workspace/noDelegation.test.ts`](./services/worker/src/workspace/noDelegation.test.ts)
+- **Lifecycle API Service**: [`services/api/src/protectedAccounts.test.ts`](./services/api/src/protectedAccounts.test.ts)
 - **Lifecycle Step Executor**: [`services/worker/src/auth/taskAuth.test.ts`](./services/worker/src/auth/taskAuth.test.ts)
 - **Lifecycle Step Executor**: [`packages/shared/src/stepPlans.test.ts`](./packages/shared/src/stepPlans.test.ts)
 - **Lifecycle API Service**: [`packages/shared/src/store.emulator.test.ts`](./packages/shared/src/store.emulator.test.ts)

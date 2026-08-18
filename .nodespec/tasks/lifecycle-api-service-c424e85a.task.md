@@ -1510,6 +1510,7 @@ Startup/initialization order based on edge directions and interaction patterns.
 | `services/api/src/schemas.test.ts` | test-plan | --- | draft |
 | `services/api/src/logging.ts` | source | --- | draft |
 | `packages/shared/package.json` | config | --- | draft |
+| `services/api/src/protectedAccounts.test.ts` | test-plan | --- | draft |
 | `packages/shared/src/store.emulator.test.ts` | test-plan | --- | draft |
 | `packages/shared/src/stepPlans.test.ts` | test-plan | --- | draft |
 | `services/api/src/routes/authorization.emulator.test.ts` | test-plan | --- | draft |

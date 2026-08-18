@@ -1,7 +1,7 @@
 {
   "modelVersion": 1,
   "generatedBy": "nodespec",
-  "modelHash": "909ba43bc8efa674ddee8ef76404361059f77b1c3433f116644f5d442dc6a333",
+  "modelHash": "9612f605656071f4871abedc873c44ae92fccc8f61313d23411a7447b360c6b8",
   "nodes": [
     {
       "id": "1c81cf63-c51e-4b0e-b6ad-7d318332d2fe",
@@ -1016,6 +1016,12 @@
       "nodeId": "c424e85a-6584-4bb7-a48e-2175ebc6a41b",
       "path": "packages/shared/package.json",
       "kind": "config"
+    },
+    {
+      "id": "b5c6d7e8-f9a0-4b1c-2d3e-4f5a6b7c8d9e",
+      "nodeId": "c424e85a-6584-4bb7-a48e-2175ebc6a41b",
+      "path": "services/api/src/protectedAccounts.test.ts",
+      "kind": "test-plan"
     },
     {
       "id": "b7c41e93-5a2d-4f18-9e60-3d8a1c72f4b5",
