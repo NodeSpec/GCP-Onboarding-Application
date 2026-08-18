@@ -1,7 +1,7 @@
 {
   "modelVersion": 1,
   "generatedBy": "nodespec",
-  "modelHash": "c6456dcc7987da901e544e17f65cef9d87d81483cfe69f4738f22930610d96fe",
+  "modelHash": "f3d84c8a78358600ca2c2c9331af1deb1f8b806ed91d5bae10d31941989cef21",
   "nodes": [
     {
       "id": "1c81cf63-c51e-4b0e-b6ad-7d318332d2fe",
@@ -1185,6 +1185,12 @@
       "contentHash": "0000000002d3546e"
     },
     {
+      "id": "e2f3a4b5-c6d7-4e8f-9a0b-1c2d3e4f5a6b",
+      "nodeId": "c424e85a-6584-4bb7-a48e-2175ebc6a41b",
+      "path": "services/api/src/protectedAccounts.ts",
+      "kind": "source"
+    },
+    {
       "id": "e450c6c4-8770-4557-8151-154e18ea979d",
       "nodeId": "db8e5409-dc6f-4052-887a-7ba1dd5fb717",
       "path": ".nodespec/tasks/lifecycle-step-executor-db8e5409.task.md",
@@ -1281,6 +1287,12 @@
       "id": "f2a9c817-5d43-4e06-b8e1-9c2f7a0d3b65",
       "nodeId": "c424e85a-6584-4bb7-a48e-2175ebc6a41b",
       "path": "services/api/src/routes/credential.emulator.test.ts",
+      "kind": "source"
+    },
+    {
+      "id": "f3a4b5c6-d7e8-4f9a-0b1c-2d3e4f5a6b7c",
+      "nodeId": "c424e85a-6584-4bb7-a48e-2175ebc6a41b",
+      "path": "services/api/src/routes/lookup.ts",
       "kind": "source"
     },
     {
