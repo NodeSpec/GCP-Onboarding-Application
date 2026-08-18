@@ -111,6 +111,7 @@ recommended test types, framework suggestions, and test scenarios.
 - **Lifecycle API Service**: [`packages/shared/src/store.emulator.test.ts`](./packages/shared/src/store.emulator.test.ts)
 - **Lifecycle API Service**: [`packages/shared/src/stepPlans.test.ts`](./packages/shared/src/stepPlans.test.ts)
 - **Lifecycle API Service**: [`services/api/src/routes/authorization.emulator.test.ts`](./services/api/src/routes/authorization.emulator.test.ts)
+- **Lifecycle API Service**: [`services/api/src/routes/lookup.test.ts`](./services/api/src/routes/lookup.test.ts)
 - **Lifecycle API Service**: [`packages/shared/src/logging.test.ts`](./packages/shared/src/logging.test.ts)
 - **Lifecycle Step Executor**: [`.nodespec/tests/req-005.tests.md`](./.nodespec/tests/req-005.tests.md)
 - **Lifecycle API Service**: [`services/api/src/config.test.ts`](./services/api/src/config.test.ts)
