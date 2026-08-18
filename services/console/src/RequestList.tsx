@@ -74,7 +74,7 @@ export function RequestList({ onOpen }: { onOpen: (requestId: string) => void })
             <tr key={r.requestId}>
               <td>{r.phase}</td>
               <td>{r.targetUser}</td>
-              <td>{r.status}</td>
+              <td data-status={r.status}>{r.status}</td>
               <td>{r.requestedBy}</td>
               <td>
                 <button type="button" onClick={() => onOpen(r.requestId)}>open</button>
