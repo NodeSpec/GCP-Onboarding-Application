@@ -105,6 +105,7 @@ recommended test types, framework suggestions, and test scenarios.
 - **Lifecycle Step Executor**: [`services/worker/src/notify/singlePath.test.ts`](./services/worker/src/notify/singlePath.test.ts)
 - **Lifecycle Step Executor**: [`services/worker/src/routes/lookup.test.ts`](./services/worker/src/routes/lookup.test.ts)
 - **Lifecycle Step Executor**: [`services/worker/src/phases/update.test.ts`](./services/worker/src/phases/update.test.ts)
+- **Company GCP Project**: [`infra/hcl.test.ts`](./infra/hcl.test.ts)
 - **Lifecycle API Service**: [`services/api/src/schemas.test.ts`](./services/api/src/schemas.test.ts)
 - **Operator Console UI**: [`services/console/src/console.test.tsx`](./services/console/src/console.test.tsx)
 - **Lifecycle Step Executor**: [`services/worker/src/workspace/noDelegation.test.ts`](./services/worker/src/workspace/noDelegation.test.ts)

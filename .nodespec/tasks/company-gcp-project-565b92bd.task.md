@@ -236,6 +236,8 @@ resource "google_project" "main" {
 | `docs/testing.md` | doc | --- | draft |
 | `infra/versions.tf` | config | --- | draft |
 | `infra/apis.tf` | config | --- | draft |
+| `infra/hcl.test.ts` | test-plan | --- | draft |
+| `infra/hcl.ts` | source | --- | draft |
 | `vitest.emulator.config.ts` | config | --- | draft |
 | `.gitignore` | config | --- | draft |
 | `package.json` | config | --- | draft |

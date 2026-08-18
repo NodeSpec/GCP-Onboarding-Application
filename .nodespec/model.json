@@ -1,7 +1,7 @@
 {
   "modelVersion": 1,
   "generatedBy": "nodespec",
-  "modelHash": "0ee4da9e533c0dc89624a4e249ac76b6cd4bb86fcc42165a65e24acaed94b996",
+  "modelHash": "b5465e0272535c5268c78092ece6e7f99e726aeefdd7ecabe6479d21b7ad045e",
   "nodes": [
     {
       "id": "1c81cf63-c51e-4b0e-b6ad-7d318332d2fe",
@@ -1065,6 +1065,12 @@
       "contentHash": "000000000097c819"
     },
     {
+      "id": "a3f5619c-8e27-4b40-9d61-05c8a7e2f4b8",
+      "nodeId": "565b92bd-2c2c-4a82-be62-b691decdbadf",
+      "path": "infra/hcl.test.ts",
+      "kind": "test-plan"
+    },
+    {
       "id": "a4b5c6d7-e8f9-4a0b-1c2d-3e4f5a6b7c8d",
       "nodeId": "c424e85a-6584-4bb7-a48e-2175ebc6a41b",
       "path": "services/api/src/lookup/workerClient.ts",
@@ -1119,6 +1125,12 @@
       "nodeId": "db8e5409-dc6f-4052-887a-7ba1dd5fb717",
       "path": "services/worker/src/phases/delete.test.ts",
       "kind": "test-plan"
+    },
+    {
+      "id": "b2c847f0-91d3-4e56-a80b-6f4e21597c3d",
+      "nodeId": "565b92bd-2c2c-4a82-be62-b691decdbadf",
+      "path": "infra/hcl.ts",
+      "kind": "source"
     },
     {
       "id": "b2d7c018-5063-4e98-ac42-38db610f9e57",
