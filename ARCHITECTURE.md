@@ -90,6 +90,7 @@ recommended test types, framework suggestions, and test scenarios.
 - **Lifecycle Step Executor**: [`.nodespec/tests/req-008.tests.md`](./.nodespec/tests/req-008.tests.md)
 - **Lifecycle Step Executor**: [`.nodespec/tests/req-016.tests.md`](./.nodespec/tests/req-016.tests.md)
 - **Lifecycle API Service**: [`.nodespec/tests/req-010.tests.md`](./.nodespec/tests/req-010.tests.md)
+- **Company GCP Project**: [`docs/docs.test.ts`](./docs/docs.test.ts)
 - **Lifecycle API Service**: [`.nodespec/tests/req-012.tests.md`](./.nodespec/tests/req-012.tests.md)
 - **Lifecycle API Service**: [`packages/shared/src/transitions.test.ts`](./packages/shared/src/transitions.test.ts)
 - **Lifecycle API Service**: [`.nodespec/tests/req-002.tests.md`](./.nodespec/tests/req-002.tests.md)

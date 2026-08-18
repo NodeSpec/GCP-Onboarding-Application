@@ -1,7 +1,7 @@
 {
   "modelVersion": 1,
   "generatedBy": "nodespec",
-  "modelHash": "3f620d9ee1d4833f5c442a6f43fdfa8c06aaff216adcbf1ed4e4722b757914cc",
+  "modelHash": "32c1e054cb8dbd84b8e8b4130acd44707f964ae8dcf513d924f9621a43038a2c",
   "nodes": [
     {
       "id": "1c81cf63-c51e-4b0e-b6ad-7d318332d2fe",
@@ -678,6 +678,12 @@
       "path": "services/api/src/authz.ts",
       "kind": "source",
       "contentHash": "000000005fb4ede0"
+    },
+    {
+      "id": "2c68e4b1-a039-47f5-9d82-6b71fc3e850a",
+      "nodeId": "565b92bd-2c2c-4a82-be62-b691decdbadf",
+      "path": "docs/docs.test.ts",
+      "kind": "test-plan"
     },
     {
       "id": "2d61cf24-e8e0-4eac-95bb-3ed60c7434aa",
@@ -1387,7 +1393,7 @@
       "nodeId": "565b92bd-2c2c-4a82-be62-b691decdbadf",
       "path": "vitest.config.ts",
       "kind": "config",
-      "contentHash": "000000004938d525"
+      "contentHash": "000000003c633117"
     },
     {
       "id": "dc658fc7-51f2-4753-9b4e-df6fbd47599f",

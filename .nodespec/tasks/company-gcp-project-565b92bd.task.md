@@ -234,6 +234,7 @@ resource "google_project" "main" {
 | File | Kind | Language | Status |
 |------|------|----------|--------|
 | `docs/testing.md` | doc | --- | draft |
+| `docs/docs.test.ts` | test-plan | --- | draft |
 | `docs/approval-policy.md` | doc | --- | draft |
 | `infra/versions.tf` | config | --- | draft |
 | `infra/apis.tf` | config | --- | draft |

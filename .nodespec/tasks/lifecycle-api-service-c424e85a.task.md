@@ -34,7 +34,6 @@ Ordered WORK ORDERS synthesized from the model — this node's deliverable kind,
   Dependency contract — capture the reference/identifier wiring in this node's config artifacts; no payload schema expected.
 - [ ] **T5 — Implement the integration with Cloud Tasks: lifecycle-steps (gcp-cloud-tasks) per Contract "Step Task Enqueue" (rest).**
   Build to the contract schema EXACTLY (see Interface Contracts).
-  ↳ serves (unverified match): REQ-007 "The lifecycle-worker service admits exactly two caller identities, each confined to its own route class: the Cloud Tasks queue invoker on /tasks/*, and the lifecycle-api service account on /lookup/*. A token issued to either identity is rejected with 401 on the other's routes, and an unauthenticated request is rejected on both" — requirement not mapped to that node; verify or reassign before relying on it
 - [ ] **T6 — Implement the integration with Firestore: lifecycle state and audit (gcp-firestore) per Contract "Lifecycle State Store" (nosql).**
   Build to the contract schema EXACTLY (see Interface Contracts).
 - [ ] **T7 — Implement the integration with Lifecycle Step Executor (nodejs) per Contract "Directory Lookup (read-only)" (rest).**
@@ -223,8 +222,8 @@ There is no end-user-facing surface anywhere in this system. Users being onboard
   → possible match: Contract "IAP Assertion Verification (JWK Set)" (rest) to Identity-Aware Proxy (unverified — requirement not mapped to that node)
 - [ ] Each deployed Cloud Run service rejects a direct request to its *.run.app URL, proving the load balancer is the only ingress path into the system
   → covered by Task T8
-- [ ] The lifecycle-worker service admits exactly two caller identities, each confined to its own route class: the Cloud Tasks queue invoker on /tasks/*, and the lifecycle-api service account on /lookup/*. A token issued to either identity is rejected with 401 on the other's routes, and an unauthenticated request is rejected on both
-  → covered by Task T5
+- [x] The lifecycle-worker service admits exactly two caller identities, each confined to its own route class: the Cloud Tasks queue invoker on /tasks/*, and the lifecycle-api service account on /lookup/*. A token issued to either identity is rejected with 401 on the other's routes, and an unauthenticated request is rejected on both
+  → possible match: Contract "Step Task Enqueue" (rest) to Cloud Tasks: lifecycle-steps (unverified — requirement not mapped to that node)
 - [x] Every load-balancer backend service in the deployment has IAP enabled — asserted against the committed Terraform, so a backend added without IAP fails the check
   → possible match: Contract "IAP Assertion Verification (JWK Set)" (rest) to Identity-Aware Proxy (unverified — requirement not mapped to that node)
 - [ ] The deployed system exposes no unauthenticated route: an unauthenticated request to every path in the application's route table is rejected, enumerated as a test rather than spot-checked
