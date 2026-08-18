@@ -1,7 +1,7 @@
 {
   "modelVersion": 1,
   "generatedBy": "nodespec",
-  "modelHash": "13a89e89c2b261dab98f44adaea8a35e844c4c9206deb0f10db4129639da0c15",
+  "modelHash": "d3899939e8d2c61e5fc7138916e8b61c219ae7491a91375feec2b92040187b1b",
   "nodes": [
     {
       "id": "1c81cf63-c51e-4b0e-b6ad-7d318332d2fe",
@@ -1321,7 +1321,8 @@
       "id": "c39e7b18-0d54-4a86-91f7-2b46ca08d5e7",
       "nodeId": "6da6f1e9-97b5-4c0b-8ba5-0b81f3bc5e4b",
       "path": "infra/logging.tf",
-      "kind": "config"
+      "kind": "config",
+      "contentHash": "0000000046870275"
     },
     {
       "id": "c3f8a129-6174-4a09-bd53-49ec721fa068",

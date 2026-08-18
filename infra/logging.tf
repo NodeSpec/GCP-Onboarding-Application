@@ -37,6 +37,14 @@ locals {
 # _Default, whose 30-day retention is not a compliance window and is editable by
 # anyone with configWriter — that is, the copy would exist and provide no
 # tamper-evidence at all.
+#
+# There is deliberately NO IAM binding for this sink's writer identity, and the
+# absence is a fact about Cloud Logging rather than an omission. A sink is
+# granted a writer identity only where it routes across a boundary that needs
+# one; this sink's destination bucket lives in the same project as the sink, and
+# same-project routing requires no grant. The API accordingly returns no writer
+# identity, so a roles/logging.bucketWriter binding against it would resolve to
+# the empty string and fail the apply outright. Re-adding one will not work.
 resource "google_logging_project_sink" "audit" {
   project     = var.project_id
   name        = "lifecycle-audit-to-bucket"
@@ -53,11 +61,4 @@ resource "google_logging_project_sink" "audit" {
   }
 
   unique_writer_identity = true
-}
-
-# The sink's own identity needs to write into the bucket it routes to.
-resource "google_project_iam_member" "audit_sink_writer" {
-  project = var.project_id
-  role    = "roles/logging.bucketWriter"
-  member  = google_logging_project_sink.audit.writer_identity
 }
