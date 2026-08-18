@@ -31,12 +31,10 @@ Ordered WORK ORDERS synthesized from the model — this node's deliverable kind,
   ↳ serves (unverified match): REQ-007 "IAP is enabled on the operator backend service and access is granted only to the intended operator group in the OAuth/IAM configuration" — requirement not mapped to that node; verify or reassign before relying on it
 - [ ] **T3 — Implement the integration with Cloud Logging: audit sink (gcp-cloud-logging) per Contract "Audit Log Sink" (dependency).**
   Dependency contract — capture the reference/identifier wiring in this node's config artifacts; no payload schema expected.
-  ↳ serves (unverified match): REQ-031 "A refused attempt writes an audit event naming the operator, the targeted protected account, and the action attempted" — requirement not mapped to that node; verify or reassign before relying on it
 - [ ] **T4 — Implement the integration with Secret Manager (gcp-secret-manager) per Contract "Secret Manager Access" (dependency).**
   Dependency contract — capture the reference/identifier wiring in this node's config artifacts; no payload schema expected.
 - [ ] **T5 — Implement the integration with Cloud Tasks: lifecycle-steps (gcp-cloud-tasks) per Contract "Step Task Enqueue" (rest).**
   Build to the contract schema EXACTLY (see Interface Contracts).
-  ↳ serves (unverified match): REQ-031 "A create, update or delete request targeting an address on the protected-account list is refused at admission with 409 and a typed ProtectedAccount error, and no request or step document is persisted" — requirement not mapped to that node; verify or reassign before relying on it
   ↳ serves (unverified match): REQ-007 "The lifecycle-worker service admits exactly two caller identities, each confined to its own route class: the Cloud Tasks queue invoker on /tasks/*, and the lifecycle-api service account on /lookup/*. A token issued to either identity is rejected with 401 on the other's routes, and an unauthenticated request is rejected on both" — requirement not mapped to that node; verify or reassign before relying on it
 - [ ] **T6 — Implement the integration with Firestore: lifecycle state and audit (gcp-firestore) per Contract "Lifecycle State Store" (nosql).**
   Build to the contract schema EXACTLY (see Interface Contracts).
@@ -45,15 +43,11 @@ Ordered WORK ORDERS synthesized from the model — this node's deliverable kind,
 - [ ] **T8 — Expose the interface External HTTPS Load Balancer consumes, per Contract "IAP-Protected HTTPS Ingress" (rest).**
   Record the endpoint/identifiers External HTTPS Load Balancer needs in this node's config artifacts — coordinate with External HTTPS Load Balancer.
   Build to the contract schema EXACTLY (see Interface Contracts).
-  ↳ serves (unverified match): REQ-031 "The dedicated no-reply sending account and the Return-Path monitoring group are on the protected list by default, so the system cannot break its own notification path" — requirement not mapped to that node; verify or reassign before relying on it
-  ↳ serves (unverified match): REQ-031 "The protected-account list is read from configuration and can be changed without a code release" — requirement not mapped to that node; verify or reassign before relying on it
-  ↳ serves (unverified match): REQ-031 "Matching is case-insensitive and covers the primary email and any alias, so a protected account cannot be reached through an alternate address" — requirement not mapped to that node; verify or reassign before relying on it
   ↳ serves (unverified match): REQ-031 "The protected-account list is documented in the runbook alongside how to amend it, since an over-broad list silently blocks legitimate offboarding" — requirement not mapped to that node; verify or reassign before relying on it
   ↳ serves (unverified match): REQ-007 "Each deployed Cloud Run service rejects a direct request to its *.run.app URL, proving the load balancer is the only ingress path into the system" — requirement not mapped to that node; verify or reassign before relying on it
 - [ ] **T9 — Expose the interface Operator Console UI consumes, per Contract "Lifecycle Operator API" (rest).**
   Record the endpoint/identifiers Operator Console UI needs in this node's config artifacts — coordinate with Operator Console UI.
   Build to the contract schema EXACTLY (see Interface Contracts).
-  ↳ serves (unverified match): REQ-031 "An operator with the admin role is refused just as a requester is — protection is not a permission level that can be escalated past" — requirement not mapped to that node; verify or reassign before relying on it
 - [ ] **T10 — Implement: "The deployed system exposes no unauthenticated route: an unauthenticated request to every path in the application's route table is rejected, enumerated as a test rather than spot-checked" (REQ-007).**
   No interface contract maps to this criterion — it is this node's internal responsibility.
   ↳ serves: REQ-007 "The deployed system exposes no unauthenticated route: an unauthenticated request to every path in the application's route table is rejected, enumerated as a test rather than spot-checked"
@@ -185,18 +179,18 @@ A configured protected-account list is therefore checked at request admission an
 The list is configuration, not code, so a tenant can protect its own break-glass accounts without a release. Refusals are audited, because an attempt to offboard a protected account is exactly the signal a security team wants to see.
 
 **Acceptance criteria — your task boxes:**
-- [ ] A create, update or delete request targeting an address on the protected-account list is refused at admission with 409 and a typed ProtectedAccount error, and no request or step document is persisted
-  → covered by Task T5
-- [ ] The dedicated no-reply sending account and the Return-Path monitoring group are on the protected list by default, so the system cannot break its own notification path
-  → covered by Task T8
-- [ ] The protected-account list is read from configuration and can be changed without a code release
-  → covered by Task T8
-- [ ] Matching is case-insensitive and covers the primary email and any alias, so a protected account cannot be reached through an alternate address
-  → covered by Task T8
-- [ ] A refused attempt writes an audit event naming the operator, the targeted protected account, and the action attempted
-  → covered by Task T3
-- [ ] An operator with the admin role is refused just as a requester is — protection is not a permission level that can be escalated past
-  → covered by Task T9
+- [x] A create, update or delete request targeting an address on the protected-account list is refused at admission with 409 and a typed ProtectedAccount error, and no request or step document is persisted
+  → possible match: Contract "Step Task Enqueue" (rest) to Cloud Tasks: lifecycle-steps (unverified — requirement not mapped to that node)
+- [x] The dedicated no-reply sending account and the Return-Path monitoring group are on the protected list by default, so the system cannot break its own notification path
+  → possible match: Contract "IAP-Protected HTTPS Ingress" (rest) from External HTTPS Load Balancer (unverified — requirement not mapped to that node)
+- [x] The protected-account list is read from configuration and can be changed without a code release
+  → possible match: Contract "IAP-Protected HTTPS Ingress" (rest) from External HTTPS Load Balancer (unverified — requirement not mapped to that node)
+- [x] Matching is case-insensitive and covers the primary email and any alias, so a protected account cannot be reached through an alternate address
+  → possible match: Contract "IAP-Protected HTTPS Ingress" (rest) from External HTTPS Load Balancer (unverified — requirement not mapped to that node)
+- [x] A refused attempt writes an audit event naming the operator, the targeted protected account, and the action attempted
+  → possible match: Contract "Audit Log Sink" (dependency) to Cloud Logging: audit sink (unverified — requirement not mapped to that node)
+- [x] An operator with the admin role is refused just as a requester is — protection is not a permission level that can be escalated past
+  → possible match: Contract "Lifecycle Operator API" (rest) from Operator Console UI (unverified — requirement not mapped to that node)
 - [ ] The protected-account list is documented in the runbook alongside how to amend it, since an over-broad list silently blocks legitimate offboarding
   → covered by Task T8
 
@@ -1488,7 +1482,7 @@ Startup/initialization order based on edge directions and interaction patterns.
 | `packages/shared/src/logging.ts` | source | --- | draft |
 | `packages/shared/src/dispatcher.ts` | source | --- | draft |
 | `.nodespec/tests/req-010.tests.md` - Test plan for requirement: Audit event model, operator-action auditing and log redaction | test-plan | markdown | draft |
-| `services/api/src/schemas.ts` | source | --- | draft |
+| `packages/schemas/src/index.ts` | source | --- | draft |
 | `services/api/src/index.ts` | source | --- | draft |
 | `services/api/src/authz.ts` | source | --- | draft |
 | `.nodespec/tests/req-012.tests.md` - Test plan for requirement: Operator role model derived from verified identity | test-plan | markdown | draft |

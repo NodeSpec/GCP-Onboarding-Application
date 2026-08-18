@@ -1,4 +1,3 @@
-import type { Phase } from '@lifecycle/shared';
 import { z } from 'zod';
 
 /**
@@ -9,11 +8,26 @@ import { z } from 'zod';
  * the operator's list, so the schema is the admission gate rather than a
  * convenience.
  *
+ * This package depends on zod alone. The operator console validates its forms
+ * against these exact definitions (REQ-011 AC-1), and a schema that dragged the
+ * Firestore or Secret Manager clients behind it could not be imported by a
+ * browser bundle. Everything Node-only stays in @lifecycle/shared, which
+ * consumes this package rather than the other way round.
+ *
  * Strict objects on purpose: an unrecognised field is refused rather than
  * silently dropped. A typo in an attribute name should fail loudly at
  * submission, not produce an account missing the attribute the operator
  * believed they had set.
  */
+
+/**
+ * The phase vocabulary, defined here because it is a property of the request
+ * contract rather than of how a request is stored. @lifecycle/shared re-exports
+ * the type so there is exactly one definition in the workspace.
+ */
+export const PHASES = ['create', 'notify', 'update', 'delete'] as const;
+
+export type Phase = (typeof PHASES)[number];
 
 const email = z.string().trim().toLowerCase().email();
 
@@ -171,6 +185,15 @@ const PHASE_SCHEMAS: Partial<Record<Phase, z.ZodTypeAny>> = {
   delete: deletePayloadSchema,
 };
 
+/**
+ * The schema for one phase, or undefined where the phase has no implementation.
+ * The console builds its forms from this rather than from a second description
+ * of the same fields (REQ-011 AC-1).
+ */
+export function schemaForPhase(phase: Phase): z.ZodTypeAny | undefined {
+  return PHASE_SCHEMAS[phase];
+}
+
 export interface ValidationIssue {
   path: string;
   message: string;
@@ -236,7 +259,7 @@ export const cancelSchema = z
 /** The submission envelope, distinct from the phase-specific payload. */
 export const submitRequestSchema = z
   .object({
-    phase: z.enum(['create', 'notify', 'update', 'delete']),
+    phase: z.enum(PHASES),
     payload: z.record(z.unknown()),
   })
   .strict();

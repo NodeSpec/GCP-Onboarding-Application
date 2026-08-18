@@ -27,8 +27,6 @@ Ordered WORK ORDERS synthesized from the model — this node's deliverable kind,
   Start from the catalog's suggested structure: `src/index.ts`, `src/routes/index.ts`, `package.json`, `tsconfig.json`.
 - [ ] **T2 — Implement the integration with Cloud Tasks: lifecycle-steps (gcp-cloud-tasks) per Contract "Step Task Enqueue" (rest).**
   Build to the contract schema EXACTLY (see Interface Contracts).
-  ↳ serves (unverified match): REQ-029 "A /lookup/* request bearing an OIDC token issued to the Cloud Tasks queue invoker identity is rejected with 401, and a /tasks/* request bearing the API service identity is likewise rejected with 401" — requirement not mapped to that node; verify or reassign before relying on it
-  ↳ serves (unverified match): REQ-029 "Lookup results are not treated as authoritative: the executing step still performs its own pre-mutation state read, verified by a test where live state changes between lookup and execution and the step observes the newer state" — requirement not mapped to that node; verify or reassign before relying on it
 - [ ] **T3 — Implement the integration with Firestore: lifecycle state and audit (gcp-firestore) per Contract "Lifecycle State Store" (nosql).**
   Build to the contract schema EXACTLY (see Interface Contracts).
 - [ ] **T4 — Implement the integration with Secret Manager (gcp-secret-manager) per Contract "Secret Manager Access" (dependency).**
@@ -39,32 +37,19 @@ Ordered WORK ORDERS synthesized from the model — this node's deliverable kind,
   Build to the contract schema EXACTLY (see Interface Contracts).
 - [ ] **T7 — Implement the integration with Google Workspace (Admin SDK Directory) per Contract "Google Admin SDK Directory API" (rest).**
   Build to the contract schema EXACTLY (see Interface Contracts).
-  ↳ serves (unverified match): REQ-029 "Every lookup route is read-only — a test enumerates the lookup router and asserts no Directory write operation is bound to any of them" — requirement not mapped to that node; verify or reassign before relying on it
-  ↳ serves (unverified match): REQ-029 "Lookup calls pass through the same shared Workspace client as mutations, inheriting its retry and error classification — verified by the absence of any separate Directory client in the lookup path" — requirement not mapped to that node; verify or reassign before relying on it
 - [ ] **T8 — Expose the interface Cloud Tasks: lifecycle-steps consumes, per Contract "Step Execution Dispatch" (rest).**
   Record the endpoint/identifiers Cloud Tasks: lifecycle-steps needs in this node's config artifacts — coordinate with Cloud Tasks: lifecycle-steps.
   Build to the contract schema EXACTLY (see Interface Contracts).
 - [ ] **T9 — Expose the interface Lifecycle API Service consumes, per Contract "Directory Lookup (read-only)" (rest).**
   Record the endpoint/identifiers Lifecycle API Service needs in this node's config artifacts — coordinate with Lifecycle API Service.
   Build to the contract schema EXACTLY (see Interface Contracts).
-  ↳ serves (unverified match): REQ-029 "A /lookup/* request with no OIDC token is rejected with 401 before any handler runs" — requirement not mapped to that node; verify or reassign before relying on it
-  ↳ serves (unverified match): REQ-029 "A lookup for a user or group that does not exist returns 404 rather than an empty success" — requirement not mapped to that node; verify or reassign before relying on it
-- [ ] **T10 — Implement: "A prefix search returns matching domain users with primaryEmail, full name, org unit path and suspended flag, paginated" (REQ-029).**
-  No interface contract maps to this criterion — it is this node's internal responsibility.
-  ↳ serves: REQ-029 "A prefix search returns matching domain users with primaryEmail, full name, org unit path and suspended flag, paginated"
-- [ ] **T11 — Implement: "Fetching one user returns their current attributes and group memberships, sufficient to pre-fill an update request" (REQ-029).**
-  No interface contract maps to this criterion — it is this node's internal responsibility.
-  ↳ serves: REQ-029 "Fetching one user returns their current attributes and group memberships, sufficient to pre-fill an update request"
-- [ ] **T12 — Implement: "The group picker lists domain groups and the org-unit picker lists org unit paths" (REQ-029).**
-  No interface contract maps to this criterion — it is this node's internal responsibility.
-  ↳ serves: REQ-029 "The group picker lists domain groups and the org-unit picker lists org unit paths"
-- [ ] **T13 — Implement: "A creation request for a primary email that already exists in the domain fails validation before any mutation is attempted and the request terminates in 'failed' with a typed AlreadyExists error" (REQ-003).**
+- [ ] **T10 — Implement: "A creation request for a primary email that already exists in the domain fails validation before any mutation is attempted and the request terminates in 'failed' with a typed AlreadyExists error" (REQ-003).**
   No interface contract maps to this criterion — it is this node's internal responsibility.
   ↳ serves: REQ-003 "A creation request for a primary email that already exists in the domain fails validation before any mutation is attempted and the request terminates in 'failed' with a typed AlreadyExists error"
-- [ ] **T14 — Implement: "The console link resolves to the request detail behind IAP, so an approver who is not signed in is authenticated at the perimeter before seeing anything" (REQ-032).**
+- [ ] **T11 — Implement: "The console link resolves to the request detail behind IAP, so an approver who is not signed in is authenticated at the perimeter before seeing anything" (REQ-032).**
   No interface contract maps to this criterion — it is this node's internal responsibility.
   ↳ serves: REQ-032 "The console link resolves to the request detail behind IAP, so an approver who is not signed in is authenticated at the perimeter before seeing anything"
-- [ ] **T15 — Verify every acceptance criterion above and tick its box.**
+- [ ] **T12 — Verify every acceptance criterion above and tick its box.**
   Ordering doctrine — plans follow schemas (contract-first TDD): schemas → test plans → implement → verify. Resolve any open [PLACEHOLDER: schema] gap FIRST (get_build_readiness supplies draftInputs; submit the schema via propose_patches update_contract) — test-plan scenarios touching a schemaless contract stay one-line [blocked by schema: …] markers until the schema lands, then the plan refreshes itself.
   AUTOMATED criteria: call get_test_plan for EACH requirement this node serves, implement the plan's test cases, run them, and report every outcome via report_test_results — a passing result flips the criterion's met flag automatically and the response receipt shows which criteria flipped.
   MANUAL criteria (rows marked (manual) above): report_test_results REFUSES to bind them — prove each by ticking its criterion box in this task doc and having the user approve the resulting change card; that approval is the only thing that flips a manual criterion met.
@@ -102,24 +87,24 @@ The lookup surface lives on the worker rather than the API service because the w
 Opening the worker to a second caller is the real cost of this design, and it is bounded by per-route isolation: /lookup/* admits only the API service identity, /tasks/* only the Cloud Tasks queue invoker identity, and each rejects the other. Every lookup route is strictly read-only. Lookup results populate pickers and pre-fill forms only — the authoritative state read still happens inside the executing step, because any lookup result is already stale by the time an operator submits.
 
 **Acceptance criteria — your task boxes:**
-- [ ] A prefix search returns matching domain users with primaryEmail, full name, org unit path and suspended flag, paginated
-  → covered by Task T10
-- [ ] Fetching one user returns their current attributes and group memberships, sufficient to pre-fill an update request
-  → covered by Task T11
-- [ ] The group picker lists domain groups and the org-unit picker lists org unit paths
-  → covered by Task T12
-- [ ] Every lookup route is read-only — a test enumerates the lookup router and asserts no Directory write operation is bound to any of them
-  → covered by Task T7
-- [ ] A /lookup/* request bearing an OIDC token issued to the Cloud Tasks queue invoker identity is rejected with 401, and a /tasks/* request bearing the API service identity is likewise rejected with 401
-  → covered by Task T2
-- [ ] A /lookup/* request with no OIDC token is rejected with 401 before any handler runs
-  → covered by Task T9
-- [ ] Lookup calls pass through the same shared Workspace client as mutations, inheriting its retry and error classification — verified by the absence of any separate Directory client in the lookup path
-  → covered by Task T7
-- [ ] A lookup for a user or group that does not exist returns 404 rather than an empty success
-  → covered by Task T9
-- [ ] Lookup results are not treated as authoritative: the executing step still performs its own pre-mutation state read, verified by a test where live state changes between lookup and execution and the step observes the newer state
-  → covered by Task T2
+- [x] A prefix search returns matching domain users with primaryEmail, full name, org unit path and suspended flag, paginated
+  → THIS NODE: internal logic
+- [x] Fetching one user returns their current attributes and group memberships, sufficient to pre-fill an update request
+  → THIS NODE: internal logic
+- [x] The group picker lists domain groups and the org-unit picker lists org unit paths
+  → THIS NODE: internal logic
+- [x] Every lookup route is read-only — a test enumerates the lookup router and asserts no Directory write operation is bound to any of them
+  → possible match: Contract "Google Admin SDK Directory API" (rest) to Google Workspace (Admin SDK Directory) (unverified — requirement not mapped to that node)
+- [x] A /lookup/* request bearing an OIDC token issued to the Cloud Tasks queue invoker identity is rejected with 401, and a /tasks/* request bearing the API service identity is likewise rejected with 401
+  → possible match: Contract "Step Task Enqueue" (rest) to Cloud Tasks: lifecycle-steps (unverified — requirement not mapped to that node)
+- [x] A /lookup/* request with no OIDC token is rejected with 401 before any handler runs
+  → possible match: Contract "Directory Lookup (read-only)" (rest) from Lifecycle API Service (unverified — requirement not mapped to that node)
+- [x] Lookup calls pass through the same shared Workspace client as mutations, inheriting its retry and error classification — verified by the absence of any separate Directory client in the lookup path
+  → possible match: Contract "Google Admin SDK Directory API" (rest) to Google Workspace (Admin SDK Directory) (unverified — requirement not mapped to that node)
+- [x] A lookup for a user or group that does not exist returns 404 rather than an empty success
+  → possible match: Contract "Directory Lookup (read-only)" (rest) from Lifecycle API Service (unverified — requirement not mapped to that node)
+- [x] Lookup results are not treated as authoritative: the executing step still performs its own pre-mutation state read, verified by a test where live state changes between lookup and execution and the step observes the newer state
+  → possible match: Contract "Step Task Enqueue" (rest) to Cloud Tasks: lifecycle-steps (unverified — requirement not mapped to that node)
 
 ### REQ-030: Welcome letter resend and credential regeneration
 Category: functional | Status: in-progress
@@ -193,7 +178,7 @@ Generation and protection of the one-time password belong to REQ-019: it is pers
 - [x] Every group listed in the request appears in the created user's membership list after the phase completes
   → THIS NODE: internal logic
 - [ ] A creation request for a primary email that already exists in the domain fails validation before any mutation is attempted and the request terminates in 'failed' with a typed AlreadyExists error
-  → covered by Task T13
+  → covered by Task T10
 - [x] The user is created with changePasswordAtNextLogin=true and a password meeting the configured generation policy
   → possible match: Contract "Audit Log Sink" (dependency) to Cloud Logging: audit sink (unverified — requirement not mapped to that node)
 - [x] If one group assignment fails, the successfully assigned groups are retained, the failing group is reported in the step error, and the request does not report success
@@ -227,7 +212,7 @@ A notification failure must not fail the request. The step is still legitimately
 - [x] The message contains request id, phase, target user, requester, the approval deadline when one is configured, and a console link — and contains no computed diff, no attribute values, no credential and no token, verified by rendering with a fully populated context and asserting none of it appears
   → THIS NODE: internal logic
 - [ ] The console link resolves to the request detail behind IAP, so an approver who is not signed in is authenticated at the perimeter before seeing anything
-  → covered by Task T14
+  → covered by Task T11
 - [x] When a step requires approval but no eligible approver exists, the notification step fails loudly with a typed NoEligibleApprover error and the condition is surfaced to admins — it never resolves as a successful send to nobody
   → possible match: Contract "Step Task Enqueue" (rest) to Cloud Tasks: lifecycle-steps (unverified — requirement not mapped to that node)
 - [x] A notification delivery failure is recorded on the step and retried, and leaves the request in 'awaiting_approval' rather than moving it to 'failed' — the approval is still pending, only the telling failed
