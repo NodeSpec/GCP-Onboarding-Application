@@ -1497,6 +1497,7 @@ Startup/initialization order based on edge directions and interaction patterns.
 | `services/api/package.json` | config | --- | draft |
 | `services/api/src/middleware/iapAuth.ts` | source | --- | draft |
 | `.nodespec/tests/req-001.tests.md` - Test plan for requirement: Lifecycle request creation and step-plan persistence | test-plan | markdown | draft |
+| `services/api/src/routes/requests.emulator.test.ts` | source | --- | draft |
 | `services/api/src/roles.test.ts` | test-plan | --- | draft |
 | `packages/shared/src/keyRotation.test.ts` | test-plan | --- | draft |
 | `services/api/src/routes/roleBindings.ts` | source | --- | draft |
