@@ -1189,6 +1189,7 @@ Startup/initialization order based on edge directions and interaction patterns.
 | `services/worker/src/phases/update.test.ts` | test-plan | --- | draft |
 | `services/worker/src/steps/duplicateDelivery.emulator.test.ts` | source | --- | draft |
 | `services/worker/src/index.ts` | source | --- | draft |
+| `services/worker/src/workspace/noDelegation.test.ts` | test-plan | --- | draft |
 | `services/worker/src/phases/delete.test.ts` | test-plan | --- | draft |
 | `services/worker/src/auth/taskAuth.test.ts` | test-plan | --- | draft |
 | `services/worker/src/workspace/passwordReset.test.ts` | source | --- | draft |
@@ -1197,7 +1198,6 @@ Startup/initialization order based on edge directions and interaction patterns.
 | `services/worker/src/phases/update.emulator.test.ts` | test-plan | --- | draft |
 | `services/worker/src/phases/create.ts` | source | --- | draft |
 | `services/worker/src/notify/resend.emulator.test.ts` | source | --- | draft |
-| `services/worker/src/workspace/noDelegation.test.ts` | test-plan | --- | draft |
 | `.nodespec/tests/req-005.tests.md` - Test plan for requirement: Phase 3 — Role and attribute updates over time | test-plan | markdown | draft |
 | `services/worker/src/steps/advance.ts` | source | --- | draft |
 | `services/worker/src/workspace/directoryClient.ts` | source | --- | draft |

@@ -1,7 +1,7 @@
 {
   "modelVersion": 1,
   "generatedBy": "nodespec",
-  "modelHash": "ef47ead3897d4e953c33140549ce54c474a764e54a48e4299a6776e08b941ad5",
+  "modelHash": "2cd36eeaeea6e448e34ace6208510fe13fac4c698ebcc0bdca05bde353ec8151",
   "nodes": [
     {
       "id": "1c81cf63-c51e-4b0e-b6ad-7d318332d2fe",
@@ -994,6 +994,12 @@
       "contentHash": "0000000023f22893"
     },
     {
+      "id": "b1c2d3e4-f5a6-4b7c-8d9e-0f1a2b3c4d5e",
+      "nodeId": "db8e5409-dc6f-4052-887a-7ba1dd5fb717",
+      "path": "services/worker/src/workspace/noDelegation.test.ts",
+      "kind": "test-plan"
+    },
+    {
       "id": "b2c3d4e5-6f7a-8b9c-0d1e-f2a3b4c5d6e7",
       "nodeId": "db8e5409-dc6f-4052-887a-7ba1dd5fb717",
       "path": "services/worker/src/phases/delete.test.ts",
@@ -1098,12 +1104,6 @@
       "id": "c99f6643-0ad0-4ccf-b1ed-1d13407c9927",
       "nodeId": "c424e85a-6584-4bb7-a48e-2175ebc6a41b",
       "path": "packages/shared/src/logging.test.ts",
-      "kind": "test-plan"
-    },
-    {
-      "id": "c9d0e1f2-3a4b-5c6d-7e8f-9a0b1c2d3e4f",
-      "nodeId": "db8e5409-dc6f-4052-887a-7ba1dd5fb717",
-      "path": "services/worker/src/workspace/noDelegation.test.ts",
       "kind": "test-plan"
     },
     {
