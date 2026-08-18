@@ -32,7 +32,11 @@ resource "google_firestore_backup_schedule" "daily" {
   project  = var.project_id
   database = google_firestore_database.lifecycle.name
 
-  retention = "${var.firestore_backup_retention_days * 24}h"
+  # The Firestore API expects a protobuf Duration, which must be expressed in
+  # seconds with an 's' suffix. An 'h' suffix (retention_days * 24 + "h") is
+  # rejected at apply time with "duration must end with s", so the days are
+  # converted to seconds here.
+  retention = "${var.firestore_backup_retention_days * 24 * 3600}s"
 
   daily_recurrence {}
 }
@@ -44,6 +48,11 @@ resource "google_firestore_backup_schedule" "daily" {
 # not a slow list — it is a 500 the first time an operator filters. They are
 # declared rather than created from the error message's console link, which is
 # how an index ends up in production and not in the repository (AC-5).
+#
+# Only genuine COMPOSITE indexes belong here. A query ordered on a single field
+# (the audit mirror's scan over timestamp) is served by Firestore's automatic
+# single-field index, which already tie-breaks on __name__; declaring a
+# composite over one field plus __name__ is rejected by the API as unnecessary.
 
 resource "google_firestore_index" "requests_by_status" {
   project    = var.project_id
@@ -147,24 +156,6 @@ resource "google_firestore_index" "audit_by_request" {
   }
   fields {
     field_path = "timestamp"
-    order      = "ASCENDING"
-  }
-}
-
-resource "google_firestore_index" "audit_by_timestamp" {
-  project     = var.project_id
-  database    = google_firestore_database.lifecycle.name
-  collection  = "auditEvents"
-  query_scope = "COLLECTION"
-
-  # The audit mirror sweeps in commit order, and reconciliation reads a window
-  # (REQ-018). Both are ordered scans over this field alone.
-  fields {
-    field_path = "timestamp"
-    order      = "ASCENDING"
-  }
-  fields {
-    field_path = "__name__"
     order      = "ASCENDING"
   }
 }
