@@ -29,21 +29,15 @@ Ordered WORK ORDERS synthesized from the model — this node's deliverable kind,
   [PLACEHOLDER: config — no user configuration recorded for this node; confirm sizing/domains/settings with the user]
 - [ ] **T2 — Declare the wiring to Lifecycle Step Executor (nodejs) per Contract "Step Execution Dispatch" (rest).**
   Build to the contract schema EXACTLY (see Interface Contracts).
-  ↳ serves (unverified match): REQ-021 "The queue's rate limits (maxDispatchesPerSecond, maxConcurrentDispatches) are set below the Workspace Directory API quota so the queue cannot self-inflict 429s" — requirement not mapped to that node; verify or reassign before relying on it
-  ↳ serves (unverified match): REQ-021 "A dedicated queue invoker service account is provisioned and used as the queue's dispatch identity — the run.invoker binding on the worker service is asserted by REQ-026" — requirement not mapped to that node; verify or reassign before relying on it
 - [ ] **T3 — Expose the interface Lifecycle Step Executor consumes, per Contract "Step Task Enqueue" (rest).**
   Record the endpoint/identifiers Lifecycle Step Executor needs in this node's config artifacts — coordinate with Lifecycle Step Executor.
   Build to the contract schema EXACTLY (see Interface Contracts).
-  ↳ serves (unverified match): REQ-021 "The lifecycle-steps queue is provisioned with maxAttempts, minBackoff, maxBackoff and maxDoublings set as declared variables rather than provider defaults" — requirement not mapped to that node; verify or reassign before relying on it
   ↳ serves (unverified match): REQ-021 "Tasks are dispatched with an OIDC token whose audience is the worker service URL" — requirement not mapped to that node; verify or reassign before relying on it
   ↳ serves (unverified match): REQ-021 "Scheduling a task with a future scheduleTime defers dispatch to that time, verified end to end, since the offboarding hold period and approval expiry both depend on it" — requirement not mapped to that node; verify or reassign before relying on it
 - [ ] **T4 — Expose the interface Lifecycle API Service consumes, per Contract "Step Task Enqueue" (rest).**
   Record the endpoint/identifiers Lifecycle API Service needs in this node's config artifacts — coordinate with Lifecycle API Service.
   Build to the contract schema EXACTLY (see Interface Contracts).
-- [ ] **T5 — Configure the service to satisfy: "The queue name and worker target URL are wired from Terraform outputs rather than hardcoded in application configuration" (REQ-021).**
-  No interface contract maps to this criterion — it is this node's internal responsibility.
-  ↳ serves: REQ-021 "The queue name and worker target URL are wired from Terraform outputs rather than hardcoded in application configuration"
-- [ ] **T6 — Verify every acceptance criterion above and tick its box.**
+- [ ] **T5 — Verify every acceptance criterion above and tick its box.**
   Ordering doctrine — plans follow schemas (contract-first TDD): schemas → test plans → implement → verify. Resolve any open [PLACEHOLDER: schema] gap FIRST (get_build_readiness supplies draftInputs; submit the schema via propose_patches update_contract) — test-plan scenarios touching a schemaless contract stay one-line [blocked by schema: …] markers until the schema lands, then the plan refreshes itself.
   AUTOMATED criteria: call get_test_plan for EACH requirement this node serves, implement the plan's test cases, run them, and report every outcome via report_test_results — a passing result flips the criterion's met flag automatically and the response receipt shows which criteria flipped.
   MANUAL criteria (rows marked (manual) above): report_test_results REFUSES to bind them — prove each by ticking its criterion box in this task doc and having the user approve the resulting change card; that approval is the only thing that flips a manual criterion met.
@@ -83,18 +77,18 @@ Category: technical | Status: in-progress
 Owned by the Cloud Tasks node. Provisions the lifecycle-steps queue that gives the state machine its durability: retry configuration, rate limits, and the OIDC identity used to authenticate dispatches to the worker. The queue's retry budget is what REQ-016 relies on for resumability, and its scheduled-task capability is what carries both the offboarding hold period (REQ-006) and approval expiry (REQ-002) — so those settings are load-bearing, not cosmetic defaults.
 
 **Acceptance criteria — your task boxes:**
-- [ ] The lifecycle-steps queue is provisioned with maxAttempts, minBackoff, maxBackoff and maxDoublings set as declared variables rather than provider defaults
-  → covered by Task T3
-- [ ] The queue's rate limits (maxDispatchesPerSecond, maxConcurrentDispatches) are set below the Workspace Directory API quota so the queue cannot self-inflict 429s
-  → covered by Task T2
-- [ ] A dedicated queue invoker service account is provisioned and used as the queue's dispatch identity — the run.invoker binding on the worker service is asserted by REQ-026
-  → covered by Task T2
+- [x] The lifecycle-steps queue is provisioned with maxAttempts, minBackoff, maxBackoff and maxDoublings set as declared variables rather than provider defaults
+  → possible match: Contract "Step Task Enqueue" (rest) from Lifecycle Step Executor (unverified — requirement not mapped to that node)
+- [x] The queue's rate limits (maxDispatchesPerSecond, maxConcurrentDispatches) are set below the Workspace Directory API quota so the queue cannot self-inflict 429s
+  → possible match: Contract "Step Execution Dispatch" (rest) to Lifecycle Step Executor (unverified — requirement not mapped to that node)
+- [x] A dedicated queue invoker service account is provisioned and used as the queue's dispatch identity — the run.invoker binding on the worker service is asserted by REQ-026
+  → possible match: Contract "Step Execution Dispatch" (rest) to Lifecycle Step Executor (unverified — requirement not mapped to that node)
 - [ ] Tasks are dispatched with an OIDC token whose audience is the worker service URL
   → covered by Task T3
 - [ ] Scheduling a task with a future scheduleTime defers dispatch to that time, verified end to end, since the offboarding hold period and approval expiry both depend on it
   → covered by Task T3
-- [ ] The queue name and worker target URL are wired from Terraform outputs rather than hardcoded in application configuration
-  → covered by Task T5
+- [x] The queue name and worker target URL are wired from Terraform outputs rather than hardcoded in application configuration
+  → THIS NODE: internal logic
 
 ## Interface Contracts
 

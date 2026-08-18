@@ -30,26 +30,16 @@ Ordered WORK ORDERS synthesized from the model — this node's deliverable kind,
 - [ ] **T2 — Expose the interface Lifecycle Step Executor consumes, per Contract "Lifecycle State Store" (nosql).**
   Record the endpoint/identifiers Lifecycle Step Executor needs in this node's config artifacts — coordinate with Lifecycle Step Executor.
   Build to the contract schema EXACTLY (see Interface Contracts).
-  ↳ serves (unverified match): REQ-020 "No Firestore security rules file is deployed, and the absence is accompanied by the recorded rationale that server-side Admin SDK access bypasses rules" — requirement not mapped to that node; verify or reassign before relying on it
 - [ ] **T3 — Expose the interface Lifecycle API Service consumes, per Contract "Lifecycle State Store" (nosql).**
   Record the endpoint/identifiers Lifecycle API Service needs in this node's config artifacts — coordinate with Lifecycle API Service.
   Build to the contract schema EXACTLY (see Interface Contracts).
-- [ ] **T4 — Configure the service to satisfy: "The database is provisioned in Native mode in the configured location, with the location recorded as a Terraform variable rather than hardcoded" (REQ-020).**
-  No interface contract maps to this criterion — it is this node's internal responsibility.
-  ↳ serves: REQ-020 "The database is provisioned in Native mode in the configured location, with the location recorded as a Terraform variable rather than hardcoded"
-- [ ] **T5 — Configure the service to satisfy: "Composite indexes exist for the documented query patterns: status+createdAt desc, targetUser+createdAt desc, phase+status, targetUser+status, and requestId+timestamp asc on audit events" (REQ-020).**
-  No interface contract maps to this criterion — it is this node's internal responsibility.
-  ↳ serves: REQ-020 "Composite indexes exist for the documented query patterns: status+createdAt desc, targetUser+createdAt desc, phase+status, targetUser+status, and requestId+timestamp asc on audit events"
-- [ ] **T6 — Configure the service to satisfy: "A TTL policy is configured on the credentialHandoffs collection's expiresAt field, and an expired document is observably removed without application action" (REQ-020).**
+- [ ] **T4 — Configure the service to satisfy: "A TTL policy is configured on the credentialHandoffs collection's expiresAt field, and an expired document is observably removed without application action" (REQ-020).**
   No interface contract maps to this criterion — it is this node's internal responsibility.
   ↳ serves: REQ-020 "A TTL policy is configured on the credentialHandoffs collection's expiresAt field, and an expired document is observably removed without application action"
-- [ ] **T7 — Configure the service to satisfy: "Point-in-time recovery or scheduled backup is enabled, with the retention window set as a variable" (REQ-020).**
-  No interface contract maps to this criterion — it is this node's internal responsibility.
-  ↳ serves: REQ-020 "Point-in-time recovery or scheduled backup is enabled, with the retention window set as a variable"
-- [ ] **T8 — Configure the service to satisfy: "terraform plan reports no drift immediately after apply, confirming every index and policy is declared rather than console-created" (REQ-020).**
+- [ ] **T5 — Configure the service to satisfy: "terraform plan reports no drift immediately after apply, confirming every index and policy is declared rather than console-created" (REQ-020).**
   No interface contract maps to this criterion — it is this node's internal responsibility.
   ↳ serves: REQ-020 "terraform plan reports no drift immediately after apply, confirming every index and policy is declared rather than console-created"
-- [ ] **T9 — Verify every acceptance criterion above and tick its box.**
+- [ ] **T6 — Verify every acceptance criterion above and tick its box.**
   Ordering doctrine — plans follow schemas (contract-first TDD): schemas → test plans → implement → verify. Resolve any open [PLACEHOLDER: schema] gap FIRST (get_build_readiness supplies draftInputs; submit the schema via propose_patches update_contract) — test-plan scenarios touching a schemaless contract stay one-line [blocked by schema: …] markers until the schema lands, then the plan refreshes itself.
   AUTOMATED criteria: call get_test_plan for EACH requirement this node serves, implement the plan's test cases, run them, and report every outcome via report_test_results — a passing result flips the criterion's met flag automatically and the response receipt shows which criteria flipped.
   MANUAL criteria (rows marked (manual) above): report_test_results REFUSES to bind them — prove each by ticking its criterion box in this task doc and having the user approve the resulting change card; that approval is the only thing that flips a manual criterion met.
@@ -89,18 +79,18 @@ Category: technical | Status: in-progress
 Owned by the Firestore node. Provisions the Native-mode database that holds all lifecycle state: location, the composite indexes the query patterns require, the TTL policy on credential handoffs, and backup/point-in-time recovery. Application behaviour against these collections belongs to REQ-001, REQ-016 and REQ-010; this requirement covers only the resources that must exist for those to work. Note that no security rules are provisioned deliberately — every client is server-side and authenticates with Admin SDK credentials, which bypass rules entirely, so rules would be a false control (see REQ-010).
 
 **Acceptance criteria — your task boxes:**
-- [ ] The database is provisioned in Native mode in the configured location, with the location recorded as a Terraform variable rather than hardcoded
-  → covered by Task T4
-- [ ] Composite indexes exist for the documented query patterns: status+createdAt desc, targetUser+createdAt desc, phase+status, targetUser+status, and requestId+timestamp asc on audit events
-  → covered by Task T5
+- [x] The database is provisioned in Native mode in the configured location, with the location recorded as a Terraform variable rather than hardcoded
+  → THIS NODE: internal logic
+- [x] Composite indexes exist for the documented query patterns: status+createdAt desc, targetUser+createdAt desc, phase+status, targetUser+status, and requestId+timestamp asc on audit events
+  → THIS NODE: internal logic
 - [ ] A TTL policy is configured on the credentialHandoffs collection's expiresAt field, and an expired document is observably removed without application action
-  → covered by Task T6
-- [ ] Point-in-time recovery or scheduled backup is enabled, with the retention window set as a variable
-  → covered by Task T7
+  → covered by Task T4
+- [x] Point-in-time recovery or scheduled backup is enabled, with the retention window set as a variable
+  → THIS NODE: internal logic
 - [ ] terraform plan reports no drift immediately after apply, confirming every index and policy is declared rather than console-created
-  → covered by Task T8
-- [ ] No Firestore security rules file is deployed, and the absence is accompanied by the recorded rationale that server-side Admin SDK access bypasses rules
-  → covered by Task T2
+  → covered by Task T5
+- [x] No Firestore security rules file is deployed, and the absence is accompanied by the recorded rationale that server-side Admin SDK access bypasses rules
+  → possible match: Contract "Lifecycle State Store" (nosql) from Lifecycle Step Executor (unverified — requirement not mapped to that node)
 
 ## Interface Contracts
 
@@ -513,3 +503,9 @@ Startup/initialization order based on edge directions and interaction patterns.
 - Lifecycle API Service (initiates Lifecycle State Store against this node (nosql))
 
 **Parent Container:** Company GCP Project (gcp)
+
+## Existing Implementation
+
+| File | Kind | Language | Status |
+|------|------|----------|--------|
+| `firebase.json` | config | --- | draft |

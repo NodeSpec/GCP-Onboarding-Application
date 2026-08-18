@@ -28,25 +28,7 @@ Ordered WORK ORDERS synthesized from the model — this node's deliverable kind,
 - [ ] **T2 — Account for every hosted component in this container's definition.**
   Hosted here: Operator Console UI, Lifecycle API Service.
   Each hosted component must be represented in the provisioning definition (compose service entry / subnet placement / deployment target, as appropriate for this container).
-- [ ] **T3 — Implement: "The service is provisioned with ingress set to internal-and-cloud-load-balancing, so a direct *.run.app request fails at the platform" (REQ-025).**
-  No interface contract maps to this criterion — it is this node's internal responsibility.
-  ↳ serves: REQ-025 "The service is provisioned with ingress set to internal-and-cloud-load-balancing, so a direct *.run.app request fails at the platform"
-- [ ] **T4 — Implement: "The service runs under its own runtime service account, distinct from the worker's" (REQ-025).**
-  No interface contract maps to this criterion — it is this node's internal responsibility.
-  ↳ serves: REQ-025 "The service runs under its own runtime service account, distinct from the worker's"
-- [ ] **T5 — Implement: "min-instances is 0 and the service scales to zero when idle" (REQ-025).**
-  No interface contract maps to this criterion — it is this node's internal responsibility.
-  ↳ serves: REQ-025 "min-instances is 0 and the service scales to zero when idle"
-- [ ] **T6 — Implement: "The IAP audience string, Firestore project, Cloud Tasks queue name and worker URL are injected as configuration from Terraform outputs, not hardcoded" (REQ-025).**
-  No interface contract maps to this criterion — it is this node's internal responsibility.
-  ↳ serves: REQ-025 "The IAP audience string, Firestore project, Cloud Tasks queue name and worker URL are injected as configuration from Terraform outputs, not hardcoded"
-- [ ] **T7 — Implement: "Request timeout and concurrency are set explicitly rather than left at provider defaults" (REQ-025).**
-  No interface contract maps to this criterion — it is this node's internal responsibility.
-  ↳ serves: REQ-025 "Request timeout and concurrency are set explicitly rather than left at provider defaults"
-- [ ] **T8 — Implement: "The container image is referenced by immutable digest rather than a mutable tag" (REQ-025).**
-  No interface contract maps to this criterion — it is this node's internal responsibility.
-  ↳ serves: REQ-025 "The container image is referenced by immutable digest rather than a mutable tag"
-- [ ] **T9 — Verify every acceptance criterion above and tick its box.**
+- [ ] **T3 — Verify every acceptance criterion above and tick its box.**
   Ordering doctrine — plans follow schemas (contract-first TDD): schemas → test plans → implement → verify. Resolve any open [PLACEHOLDER: schema] gap FIRST (get_build_readiness supplies draftInputs; submit the schema via propose_patches update_contract) — test-plan scenarios touching a schemaless contract stay one-line [blocked by schema: …] markers until the schema lands, then the plan refreshes itself.
   AUTOMATED criteria: call get_test_plan for EACH requirement this node serves, implement the plan's test cases, run them, and report every outcome via report_test_results — a passing result flips the criterion's met flag automatically and the response receipt shows which criteria flipped.
   MANUAL criteria (rows marked (manual) above): report_test_results REFUSES to bind them — prove each by ticking its criterion box in this task doc and having the user approve the resulting change card; that approval is the only thing that flips a manual criterion met.
@@ -86,18 +68,12 @@ Category: technical | Status: in-progress
 Owned by the Cloud Run: lifecycle-api node. Provisions the operator-facing service that hosts the API and serves the console SPA: container image reference, its own runtime service account, ingress restricted so the load balancer is the only reachable path, scale-to-zero, request concurrency and timeout, and the configuration it needs injected. This service's identity is deliberately the weaker of the two — no Workspace admin role, no step-document write access — and that separation is enforced here at provisioning time as well as asserted in REQ-014.
 
 **Acceptance criteria — your task boxes:**
-- [ ] The service is provisioned with ingress set to internal-and-cloud-load-balancing, so a direct *.run.app request fails at the platform
-  → covered by Task T3
-- [ ] The service runs under its own runtime service account, distinct from the worker's
-  → covered by Task T4
-- [ ] min-instances is 0 and the service scales to zero when idle
-  → covered by Task T5
-- [ ] The IAP audience string, Firestore project, Cloud Tasks queue name and worker URL are injected as configuration from Terraform outputs, not hardcoded
-  → covered by Task T6
-- [ ] Request timeout and concurrency are set explicitly rather than left at provider defaults
-  → covered by Task T7
-- [ ] The container image is referenced by immutable digest rather than a mutable tag
-  → covered by Task T8
+- [x] The service is provisioned with ingress set to internal-and-cloud-load-balancing, so a direct *.run.app request fails at the platform
+- [x] The service runs under its own runtime service account, distinct from the worker's
+- [x] min-instances is 0 and the service scales to zero when idle
+- [x] The IAP audience string, Firestore project, Cloud Tasks queue name and worker URL are injected as configuration from Terraform outputs, not hardcoded
+- [x] Request timeout and concurrency are set explicitly rather than left at provider defaults
+- [x] The container image is referenced by immutable digest rather than a mutable tag
 
 ## Technology Guidance
 

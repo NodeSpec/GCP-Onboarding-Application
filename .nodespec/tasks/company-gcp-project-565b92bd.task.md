@@ -54,49 +54,16 @@ Ordered WORK ORDERS synthesized from the model — this node's deliverable kind,
 - [ ] **T10 — Configure the service to satisfy: "terraform validate and terraform plan succeed against the committed configuration with no manual resource references" (REQ-009).**
   No interface contract maps to this criterion — it is this node's internal responsibility.
   ↳ serves: REQ-009 "terraform validate and terraform plan succeed against the committed configuration with no manual resource references"
-- [ ] **T11 — Configure the service to satisfy: "The Terraform configuration provisions both Cloud Run services, the load balancer with serverless NEG, IAP, Firestore, the Cloud Tasks queue, and Secret Manager secrets" (REQ-009).**
-  No interface contract maps to this criterion — it is this node's internal responsibility.
-  ↳ serves: REQ-009 "The Terraform configuration provisions both Cloud Run services, the load balancer with serverless NEG, IAP, Firestore, the Cloud Tasks queue, and Secret Manager secrets"
-- [ ] **T12 — Configure the service to satisfy: "Both Cloud Run services are configured with min-instances 0 and scale to zero when idle" (REQ-009).**
-  No interface contract maps to this criterion — it is this node's internal responsibility.
-  ↳ serves: REQ-009 "Both Cloud Run services are configured with min-instances 0 and scale to zero when idle"
-- [ ] **T13 — Configure the service to satisfy: "The API service and the worker service are bound to distinct runtime service accounts, and only the worker's identity holds the Workspace admin role" (REQ-009).**
-  No interface contract maps to this criterion — it is this node's internal responsibility.
-  ↳ serves: REQ-009 "The API service and the worker service are bound to distinct runtime service accounts, and only the worker's identity holds the Workspace admin role"
-- [ ] **T14 — Configure the service to satisfy: "The Cloud Tasks queue targets the worker service with OIDC authentication, and the worker rejects task requests not carrying a valid OIDC token from the queue's service account" (REQ-009).**
-  No interface contract maps to this criterion — it is this node's internal responsibility.
-  ↳ serves: REQ-009 "The Cloud Tasks queue targets the worker service with OIDC authentication, and the worker rejects task requests not carrying a valid OIDC token from the queue's service account"
-- [ ] **T15 — Configure the service to satisfy: "No resource in the deployment is a VM, managed instance group, or Kubernetes cluster" (REQ-009).**
-  No interface contract maps to this criterion — it is this node's internal responsibility.
-  ↳ serves: REQ-009 "No resource in the deployment is a VM, managed instance group, or Kubernetes cluster"
-- [ ] **T16 — Configure the service to satisfy: "A from-scratch apply into an empty GCP project produces a reachable, IAP-protected endpoint following only the documented steps" (REQ-009).**
+- [ ] **T11 — Configure the service to satisfy: "A from-scratch apply into an empty GCP project produces a reachable, IAP-protected endpoint following only the documented steps" (REQ-009).**
   No interface contract maps to this criterion — it is this node's internal responsibility.
   ↳ serves: REQ-009 "A from-scratch apply into an empty GCP project produces a reachable, IAP-protected endpoint following only the documented steps"
-- [ ] **T17 — Configure the service to satisfy: "No service-account key file, API key, or password literal exists anywhere in the repository, verified by a secret-scanning check in CI" (REQ-014).**
-  No interface contract maps to this criterion — it is this node's internal responsibility.
-  ↳ serves: REQ-014 "No service-account key file, API key, or password literal exists anywhere in the repository, verified by a secret-scanning check in CI"
-- [ ] **T18 — Configure the service to satisfy: "Secrets are referenced by Secret Manager resource name in configuration and resolved at runtime, never inlined into an environment variable at build time" (REQ-014).**
-  No interface contract maps to this criterion — it is this node's internal responsibility.
-  ↳ serves: REQ-014 "Secrets are referenced by Secret Manager resource name in configuration and resolved at runtime, never inlined into an environment variable at build time"
-- [ ] **T19 — Configure the service to satisfy: "Each runtime service account is granted secretAccessor only on the specific secrets it needs, not at project scope: the worker on notification-smtp-credentials and credential-encryption-key, the API service on credential-encryption-key alone" (REQ-014).**
-  No interface contract maps to this criterion — it is this node's internal responsibility.
-  ↳ serves: REQ-014 "Each runtime service account is granted secretAccessor only on the specific secrets it needs, not at project scope: the worker on notification-smtp-credentials and credential-encryption-key, the API service on credential-encryption-key alone"
-- [ ] **T20 — Configure the service to satisfy: "The API service and the worker are bound to distinct runtime service accounts in the deployed configuration" (REQ-014).**
-  No interface contract maps to this criterion — it is this node's internal responsibility.
-  ↳ serves: REQ-014 "The API service and the worker are bound to distinct runtime service accounts in the deployed configuration"
-- [ ] **T21 — Configure the service to satisfy: "The worker's runtime identity is the only one holding the Workspace admin role, and the API service's identity holds no Workspace admin role — verified by attempting a Directory API call with the API service's identity and observing it refused" (REQ-014).**
+- [ ] **T12 — Configure the service to satisfy: "The worker's runtime identity is the only one holding the Workspace admin role, and the API service's identity holds no Workspace admin role — verified by attempting a Directory API call with the API service's identity and observing it refused" (REQ-014).**
   No interface contract maps to this criterion — it is this node's internal responsibility.
   ↳ serves: REQ-014 "The worker's runtime identity is the only one holding the Workspace admin role, and the API service's identity holds no Workspace admin role — verified by attempting a Directory API call with the API service's identity and observing it refused"
-- [ ] **T22 — Configure the service to satisfy: "Rotating a secret version is picked up without redeploying the service" (REQ-014).**
+- [ ] **T13 — Configure the service to satisfy: "Rotating a secret version is picked up without redeploying the service" (REQ-014).**
   No interface contract maps to this criterion — it is this node's internal responsibility.
   ↳ serves: REQ-014 "Rotating a secret version is picked up without redeploying the service"
-- [ ] **T23 — Configure the service to satisfy: "The deployment claims no per-collection Firestore IAM restriction anywhere, since Firestore IAM is database-scoped — a repository check finds no IAM binding or comment asserting collection-level Firestore permissions" (REQ-014).**
-  No interface contract maps to this criterion — it is this node's internal responsibility.
-  ↳ serves: REQ-014 "The deployment claims no per-collection Firestore IAM restriction anywhere, since Firestore IAM is database-scoped — a repository check finds no IAM binding or comment asserting collection-level Firestore permissions"
-- [ ] **T24 — Configure the service to satisfy: "The two long-lived secrets are the only ones in the deployment, and each carries a recorded justification and removal path — notification-smtp-credentials is removable by the relay IP-allowlisting hardening path (REQ-028), credential-encryption-key by Cloud KMS envelope encryption" (REQ-014).**
-  No interface contract maps to this criterion — it is this node's internal responsibility.
-  ↳ serves: REQ-014 "The two long-lived secrets are the only ones in the deployment, and each carries a recorded justification and removal path — notification-smtp-credentials is removable by the relay IP-allowlisting hardening path (REQ-028), credential-encryption-key by Cloud KMS envelope encryption"
-- [ ] **T25 — Verify every acceptance criterion above and tick its box.**
+- [ ] **T14 — Verify every acceptance criterion above and tick its box.**
   Ordering doctrine — plans follow schemas (contract-first TDD): schemas → test plans → implement → verify. Resolve any open [PLACEHOLDER: schema] gap FIRST (get_build_readiness supplies draftInputs; submit the schema via propose_patches update_contract) — test-plan scenarios touching a schemaless contract stay one-line [blocked by schema: …] markers until the schema lands, then the plan refreshes itself.
   AUTOMATED criteria: call get_test_plan for EACH requirement this node serves, implement the plan's test cases, run them, and report every outcome via report_test_results — a passing result flips the criterion's met flag automatically and the response receipt shows which criteria flipped.
   MANUAL criteria (rows marked (manual) above): report_test_results REFUSES to bind them — prove each by ticking its criterion box in this task doc and having the user approve the resulting change card; that approval is the only thing that flips a manual criterion met.
@@ -152,18 +119,13 @@ The whole system runs serverless — no VMs, no clusters, no always-on instances
 **Acceptance criteria — your task boxes:**
 - [ ] terraform validate and terraform plan succeed against the committed configuration with no manual resource references
   → covered by Task T10
-- [ ] The Terraform configuration provisions both Cloud Run services, the load balancer with serverless NEG, IAP, Firestore, the Cloud Tasks queue, and Secret Manager secrets
-  → covered by Task T11
-- [ ] Both Cloud Run services are configured with min-instances 0 and scale to zero when idle
-  → covered by Task T12
-- [ ] The API service and the worker service are bound to distinct runtime service accounts, and only the worker's identity holds the Workspace admin role
-  → covered by Task T13
-- [ ] The Cloud Tasks queue targets the worker service with OIDC authentication, and the worker rejects task requests not carrying a valid OIDC token from the queue's service account
-  → covered by Task T14
-- [ ] No resource in the deployment is a VM, managed instance group, or Kubernetes cluster
-  → covered by Task T15
+- [x] The Terraform configuration provisions both Cloud Run services, the load balancer with serverless NEG, IAP, Firestore, the Cloud Tasks queue, and Secret Manager secrets
+- [x] Both Cloud Run services are configured with min-instances 0 and scale to zero when idle
+- [x] The API service and the worker service are bound to distinct runtime service accounts, and only the worker's identity holds the Workspace admin role
+- [x] The Cloud Tasks queue targets the worker service with OIDC authentication, and the worker rejects task requests not carrying a valid OIDC token from the queue's service account
+- [x] No resource in the deployment is a VM, managed instance group, or Kubernetes cluster
 - [ ] A from-scratch apply into an empty GCP project produces a reachable, IAP-protected endpoint following only the documented steps (manual)
-  → covered by Task T16
+  → covered by Task T11
 
 ### REQ-014: Least-privilege runtime identities and secret provisioning
 Category: technical | Status: in-progress
@@ -174,22 +136,16 @@ Each Cloud Run service runs under its own runtime service account holding only t
 Cloud KMS envelope encryption is the hardening path for the encryption key if Company wants decrypt operations independently audited and key material never resident in a service process; it is a straight substitution and changes nothing else. In-code credential protection is REQ-019.
 
 **Acceptance criteria — your task boxes:**
-- [ ] No service-account key file, API key, or password literal exists anywhere in the repository, verified by a secret-scanning check in CI
-  → covered by Task T17
-- [ ] Secrets are referenced by Secret Manager resource name in configuration and resolved at runtime, never inlined into an environment variable at build time
-  → covered by Task T18
-- [ ] Each runtime service account is granted secretAccessor only on the specific secrets it needs, not at project scope: the worker on notification-smtp-credentials and credential-encryption-key, the API service on credential-encryption-key alone
-  → covered by Task T19
-- [ ] The API service and the worker are bound to distinct runtime service accounts in the deployed configuration
-  → covered by Task T20
+- [x] No service-account key file, API key, or password literal exists anywhere in the repository, verified by a secret-scanning check in CI
+- [x] Secrets are referenced by Secret Manager resource name in configuration and resolved at runtime, never inlined into an environment variable at build time
+- [x] Each runtime service account is granted secretAccessor only on the specific secrets it needs, not at project scope: the worker on notification-smtp-credentials and credential-encryption-key, the API service on credential-encryption-key alone
+- [x] The API service and the worker are bound to distinct runtime service accounts in the deployed configuration
 - [ ] The worker's runtime identity is the only one holding the Workspace admin role, and the API service's identity holds no Workspace admin role — verified by attempting a Directory API call with the API service's identity and observing it refused
-  → covered by Task T21
+  → covered by Task T12
 - [ ] Rotating a secret version is picked up without redeploying the service
-  → covered by Task T22
-- [ ] The deployment claims no per-collection Firestore IAM restriction anywhere, since Firestore IAM is database-scoped — a repository check finds no IAM binding or comment asserting collection-level Firestore permissions
-  → covered by Task T23
-- [ ] The two long-lived secrets are the only ones in the deployment, and each carries a recorded justification and removal path — notification-smtp-credentials is removable by the relay IP-allowlisting hardening path (REQ-028), credential-encryption-key by Cloud KMS envelope encryption
-  → covered by Task T24
+  → covered by Task T13
+- [x] The deployment claims no per-collection Firestore IAM restriction anywhere, since Firestore IAM is database-scoped — a repository check finds no IAM binding or comment asserting collection-level Firestore permissions
+- [x] The two long-lived secrets are the only ones in the deployment, and each carries a recorded justification and removal path — notification-smtp-credentials is removable by the relay IP-allowlisting hardening path (REQ-028), credential-encryption-key by Cloud KMS envelope encryption
 
 ## Technology Guidance
 
@@ -278,7 +234,8 @@ resource "google_project" "main" {
 | File | Kind | Language | Status |
 |------|------|----------|--------|
 | `docs/testing.md` | doc | --- | draft |
-| `vitest.config.ts` | config | --- | draft |
-| `package.json` | config | --- | draft |
+| `vitest.emulator.config.ts` | config | --- | draft |
 | `.gitignore` | config | --- | draft |
+| `package.json` | config | --- | draft |
+| `vitest.config.ts` | config | --- | draft |
 | `README.md` | doc | --- | draft |

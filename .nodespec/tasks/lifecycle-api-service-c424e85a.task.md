@@ -27,7 +27,6 @@ Ordered WORK ORDERS synthesized from the model — this node's deliverable kind,
   Start from the catalog's suggested structure: `src/index.ts`, `src/routes/index.ts`, `package.json`, `tsconfig.json`.
 - [ ] **T2 — Implement the integration with Identity-Aware Proxy (gcp-identity-aware-proxy) per Contract "IAP Assertion Verification (JWK Set)" (rest).**
   Build to the contract schema EXACTLY (see Interface Contracts).
-  ↳ serves (unverified match): REQ-007 "Every load-balancer backend service in the deployment has IAP enabled — asserted against the committed Terraform, so a backend added without IAP fails the check" — requirement not mapped to that node; verify or reassign before relying on it
   ↳ serves (unverified match): REQ-007 "IAP is enabled on the operator backend service and access is granted only to the intended operator group in the OAuth/IAM configuration" — requirement not mapped to that node; verify or reassign before relying on it
 - [ ] **T3 — Implement the integration with Cloud Logging: audit sink (gcp-cloud-logging) per Contract "Audit Log Sink" (dependency).**
   Dependency contract — capture the reference/identifier wiring in this node's config artifacts; no payload schema expected.
@@ -227,8 +226,8 @@ There is no end-user-facing surface anywhere in this system. Users being onboard
   → covered by Task T8
 - [ ] The lifecycle-worker service admits exactly two caller identities, each confined to its own route class: the Cloud Tasks queue invoker on /tasks/*, and the lifecycle-api service account on /lookup/*. A token issued to either identity is rejected with 401 on the other's routes, and an unauthenticated request is rejected on both
   → covered by Task T5
-- [ ] Every load-balancer backend service in the deployment has IAP enabled — asserted against the committed Terraform, so a backend added without IAP fails the check
-  → covered by Task T2
+- [x] Every load-balancer backend service in the deployment has IAP enabled — asserted against the committed Terraform, so a backend added without IAP fails the check
+  → possible match: Contract "IAP Assertion Verification (JWK Set)" (rest) to Identity-Aware Proxy (unverified — requirement not mapped to that node)
 - [ ] The deployed system exposes no unauthenticated route: an unauthenticated request to every path in the application's route table is rejected, enumerated as a test rather than spot-checked
   → covered by Task T10
 - [ ] IAP is enabled on the operator backend service and access is granted only to the intended operator group in the OAuth/IAM configuration (manual)

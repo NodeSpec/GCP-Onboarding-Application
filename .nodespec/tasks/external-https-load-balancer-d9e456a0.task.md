@@ -29,23 +29,9 @@ Ordered WORK ORDERS synthesized from the model — this node's deliverable kind,
   [PLACEHOLDER: config — no user configuration recorded for this node; confirm sizing/domains/settings with the user]
 - [ ] **T2 — Declare the wiring to Identity-Aware Proxy (gcp-identity-aware-proxy) per Contract "IAP Authorization Check" (rest).**
   Build to the contract schema EXACTLY (see Interface Contracts).
-  ↳ serves (unverified match): REQ-024 "Exactly one backend service exists in the deployment, and it has IAP enabled — asserted in Terraform so an added backend fails the check" — requirement not mapped to that node; verify or reassign before relying on it
 - [ ] **T3 — Declare the wiring to Lifecycle API Service (nodejs) per Contract "IAP-Protected HTTPS Ingress" (rest).**
   Build to the contract schema EXACTLY (see Interface Contracts).
-  ↳ serves (unverified match): REQ-024 "HTTP requests are redirected to HTTPS rather than served" — requirement not mapped to that node; verify or reassign before relying on it
-- [ ] **T4 — Configure the service to satisfy: "A serverless NEG targets the lifecycle-api Cloud Run service and is attached to the backend service" (REQ-024).**
-  No interface contract maps to this criterion — it is this node's internal responsibility.
-  ↳ serves: REQ-024 "A serverless NEG targets the lifecycle-api Cloud Run service and is attached to the backend service"
-- [ ] **T5 — Configure the service to satisfy: "A Google-managed TLS certificate is provisioned and attached, with the domain supplied as a variable" (REQ-024).**
-  No interface contract maps to this criterion — it is this node's internal responsibility.
-  ↳ serves: REQ-024 "A Google-managed TLS certificate is provisioned and attached, with the domain supplied as a variable"
-- [ ] **T6 — Configure the service to satisfy: "The worker Cloud Run service is not attached to this load balancer, verified by asserting the backend set contains only the api service" (REQ-024).**
-  No interface contract maps to this criterion — it is this node's internal responsibility.
-  ↳ serves: REQ-024 "The worker Cloud Run service is not attached to this load balancer, verified by asserting the backend set contains only the api service"
-- [ ] **T7 — Configure the service to satisfy: "The load balancer's service identity is the only principal granted run.invoker on the lifecycle-api service" (REQ-024).**
-  No interface contract maps to this criterion — it is this node's internal responsibility.
-  ↳ serves: REQ-024 "The load balancer's service identity is the only principal granted run.invoker on the lifecycle-api service"
-- [ ] **T8 — Verify every acceptance criterion above and tick its box.**
+- [ ] **T4 — Verify every acceptance criterion above and tick its box.**
   Ordering doctrine — plans follow schemas (contract-first TDD): schemas → test plans → implement → verify. Resolve any open [PLACEHOLDER: schema] gap FIRST (get_build_readiness supplies draftInputs; submit the schema via propose_patches update_contract) — test-plan scenarios touching a schemaless contract stay one-line [blocked by schema: …] markers until the schema lands, then the plan refreshes itself.
   AUTOMATED criteria: call get_test_plan for EACH requirement this node serves, implement the plan's test cases, run them, and report every outcome via report_test_results — a passing result flips the criterion's met flag automatically and the response receipt shows which criteria flipped.
   MANUAL criteria (rows marked (manual) above): report_test_results REFUSES to bind them — prove each by ticking its criterion box in this task doc and having the user approve the resulting change card; that approval is the only thing that flips a manual criterion met.
@@ -85,18 +71,18 @@ Category: technical | Status: in-progress
 Owned by the External HTTPS Load Balancer node. Provisions the single ingress path into the system: the serverless NEG pointing at the lifecycle-api Cloud Run service, exactly one backend service, a Google-managed TLS certificate, and an HTTP-to-HTTPS redirect. The invariant this node must hold is that there is one backend and it has IAP enabled — the architecture briefly carried a second, unauthenticated backend and that was reverted to honour the customer's IAP constraint, so the count is asserted rather than assumed.
 
 **Acceptance criteria — your task boxes:**
-- [ ] A serverless NEG targets the lifecycle-api Cloud Run service and is attached to the backend service
-  → covered by Task T4
-- [ ] Exactly one backend service exists in the deployment, and it has IAP enabled — asserted in Terraform so an added backend fails the check
-  → covered by Task T2
-- [ ] A Google-managed TLS certificate is provisioned and attached, with the domain supplied as a variable
-  → covered by Task T5
-- [ ] HTTP requests are redirected to HTTPS rather than served
-  → covered by Task T3
-- [ ] The worker Cloud Run service is not attached to this load balancer, verified by asserting the backend set contains only the api service
-  → covered by Task T6
-- [ ] The load balancer's service identity is the only principal granted run.invoker on the lifecycle-api service
-  → covered by Task T7
+- [x] A serverless NEG targets the lifecycle-api Cloud Run service and is attached to the backend service
+  → THIS NODE: internal logic
+- [x] Exactly one backend service exists in the deployment, and it has IAP enabled — asserted in Terraform so an added backend fails the check
+  → possible match: Contract "IAP Authorization Check" (rest) to Identity-Aware Proxy (unverified — requirement not mapped to that node)
+- [x] A Google-managed TLS certificate is provisioned and attached, with the domain supplied as a variable
+  → THIS NODE: internal logic
+- [x] HTTP requests are redirected to HTTPS rather than served
+  → possible match: Contract "IAP-Protected HTTPS Ingress" (rest) to Lifecycle API Service (unverified — requirement not mapped to that node)
+- [x] The worker Cloud Run service is not attached to this load balancer, verified by asserting the backend set contains only the api service
+  → THIS NODE: internal logic
+- [x] The load balancer's service identity is the only principal granted run.invoker on the lifecycle-api service
+  → THIS NODE: internal logic
 
 ## Interface Contracts
 

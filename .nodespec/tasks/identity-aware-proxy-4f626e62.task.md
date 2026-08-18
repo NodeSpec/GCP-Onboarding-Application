@@ -30,22 +30,16 @@ Ordered WORK ORDERS synthesized from the model — this node's deliverable kind,
 - [ ] **T2 — Expose the interface Lifecycle API Service consumes, per Contract "IAP Assertion Verification (JWK Set)" (rest).**
   Record the endpoint/identifiers Lifecycle API Service needs in this node's config artifacts — coordinate with Lifecycle API Service.
   Build to the contract schema EXACTLY (see Interface Contracts).
-  ↳ serves (unverified match): REQ-023 "The OAuth brand and IAP client are provisioned, and the client id is surfaced as a Terraform output rather than copied by hand" — requirement not mapped to that node; verify or reassign before relying on it
-  ↳ serves (unverified match): REQ-023 "roles/iap.httpsResourceAccessor is granted to the operator Google group only — not to individual users, and not to allAuthenticatedUsers" — requirement not mapped to that node; verify or reassign before relying on it
-  ↳ serves (unverified match): REQ-023 "IAP is enabled on the operator backend service, and terraform plan reports no drift after apply" — requirement not mapped to that node; verify or reassign before relying on it
 - [ ] **T3 — Expose the interface External HTTPS Load Balancer consumes, per Contract "IAP Authorization Check" (rest).**
   Record the endpoint/identifiers External HTTPS Load Balancer needs in this node's config artifacts — coordinate with External HTTPS Load Balancer.
   Build to the contract schema EXACTLY (see Interface Contracts).
-- [ ] **T4 — Configure the service to satisfy: "The backend-service audience string is emitted as a Terraform output and consumed by the API service as configuration, so the verifier and the perimeter cannot disagree" (REQ-023).**
-  No interface contract maps to this criterion — it is this node's internal responsibility.
-  ↳ serves: REQ-023 "The backend-service audience string is emitted as a Terraform output and consumed by the API service as configuration, so the verifier and the perimeter cannot disagree"
-- [ ] **T5 — Configure the service to satisfy: "Removing a member from the operator group revokes their access without a redeploy" (REQ-023).**
+- [ ] **T4 — Configure the service to satisfy: "Removing a member from the operator group revokes their access without a redeploy" (REQ-023).**
   No interface contract maps to this criterion — it is this node's internal responsibility.
   ↳ serves: REQ-023 "Removing a member from the operator group revokes their access without a redeploy"
-- [ ] **T6 — Configure the service to satisfy: "An account outside the operator group is refused at the perimeter and never reaches the application, confirmed against the deployed environment" (REQ-023).**
+- [ ] **T5 — Configure the service to satisfy: "An account outside the operator group is refused at the perimeter and never reaches the application, confirmed against the deployed environment" (REQ-023).**
   No interface contract maps to this criterion — it is this node's internal responsibility.
   ↳ serves: REQ-023 "An account outside the operator group is refused at the perimeter and never reaches the application, confirmed against the deployed environment"
-- [ ] **T7 — Verify every acceptance criterion above and tick its box.**
+- [ ] **T6 — Verify every acceptance criterion above and tick its box.**
   Ordering doctrine — plans follow schemas (contract-first TDD): schemas → test plans → implement → verify. Resolve any open [PLACEHOLDER: schema] gap FIRST (get_build_readiness supplies draftInputs; submit the schema via propose_patches update_contract) — test-plan scenarios touching a schemaless contract stay one-line [blocked by schema: …] markers until the schema lands, then the plan refreshes itself.
   AUTOMATED criteria: call get_test_plan for EACH requirement this node serves, implement the plan's test cases, run them, and report every outcome via report_test_results — a passing result flips the criterion's met flag automatically and the response receipt shows which criteria flipped.
   MANUAL criteria (rows marked (manual) above): report_test_results REFUSES to bind them — prove each by ticking its criterion box in this task doc and having the user approve the resulting change card; that approval is the only thing that flips a manual criterion met.
@@ -85,18 +79,18 @@ Category: technical | Status: in-progress
 Owned by the Identity-Aware Proxy node. Provisions IAP on the operator backend service: the OAuth brand and client, the IAM grant that decides which humans may reach the application, and the backend-service audience string the application verifies against. REQ-007 owns the application-side verification code; this requirement owns the perimeter configuration that produces the assertion in the first place. The two must agree on the audience string, and a mismatch is the single most likely cause of a working deployment rejecting every request — so that agreement is asserted here rather than discovered at runtime.
 
 **Acceptance criteria — your task boxes:**
-- [ ] The OAuth brand and IAP client are provisioned, and the client id is surfaced as a Terraform output rather than copied by hand
-  → covered by Task T2
-- [ ] roles/iap.httpsResourceAccessor is granted to the operator Google group only — not to individual users, and not to allAuthenticatedUsers
-  → covered by Task T2
-- [ ] The backend-service audience string is emitted as a Terraform output and consumed by the API service as configuration, so the verifier and the perimeter cannot disagree
-  → covered by Task T4
-- [ ] IAP is enabled on the operator backend service, and terraform plan reports no drift after apply
-  → covered by Task T2
+- [x] The OAuth brand and IAP client are provisioned, and the client id is surfaced as a Terraform output rather than copied by hand
+  → possible match: Contract "IAP Assertion Verification (JWK Set)" (rest) from Lifecycle API Service (unverified — requirement not mapped to that node)
+- [x] roles/iap.httpsResourceAccessor is granted to the operator Google group only — not to individual users, and not to allAuthenticatedUsers
+  → possible match: Contract "IAP Assertion Verification (JWK Set)" (rest) from Lifecycle API Service (unverified — requirement not mapped to that node)
+- [x] The backend-service audience string is emitted as a Terraform output and consumed by the API service as configuration, so the verifier and the perimeter cannot disagree
+  → THIS NODE: internal logic
+- [x] IAP is enabled on the operator backend service, and terraform plan reports no drift after apply
+  → possible match: Contract "IAP Assertion Verification (JWK Set)" (rest) from Lifecycle API Service (unverified — requirement not mapped to that node)
 - [ ] Removing a member from the operator group revokes their access without a redeploy
-  → covered by Task T5
+  → covered by Task T4
 - [ ] An account outside the operator group is refused at the perimeter and never reaches the application, confirmed against the deployed environment (manual)
-  → covered by Task T6
+  → covered by Task T5
 
 ## Interface Contracts
 

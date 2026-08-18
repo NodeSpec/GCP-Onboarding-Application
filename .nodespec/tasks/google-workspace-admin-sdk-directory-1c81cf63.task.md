@@ -28,7 +28,6 @@ Ordered WORK ORDERS synthesized from the model — this node's deliverable kind,
 - [ ] **T2 — Expose the interface Lifecycle Step Executor consumes, per Contract "Google Admin SDK Directory API" (rest).**
   Record the endpoint/identifiers Lifecycle Step Executor needs in this node's config artifacts — coordinate with Lifecycle Step Executor.
   Build to the contract schema EXACTLY (see Interface Contracts).
-  ↳ serves (unverified match): REQ-027 "The Admin SDK API is enabled on the GCP project, declared in Terraform" — requirement not mapped to that node; verify or reassign before relying on it
   ↳ serves (unverified match): REQ-027 "A custom Workspace admin role exists carrying only: Users (create, read, update, delete), Groups (read and manage members), and Organizational Units (read) — no broader privilege is granted" — requirement not mapped to that node; verify or reassign before relying on it
   ↳ serves (unverified match): REQ-027 "The custom admin role does NOT carry any role-management privilege, verified by reviewing the role's privilege list in the Admin console — so the service account cannot assign admin roles to itself or anyone else" — requirement not mapped to that node; verify or reassign before relying on it
   ↳ serves (unverified match): REQ-027 "The custom role is assigned to the worker runtime service account by email under Account > Admin roles > Assign service accounts, and to no other principal" — requirement not mapped to that node; verify or reassign before relying on it
@@ -73,8 +72,8 @@ Owned by the Google Workspace node. This is the tenant-side configuration that m
 The privilege list is a ceiling, not a starting point. It deliberately EXCLUDES role management: a service account able to assign admin roles could grant itself or any other principal Super Admin, which would defeat the least-privilege posture the customer chose when they ruled out Domain-Wide Delegation. That exclusion is why REQ-005 reads the customer's word "roles" as group membership rather than admin role — see the interpretation recorded there. If admin-role management is later wanted, adding it is a deliberate decision with a named escalation consequence, not a quiet privilege addition.
 
 **Acceptance criteria — your task boxes:**
-- [ ] The Admin SDK API is enabled on the GCP project, declared in Terraform
-  → covered by Task T2
+- [x] The Admin SDK API is enabled on the GCP project, declared in Terraform
+  → possible match: Contract "Google Admin SDK Directory API" (rest) from Lifecycle Step Executor (unverified — requirement not mapped to that node)
 - [ ] A custom Workspace admin role exists carrying only: Users (create, read, update, delete), Groups (read and manage members), and Organizational Units (read) — no broader privilege is granted (manual)
   → covered by Task T2
 - [ ] The custom admin role does NOT carry any role-management privilege, verified by reviewing the role's privilege list in the Admin console — so the service account cannot assign admin roles to itself or anyone else (manual)

@@ -28,25 +28,7 @@ Ordered WORK ORDERS synthesized from the model — this node's deliverable kind,
 - [ ] **T2 — Account for every hosted component in this container's definition.**
   Hosted here: Lifecycle Step Executor.
   Each hosted component must be represented in the provisioning definition (compose service entry / subnet placement / deployment target, as appropriate for this container).
-- [ ] **T3 — Implement: "The service is provisioned with ingress set to internal-and-cloud-load-balancing and is not attached to any load balancer backend" (REQ-026).**
-  No interface contract maps to this criterion — it is this node's internal responsibility.
-  ↳ serves: REQ-026 "The service is provisioned with ingress set to internal-and-cloud-load-balancing and is not attached to any load balancer backend"
-- [ ] **T4 — Implement: "run.invoker on this service is granted to exactly two principals — the Cloud Tasks queue invoker service account and the lifecycle-api runtime service account — asserted in Terraform so a third principal fails the check" (REQ-026).**
-  No interface contract maps to this criterion — it is this node's internal responsibility.
-  ↳ serves: REQ-026 "run.invoker on this service is granted to exactly two principals — the Cloud Tasks queue invoker service account and the lifecycle-api runtime service account — asserted in Terraform so a third principal fails the check"
-- [ ] **T5 — Implement: "The service runs under its own runtime service account, which is the only identity holding the Workspace admin role" (REQ-026).**
-  No interface contract maps to this criterion — it is this node's internal responsibility.
-  ↳ serves: REQ-026 "The service runs under its own runtime service account, which is the only identity holding the Workspace admin role"
-- [ ] **T6 — Implement: "min-instances is 0 and the service scales to zero when idle" (REQ-026).**
-  No interface contract maps to this criterion — it is this node's internal responsibility.
-  ↳ serves: REQ-026 "min-instances is 0 and the service scales to zero when idle"
-- [ ] **T7 — Implement: "The request timeout exceeds the slowest expected Workspace step including its retry window, set as a declared variable rather than a default" (REQ-026).**
-  No interface contract maps to this criterion — it is this node's internal responsibility.
-  ↳ serves: REQ-026 "The request timeout exceeds the slowest expected Workspace step including its retry window, set as a declared variable rather than a default"
-- [ ] **T8 — Implement: "The container image is referenced by immutable digest rather than a mutable tag" (REQ-026).**
-  No interface contract maps to this criterion — it is this node's internal responsibility.
-  ↳ serves: REQ-026 "The container image is referenced by immutable digest rather than a mutable tag"
-- [ ] **T9 — Verify every acceptance criterion above and tick its box.**
+- [ ] **T3 — Verify every acceptance criterion above and tick its box.**
   Ordering doctrine — plans follow schemas (contract-first TDD): schemas → test plans → implement → verify. Resolve any open [PLACEHOLDER: schema] gap FIRST (get_build_readiness supplies draftInputs; submit the schema via propose_patches update_contract) — test-plan scenarios touching a schemaless contract stay one-line [blocked by schema: …] markers until the schema lands, then the plan refreshes itself.
   AUTOMATED criteria: call get_test_plan for EACH requirement this node serves, implement the plan's test cases, run them, and report every outcome via report_test_results — a passing result flips the criterion's met flag automatically and the response receipt shows which criteria flipped.
   MANUAL criteria (rows marked (manual) above): report_test_results REFUSES to bind them — prove each by ticking its criterion box in this task doc and having the user approve the resulting change card; that approval is the only thing that flips a manual criterion met.
@@ -88,18 +70,12 @@ Owned by the Cloud Run: lifecycle-worker node. Provisions the step-executor serv
 The worker has two machine callers, and provisioning must grant exactly those two and no more: the Cloud Tasks queue invoker service account, which drives step execution, and the lifecycle-api runtime service account, which uses the read-only lookup routes (REQ-029). Granting run.invoker to both is an IAM-level grant that cannot distinguish routes, so the route-level confinement is enforced in the application (REQ-007, REQ-016, REQ-029) — this requirement's job is to keep the IAM grant list to exactly those two principals so nothing else can reach the service at all.
 
 **Acceptance criteria — your task boxes:**
-- [ ] The service is provisioned with ingress set to internal-and-cloud-load-balancing and is not attached to any load balancer backend
-  → covered by Task T3
-- [ ] run.invoker on this service is granted to exactly two principals — the Cloud Tasks queue invoker service account and the lifecycle-api runtime service account — asserted in Terraform so a third principal fails the check
-  → covered by Task T4
-- [ ] The service runs under its own runtime service account, which is the only identity holding the Workspace admin role
-  → covered by Task T5
-- [ ] min-instances is 0 and the service scales to zero when idle
-  → covered by Task T6
-- [ ] The request timeout exceeds the slowest expected Workspace step including its retry window, set as a declared variable rather than a default
-  → covered by Task T7
-- [ ] The container image is referenced by immutable digest rather than a mutable tag
-  → covered by Task T8
+- [x] The service is provisioned with ingress set to internal-and-cloud-load-balancing and is not attached to any load balancer backend
+- [x] run.invoker on this service is granted to exactly two principals — the Cloud Tasks queue invoker service account and the lifecycle-api runtime service account — asserted in Terraform so a third principal fails the check
+- [x] The service runs under its own runtime service account, which is the only identity holding the Workspace admin role
+- [x] min-instances is 0 and the service scales to zero when idle
+- [x] The request timeout exceeds the slowest expected Workspace step including its retry window, set as a declared variable rather than a default
+- [x] The container image is referenced by immutable digest rather than a mutable tag
 
 ## Technology Guidance
 

@@ -20,7 +20,7 @@ export default defineConfig({
     ],
   },
   test: {
-    include: ['packages/**/*.test.ts', 'services/**/*.test.ts', 'services/**/*.test.tsx'],
+    include: ['packages/**/*.test.ts', 'services/**/*.test.ts', 'services/**/*.test.tsx', 'infra/**/*.test.ts'],
     // The emulator suite has its own config and its own command; it must not
     // run here, where there is no emulator listening.
     exclude: ['**/node_modules/**', '**/*.emulator.test.ts'],

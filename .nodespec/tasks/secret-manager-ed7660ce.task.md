@@ -30,11 +30,7 @@ Ordered WORK ORDERS synthesized from the model — this node's deliverable kind,
 - [ ] **T2 — Expose the interface Lifecycle Step Executor consumes, per Contract "Secret Manager Access" (dependency).**
   Record the endpoint/identifiers Lifecycle Step Executor needs in this node's config artifacts — coordinate with Lifecycle Step Executor.
   Dependency contract — capture the reference/identifier wiring in this node's config artifacts; no payload schema expected.
-  ↳ serves (unverified match): REQ-022 "Both secrets — notification-smtp-credentials and credential-encryption-key — are provisioned by name with an explicit replication policy rather than the provider default" — requirement not mapped to that node; verify or reassign before relying on it
-  ↳ serves (unverified match): REQ-022 "No secret VALUE appears in Terraform configuration or state — secrets are created empty and populated out of band, verified by inspecting the state file for the known values" — requirement not mapped to that node; verify or reassign before relying on it
   ↳ serves (unverified match): REQ-022 "Adding a new secret version does not require redeploying either Cloud Run service" — requirement not mapped to that node; verify or reassign before relying on it
-  ↳ serves (unverified match): REQ-022 "A prior secret version remains accessible for at least the credential TTL window after rotation, so ciphertext written under the old version stays decryptable — or the rotation runbook documents an explicit drain step, and whichever is chosen is recorded as a decision" — requirement not mapped to that node; verify or reassign before relying on it
-  ↳ serves (unverified match): REQ-022 "Secret resources carry labels identifying their owning service and purpose" — requirement not mapped to that node; verify or reassign before relying on it
 - [ ] **T3 — Expose the interface Lifecycle API Service consumes, per Contract "Secret Manager Access" (dependency).**
   Record the endpoint/identifiers Lifecycle API Service needs in this node's config artifacts — coordinate with Lifecycle API Service.
   Dependency contract — capture the reference/identifier wiring in this node's config artifacts; no payload schema expected.
@@ -81,18 +77,18 @@ Category: technical | Status: in-progress
 Owned by the Secret Manager node. Provisions the two secret resources the system needs — notification-smtp-credentials (the app password for the dedicated no-reply Workspace account used against the SMTP relay, REQ-028) and credential-encryption-key (protecting the one-time password between generation and operator retrieval) — with their replication policy and version lifecycle. The IAM bindings that scope who may read them, and the runtime identity separation they enforce, belong to REQ-014; this requirement covers the resources themselves and the hygiene around them, in particular that no secret value is ever written into Terraform state.
 
 **Acceptance criteria — your task boxes:**
-- [ ] Both secrets — notification-smtp-credentials and credential-encryption-key — are provisioned by name with an explicit replication policy rather than the provider default
-  → covered by Task T2
-- [ ] No secret VALUE appears in Terraform configuration or state — secrets are created empty and populated out of band, verified by inspecting the state file for the known values
-  → covered by Task T2
+- [x] Both secrets — notification-smtp-credentials and credential-encryption-key — are provisioned by name with an explicit replication policy rather than the provider default
+  → possible match: Contract "Secret Manager Access" (dependency) from Lifecycle Step Executor (unverified — requirement not mapped to that node)
+- [x] No secret VALUE appears in Terraform configuration or state — secrets are created empty and populated out of band, verified by inspecting the state file for the known values
+  → possible match: Contract "Secret Manager Access" (dependency) from Lifecycle Step Executor (unverified — requirement not mapped to that node)
 - [ ] The credential data-encryption key is generated with sufficient entropy for the chosen cipher and its generation procedure is documented rather than ad hoc
   → covered by Task T4
 - [ ] Adding a new secret version does not require redeploying either Cloud Run service
   → covered by Task T2
-- [ ] A prior secret version remains accessible for at least the credential TTL window after rotation, so ciphertext written under the old version stays decryptable — or the rotation runbook documents an explicit drain step, and whichever is chosen is recorded as a decision
-  → covered by Task T2
-- [ ] Secret resources carry labels identifying their owning service and purpose
-  → covered by Task T2
+- [x] A prior secret version remains accessible for at least the credential TTL window after rotation, so ciphertext written under the old version stays decryptable — or the rotation runbook documents an explicit drain step, and whichever is chosen is recorded as a decision
+  → possible match: Contract "Secret Manager Access" (dependency) from Lifecycle Step Executor (unverified — requirement not mapped to that node)
+- [x] Secret resources carry labels identifying their owning service and purpose
+  → possible match: Contract "Secret Manager Access" (dependency) from Lifecycle Step Executor (unverified — requirement not mapped to that node)
 
 ## Interface Contracts
 
