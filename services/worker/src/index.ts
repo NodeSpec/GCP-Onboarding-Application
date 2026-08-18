@@ -4,6 +4,7 @@ import { CredentialStore, LifecycleStore, SecretManagerKeyProvider } from '@life
 import { requireCaller } from './auth/taskAuth.js';
 import { config } from './config.js';
 import { logger } from './logging.js';
+import { lookupRoutes } from './routes/lookup.js';
 import { taskRoutes } from './routes/tasks.js';
 import { advance } from './steps/advance.js';
 import { createDispatcher } from './tasks/dispatcher.js';
@@ -25,10 +26,10 @@ import './phases/delete.js';
  * Worker entry point.
  *
  * Route mounting is the security boundary. /tasks/* admits only the Cloud Tasks
- * queue invoker; /lookup/* will admit only the API service. Each router is
- * mounted behind its own requireCaller, so neither identity can reach the
- * other's routes even though run.invoker is granted at the service level and
- * cannot tell them apart.
+ * queue invoker; /lookup/* admits only the API service. Each router is mounted
+ * behind its own requireCaller, so neither identity can reach the other's
+ * routes even though run.invoker is granted at the service level and cannot
+ * tell them apart.
  *
  * This service is not attached to the load balancer and has no human callers,
  * which is why it is not behind IAP. See REQ-007.
@@ -72,8 +73,10 @@ app.use(
   }),
 );
 
-// /lookup is mounted in the directory-lookup change (REQ-029), behind
-// requireCaller('api-service').
+// Read-only directory lookup for the console's pickers (REQ-029). Mounted
+// behind the API service's identity, so the Cloud Tasks invoker admitted on
+// /tasks cannot reach it, and vice versa.
+app.use('/lookup', requireCaller('api-service'), lookupRoutes({ directory }));
 
 app.use((_req, res) => {
   res.status(404).json({ error: 'not_found' });
