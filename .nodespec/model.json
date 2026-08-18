@@ -1,7 +1,7 @@
 {
   "modelVersion": 1,
   "generatedBy": "nodespec",
-  "modelHash": "32c1e054cb8dbd84b8e8b4130acd44707f964ae8dcf513d924f9621a43038a2c",
+  "modelHash": "bc97187e666325e16c0c2e0f8c8bbaba7541083948478f048b0bad5823862c22",
   "nodes": [
     {
       "id": "1c81cf63-c51e-4b0e-b6ad-7d318332d2fe",
@@ -579,6 +579,12 @@
       "kind": "test-plan"
     },
     {
+      "id": "0a94f2b7-5d38-4c16-9e07-b3f8264ad510",
+      "nodeId": "565b92bd-2c2c-4a82-be62-b691decdbadf",
+      "path": "docs/runbook.md",
+      "kind": "doc"
+    },
+    {
       "id": "0bb59957-2faf-43af-a215-8c31221ac610",
       "nodeId": "c424e85a-6584-4bb7-a48e-2175ebc6a41b",
       "path": ".nodespec/tests/req-007.tests.md",
@@ -962,6 +968,12 @@
       "nodeId": "565b92bd-2c2c-4a82-be62-b691decdbadf",
       "path": "infra/apis.tf",
       "kind": "config"
+    },
+    {
+      "id": "7f26b3d8-91e4-40a5-bc73-2085d1e97b64",
+      "nodeId": "565b92bd-2c2c-4a82-be62-b691decdbadf",
+      "path": "docs/architecture.md",
+      "kind": "doc"
     },
     {
       "id": "81d2fca9-9bf0-4c7d-b3a2-89955a220175",
