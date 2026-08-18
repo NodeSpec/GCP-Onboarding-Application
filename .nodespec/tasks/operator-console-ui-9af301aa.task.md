@@ -28,7 +28,6 @@ Ordered WORK ORDERS synthesized from the model — this node's deliverable kind,
 - [ ] **T2 — Implement the integration with Lifecycle API Service (nodejs) per Contract "Lifecycle Operator API" (rest).**
   Build to the contract schema EXACTLY (see Interface Contracts).
   ↳ serves (unverified match): REQ-011 "Each phase has a form whose validation is generated from the same schema the API enforces, so client and server reject the same payloads" — requirement not mapped to that node; verify or reassign before relying on it
-  ↳ serves (unverified match): REQ-011 "The approvals inbox shows only requests the signed-in operator is eligible to approve, and never shows their own requests" — requirement not mapped to that node; verify or reassign before relying on it
   ↳ serves (unverified match): REQ-011 "A completed onboarding offers a resend action that lets the operator correct the notification address and choose whether to regenerate the credential, surfacing the CredentialUnavailable case rather than failing opaquely" — requirement not mapped to that node; verify or reassign before relying on it
   ↳ serves (unverified match): REQ-011 "A control the signed-in operator is not authorized to use is not rendered — but the console never relies on that as enforcement, which is proven server-side by REQ-012" — requirement not mapped to that node; verify or reassign before relying on it
 - [ ] **T3 — Implement: "The target user is chosen through a search picker backed by directory lookup rather than typed free-hand, and the update form pre-fills from the selected user's current attributes and memberships" (REQ-011).**
@@ -37,22 +36,19 @@ Ordered WORK ORDERS synthesized from the model — this node's deliverable kind,
 - [ ] **T4 — Implement: "Groups and org unit are chosen from pickers listing what actually exists in the domain, so an invalid group or org unit cannot be submitted" (REQ-011).**
   No interface contract maps to this criterion — it is this node's internal responsibility.
   ↳ serves: REQ-011 "Groups and org unit are chosen from pickers listing what actually exists in the domain, so an invalid group or org unit cannot be submitted"
-- [ ] **T5 — Implement: "The request list filters by phase, status, and target user and paginates without loading the full collection" (REQ-011).**
-  No interface contract maps to this criterion — it is this node's internal responsibility.
-  ↳ serves: REQ-011 "The request list filters by phase, status, and target user and paginates without loading the full collection"
-- [ ] **T6 — Implement: "The request detail view renders the ordered step timeline with each step's status, attempt count, timestamps, and error text" (REQ-011).**
+- [ ] **T5 — Implement: "The request detail view renders the ordered step timeline with each step's status, attempt count, timestamps, and error text" (REQ-011).**
   No interface contract maps to this criterion — it is this node's internal responsibility.
   ↳ serves: REQ-011 "The request detail view renders the ordered step timeline with each step's status, attempt count, timestamps, and error text"
-- [ ] **T7 — Implement: "The approve and reject controls require a justification before submitting, and surface the server's 400 when one is missing rather than assuming the client check was sufficient" (REQ-011).**
+- [ ] **T6 — Implement: "The approve and reject controls require a justification before submitting, and surface the server's 400 when one is missing rather than assuming the client check was sufficient" (REQ-011).**
   No interface contract maps to this criterion — it is this node's internal responsibility.
   ↳ serves: REQ-011 "The approve and reject controls require a justification before submitting, and surface the server's 400 when one is missing rather than assuming the client check was sufficient"
-- [ ] **T8 — Implement: "The console reads the signed-in identity from a server endpoint backed by the verified IAP assertion, not from any client-held token or claim" (REQ-011).**
+- [ ] **T7 — Implement: "The console reads the signed-in identity from a server endpoint backed by the verified IAP assertion, not from any client-held token or claim" (REQ-011).**
   No interface contract maps to this criterion — it is this node's internal responsibility.
   ↳ serves: REQ-011 "The console reads the signed-in identity from a server endpoint backed by the verified IAP assertion, not from any client-held token or claim"
-- [ ] **T9 — Implement: "The console renders the computed diff for an update request showing before/after per changed attribute and per group change, so an approver sees what will change rather than a raw payload" (REQ-011).**
+- [ ] **T8 — Implement: "The console renders the computed diff for an update request showing before/after per changed attribute and per group change, so an approver sees what will change rather than a raw payload" (REQ-011).**
   No interface contract maps to this criterion — it is this node's internal responsibility.
   ↳ serves: REQ-011 "The console renders the computed diff for an update request showing before/after per changed attribute and per group change, so an approver sees what will change rather than a raw payload"
-- [ ] **T10 — Verify every acceptance criterion above and tick its box.**
+- [ ] **T9 — Verify every acceptance criterion above and tick its box.**
   Ordering doctrine — plans follow schemas (contract-first TDD): schemas → test plans → implement → verify. Resolve any open [PLACEHOLDER: schema] gap FIRST (get_build_readiness supplies draftInputs; submit the schema via propose_patches update_contract) — test-plan scenarios touching a schemaless contract stay one-line [blocked by schema: …] markers until the schema lands, then the plan refreshes itself.
   AUTOMATED criteria: call get_test_plan for EACH requirement this node serves, implement the plan's test cases, run them, and report every outcome via report_test_results — a passing result flips the criterion's met flag automatically and the response receipt shows which criteria flipped.
   MANUAL criteria (rows marked (manual) above): report_test_results REFUSES to bind them — prove each by ticking its criterion box in this task doc and having the user approve the resulting change card; that approval is the only thing that flips a manual criterion met.
@@ -92,18 +88,18 @@ A single-page operator console, served behind IAP by the same Cloud Run service 
   → covered by Task T3
 - [ ] Groups and org unit are chosen from pickers listing what actually exists in the domain, so an invalid group or org unit cannot be submitted
   → covered by Task T4
-- [ ] The request list filters by phase, status, and target user and paginates without loading the full collection
-  → covered by Task T5
+- [x] The request list filters by phase, status, and target user and paginates without loading the full collection
+  → THIS NODE: internal logic
 - [ ] The request detail view renders the ordered step timeline with each step's status, attempt count, timestamps, and error text
-  → covered by Task T6
-- [ ] The approvals inbox shows only requests the signed-in operator is eligible to approve, and never shows their own requests
-  → covered by Task T2
+  → covered by Task T5
+- [x] The approvals inbox shows only requests the signed-in operator is eligible to approve, and never shows their own requests
+  → possible match: Contract "Lifecycle Operator API" (rest) to Lifecycle API Service (unverified — requirement not mapped to that node)
 - [ ] The approve and reject controls require a justification before submitting, and surface the server's 400 when one is missing rather than assuming the client check was sufficient
-  → covered by Task T7
+  → covered by Task T6
 - [ ] The console reads the signed-in identity from a server endpoint backed by the verified IAP assertion, not from any client-held token or claim
-  → covered by Task T8
+  → covered by Task T7
 - [ ] The console renders the computed diff for an update request showing before/after per changed attribute and per group change, so an approver sees what will change rather than a raw payload
-  → covered by Task T9
+  → covered by Task T8
 - [ ] A completed onboarding offers a resend action that lets the operator correct the notification address and choose whether to regenerate the credential, surfacing the CredentialUnavailable case rather than failing opaquely
   → covered by Task T2
 - [ ] A control the signed-in operator is not authorized to use is not rendered — but the console never relies on that as enforcement, which is proven server-side by REQ-012

@@ -14,6 +14,8 @@ import { config } from './config.js';
 import { logger } from './logging.js';
 import { createIapAuth } from './middleware/iapAuth.js';
 import { adminRoutes } from './routes/admin.js';
+import { ProtectedAccounts } from './protectedAccounts.js';
+import { lookupRoutes } from './routes/lookup.js';
 import { requestRoutes } from './routes/requests.js';
 import { roleBindingRoutes } from './routes/roleBindings.js';
 import { BindingRoleResolver } from './roles.js';
@@ -118,10 +120,14 @@ const dispatcher = createDispatcher();
  * unreachable. An operator with no binding is authenticated and authorized for
  * nothing (REQ-012 AC-2); BOOTSTRAP_ADMINS is the only way into an empty store.
  *
- * Group membership needs the worker's read-only directory lookup (REQ-029),
- * which is not built, so only individual bindings resolve today. Caching is
- * left off: it would trade revocation latency for read volume, and read volume
- * is not this service's problem.
+ * No GroupMembershipProvider is supplied, so only individual bindings resolve
+ * here. The group path itself is built and tested; what is missing is the
+ * membership source, which the worker's lookup surface can now supply
+ * (REQ-029). Until it is wired, a 'group' binding grants nothing in a deployed
+ * environment even though it resolves correctly in test.
+ *
+ * Caching is left off: it would trade revocation latency for read volume, and
+ * read volume is not this service's problem.
  */
 const resolver = new BindingRoleResolver(store, { bootstrapAdmins: config.BOOTSTRAP_ADMINS });
 
@@ -148,13 +154,25 @@ const onDenied = (event: {
 
 app.use(
   '/api/requests',
-  requestRoutes({ store, loadPolicy, dispatcher, resolver, credentials, onDenied }),
+  requestRoutes({
+    store,
+    loadPolicy,
+    dispatcher,
+    resolver,
+    credentials,
+    onDenied,
+    protectedAccounts: new ProtectedAccounts(),
+  }),
 );
 app.use(
   '/api/role-bindings',
   roleBindingRoutes({ store, resolver, onChanged: (subject) => resolver.invalidate(subject) }),
 );
 app.use('/api/admin', adminRoutes({ store, dispatcher, resolver }));
+
+// Directory pickers for the console, proxied to the worker, which holds the
+// only Workspace credential (REQ-029).
+app.use('/api/lookup', lookupRoutes({ resolver }));
 
 app.get('/api/me', async (req, res) => {
   // The console reads who it is, and what it may do, from the server. It must
