@@ -171,7 +171,10 @@ describe('AC-3: a colliding primary email fails validation', () => {
     const step = (await store.listSteps(requestId)).find((s) => s.stepId === stepId)!;
 
     expect(step.status).toBe('failed');
+    // The class an operator's own bad input earns, and a code stable enough to
+    // branch on. 'terminal'/'terminal' would have been true and unusable.
     expect(step.error).toMatchObject({ class: 'validation', code: 'already_exists' });
+    // The message names the address, so the operator knows which field to fix.
     expect(step.error!.message).toContain(TAKEN);
   });
 
@@ -182,6 +185,9 @@ describe('AC-3: a colliding primary email fails validation', () => {
   });
 
   it('attempts no mutation whatsoever', async () => {
+    // The criterion's real content. Counted at the Directory boundary rather
+    // than inferred from the resulting domain, because a run that mutated and
+    // then failed can leave state indistinguishable from one that did not.
     await submitAndValidate();
 
     expect(directory.mutations).toEqual([]);
@@ -194,10 +200,14 @@ describe('AC-3: a colliding primary email fails validation', () => {
     expect(steps.slice(1).every((s) => s.status === 'pending' && s.attempts === 0)).toBe(true);
     expect(steps).toHaveLength(plan.length);
 
+    // create-user never ran, so nothing was generated to stash. A record here
+    // would mean a password was issued for an account that was never made.
     expect((await db.collection(COLLECTIONS.credentialHandoffs).get()).size).toBe(0);
   });
 
   it('settles instead of asking Cloud Tasks to redeliver', async () => {
+    // A collision does not heal on retry. Returning 'retry' would spend the
+    // whole budget re-reading the same account before failing anyway.
     const { outcome } = await submitAndValidate();
 
     expect(outcome).toEqual({ kind: 'settled', status: 'failed' });
@@ -216,6 +226,8 @@ describe('AC-3: a colliding primary email fails validation', () => {
   });
 
   it('is the collision that caused this: the same run proceeds when the address is free', async () => {
+    // The control. Without it every assertion above would also hold for a
+    // validation step that failed for some unrelated reason.
     directory.exists = false;
 
     const { requestId, stepId } = await submitAndValidate();
@@ -229,12 +241,17 @@ describe('AC-3: a colliding primary email fails validation', () => {
 
 describe('the error type carries the classification, not the call site', () => {
   it('is a UserAlreadyExistsError naming the address and the operation', () => {
+    // Constructed directly, because the executor only ever sees it as a
+    // classified step error and the type's own contract would otherwise go
+    // unasserted.
     const err = new UserAlreadyExistsError(TAKEN, 'validate-request');
 
     expect(err).toBeInstanceOf(UserAlreadyExistsError);
     expect(err.name).toBe('UserAlreadyExistsError');
     expect(err.primaryEmail).toBe(TAKEN);
     expect(err.operation).toBe('validate-request');
+    // 'conflict' is not in the retryable set, which is what stops the executor
+    // handing the step back to 'ready' for another delivery.
     expect(err.errorClass).toBe('conflict');
     expect(err.status).toBe(409);
   });
