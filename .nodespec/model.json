@@ -1,7 +1,7 @@
 {
   "modelVersion": 1,
   "generatedBy": "nodespec",
-  "modelHash": "fb7e6304e830e9730e5c1a90379c06de05ebdb651a6084f804da19d4ccc23714",
+  "modelHash": "90b7c6c82a1957adaf08069144e6c1eae39cbdf6737f6da1df6b27aca835d93e",
   "nodes": [
     {
       "id": "1c81cf63-c51e-4b0e-b6ad-7d318332d2fe",
@@ -1054,7 +1054,8 @@
       "id": "8e2a5f14-b70c-4d96-a385-27f4c1b0938e",
       "nodeId": "565b92bd-2c2c-4a82-be62-b691decdbadf",
       "path": "docs/deployment.md",
-      "kind": "doc"
+      "kind": "doc",
+      "contentHash": "00000000421c69f7"
     },
     {
       "id": "8e3f7a92-4c15-4b60-9d28-6a0f5c3e1b47",
@@ -1510,7 +1511,8 @@
       "id": "e94a6c27-5138-4b70-a2d6-73819fc0e451",
       "nodeId": "d9e456a0-b079-4914-b8fc-f48f42fa7a7f",
       "path": "infra/loadbalancer.tf",
-      "kind": "config"
+      "kind": "config",
+      "contentHash": "0000000031ca79d5"
     },
     {
       "id": "eb01c689-4c8f-4510-985a-69242309c3e0",
