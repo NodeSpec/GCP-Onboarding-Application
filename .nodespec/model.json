@@ -1,7 +1,7 @@
 {
   "modelVersion": 1,
   "generatedBy": "nodespec",
-  "modelHash": "e7f8798b6f641acfe2e311ea9cf2eaaf92e7410ded6c1f101261dd87725c8126",
+  "modelHash": "b76c6b866ad06fe22beab1a2e26e394727778e6f0f5883ba012ea43c91dddd85",
   "nodes": [
     {
       "id": "1c81cf63-c51e-4b0e-b6ad-7d318332d2fe",
@@ -1563,7 +1563,8 @@
       "id": "e94a6c27-5138-4b70-a2d6-73819fc0e451",
       "nodeId": "d9e456a0-b079-4914-b8fc-f48f42fa7a7f",
       "path": "infra/loadbalancer.tf",
-      "kind": "config"
+      "kind": "config",
+      "contentHash": "0000000031ca79d5"
     },
     {
       "id": "eb01c689-4c8f-4510-985a-69242309c3e0",

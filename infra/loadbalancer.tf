@@ -17,7 +17,16 @@ resource "google_compute_region_network_endpoint_group" "api" {
   network_endpoint_type = "SERVERLESS"
 
   cloud_run {
-    service = google_cloud_run_v2_service.api.name
+    # Referenced by NAME as a literal, not as google_cloud_run_v2_service.api.name,
+    # and this is load bearing. The IAP audience is built from this backend
+    # service's generated id, the API service is given that audience as an env
+    # var, the backend is built from this NEG, and a resource-attribute
+    # reference here would close the loop into a dependency cycle that Terraform
+    # refuses to plan. A serverless NEG needs only the service name and does not
+    # require the service to exist when the NEG is created, so the name breaks
+    # the cycle at no cost. This string MUST equal the API service name in
+    # cloudrun.tf.
+    service = "lifecycle-api"
   }
 }
 
