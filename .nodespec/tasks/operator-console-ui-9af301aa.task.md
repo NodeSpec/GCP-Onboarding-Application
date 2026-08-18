@@ -27,28 +27,7 @@ Ordered WORK ORDERS synthesized from the model — this node's deliverable kind,
   Start from the catalog's suggested structure: `src/App.tsx`, `src/main.tsx`, `vite.config.ts`, `tsconfig.json`.
 - [ ] **T2 — Implement the integration with Lifecycle API Service (nodejs) per Contract "Lifecycle Operator API" (rest).**
   Build to the contract schema EXACTLY (see Interface Contracts).
-  ↳ serves (unverified match): REQ-011 "Each phase has a form whose validation is generated from the same schema the API enforces, so client and server reject the same payloads" — requirement not mapped to that node; verify or reassign before relying on it
-  ↳ serves (unverified match): REQ-011 "A completed onboarding offers a resend action that lets the operator correct the notification address and choose whether to regenerate the credential, surfacing the CredentialUnavailable case rather than failing opaquely" — requirement not mapped to that node; verify or reassign before relying on it
-  ↳ serves (unverified match): REQ-011 "A control the signed-in operator is not authorized to use is not rendered — but the console never relies on that as enforcement, which is proven server-side by REQ-012" — requirement not mapped to that node; verify or reassign before relying on it
-- [ ] **T3 — Implement: "The target user is chosen through a search picker backed by directory lookup rather than typed free-hand, and the update form pre-fills from the selected user's current attributes and memberships" (REQ-011).**
-  No interface contract maps to this criterion — it is this node's internal responsibility.
-  ↳ serves: REQ-011 "The target user is chosen through a search picker backed by directory lookup rather than typed free-hand, and the update form pre-fills from the selected user's current attributes and memberships"
-- [ ] **T4 — Implement: "Groups and org unit are chosen from pickers listing what actually exists in the domain, so an invalid group or org unit cannot be submitted" (REQ-011).**
-  No interface contract maps to this criterion — it is this node's internal responsibility.
-  ↳ serves: REQ-011 "Groups and org unit are chosen from pickers listing what actually exists in the domain, so an invalid group or org unit cannot be submitted"
-- [ ] **T5 — Implement: "The request detail view renders the ordered step timeline with each step's status, attempt count, timestamps, and error text" (REQ-011).**
-  No interface contract maps to this criterion — it is this node's internal responsibility.
-  ↳ serves: REQ-011 "The request detail view renders the ordered step timeline with each step's status, attempt count, timestamps, and error text"
-- [ ] **T6 — Implement: "The approve and reject controls require a justification before submitting, and surface the server's 400 when one is missing rather than assuming the client check was sufficient" (REQ-011).**
-  No interface contract maps to this criterion — it is this node's internal responsibility.
-  ↳ serves: REQ-011 "The approve and reject controls require a justification before submitting, and surface the server's 400 when one is missing rather than assuming the client check was sufficient"
-- [ ] **T7 — Implement: "The console reads the signed-in identity from a server endpoint backed by the verified IAP assertion, not from any client-held token or claim" (REQ-011).**
-  No interface contract maps to this criterion — it is this node's internal responsibility.
-  ↳ serves: REQ-011 "The console reads the signed-in identity from a server endpoint backed by the verified IAP assertion, not from any client-held token or claim"
-- [ ] **T8 — Implement: "The console renders the computed diff for an update request showing before/after per changed attribute and per group change, so an approver sees what will change rather than a raw payload" (REQ-011).**
-  No interface contract maps to this criterion — it is this node's internal responsibility.
-  ↳ serves: REQ-011 "The console renders the computed diff for an update request showing before/after per changed attribute and per group change, so an approver sees what will change rather than a raw payload"
-- [ ] **T9 — Verify every acceptance criterion above and tick its box.**
+- [ ] **T3 — Verify every acceptance criterion above and tick its box.**
   Ordering doctrine — plans follow schemas (contract-first TDD): schemas → test plans → implement → verify. Resolve any open [PLACEHOLDER: schema] gap FIRST (get_build_readiness supplies draftInputs; submit the schema via propose_patches update_contract) — test-plan scenarios touching a schemaless contract stay one-line [blocked by schema: …] markers until the schema lands, then the plan refreshes itself.
   AUTOMATED criteria: call get_test_plan for EACH requirement this node serves, implement the plan's test cases, run them, and report every outcome via report_test_results — a passing result flips the criterion's met flag automatically and the response receipt shows which criteria flipped.
   MANUAL criteria (rows marked (manual) above): report_test_results REFUSES to bind them — prove each by ticking its criterion box in this task doc and having the user approve the resulting change card; that approval is the only thing that flips a manual criterion met.
@@ -82,28 +61,28 @@ Category: functional | Status: in-progress
 A single-page operator console, served behind IAP by the same Cloud Run service that hosts the API, is the human surface for all four phases. It provides: guided forms for each phase (create, notify, update, delete) driven by the same schemas the API validates against; a request list filterable by phase, status, and target user; a request detail view showing the step timeline with per-step status, attempts, timestamps, and errors; an approvals inbox showing only requests the signed-in operator is eligible to approve, with the rendered diff and approve/reject controls requiring a justification; and a resume/cancel control for failed or held requests. The console derives the signed-in identity and available actions from the server's verified IAP identity — it never asserts identity itself, and hiding a control in the UI is never the only enforcement of a permission.
 
 **Acceptance criteria — your task boxes:**
-- [ ] Each phase has a form whose validation is generated from the same schema the API enforces, so client and server reject the same payloads
-  → covered by Task T2
-- [ ] The target user is chosen through a search picker backed by directory lookup rather than typed free-hand, and the update form pre-fills from the selected user's current attributes and memberships
-  → covered by Task T3
-- [ ] Groups and org unit are chosen from pickers listing what actually exists in the domain, so an invalid group or org unit cannot be submitted
-  → covered by Task T4
+- [x] Each phase has a form whose validation is generated from the same schema the API enforces, so client and server reject the same payloads
+  → possible match: Contract "Lifecycle Operator API" (rest) to Lifecycle API Service (unverified — requirement not mapped to that node)
+- [x] The target user is chosen through a search picker backed by directory lookup rather than typed free-hand, and the update form pre-fills from the selected user's current attributes and memberships
+  → THIS NODE: internal logic
+- [x] Groups and org unit are chosen from pickers listing what actually exists in the domain, so an invalid group or org unit cannot be submitted
+  → THIS NODE: internal logic
 - [x] The request list filters by phase, status, and target user and paginates without loading the full collection
   → THIS NODE: internal logic
-- [ ] The request detail view renders the ordered step timeline with each step's status, attempt count, timestamps, and error text
-  → covered by Task T5
+- [x] The request detail view renders the ordered step timeline with each step's status, attempt count, timestamps, and error text
+  → THIS NODE: internal logic
 - [x] The approvals inbox shows only requests the signed-in operator is eligible to approve, and never shows their own requests
   → possible match: Contract "Lifecycle Operator API" (rest) to Lifecycle API Service (unverified — requirement not mapped to that node)
-- [ ] The approve and reject controls require a justification before submitting, and surface the server's 400 when one is missing rather than assuming the client check was sufficient
-  → covered by Task T6
-- [ ] The console reads the signed-in identity from a server endpoint backed by the verified IAP assertion, not from any client-held token or claim
-  → covered by Task T7
-- [ ] The console renders the computed diff for an update request showing before/after per changed attribute and per group change, so an approver sees what will change rather than a raw payload
-  → covered by Task T8
-- [ ] A completed onboarding offers a resend action that lets the operator correct the notification address and choose whether to regenerate the credential, surfacing the CredentialUnavailable case rather than failing opaquely
-  → covered by Task T2
-- [ ] A control the signed-in operator is not authorized to use is not rendered — but the console never relies on that as enforcement, which is proven server-side by REQ-012
-  → covered by Task T2
+- [x] The approve and reject controls require a justification before submitting, and surface the server's 400 when one is missing rather than assuming the client check was sufficient
+  → THIS NODE: internal logic
+- [x] The console reads the signed-in identity from a server endpoint backed by the verified IAP assertion, not from any client-held token or claim
+  → THIS NODE: internal logic
+- [x] The console renders the computed diff for an update request showing before/after per changed attribute and per group change, so an approver sees what will change rather than a raw payload
+  → THIS NODE: internal logic
+- [x] A completed onboarding offers a resend action that lets the operator correct the notification address and choose whether to regenerate the credential, surfacing the CredentialUnavailable case rather than failing opaquely
+  → possible match: Contract "Lifecycle Operator API" (rest) to Lifecycle API Service (unverified — requirement not mapped to that node)
+- [x] A control the signed-in operator is not authorized to use is not rendered — but the console never relies on that as enforcement, which is proven server-side by REQ-012
+  → possible match: Contract "Lifecycle Operator API" (rest) to Lifecycle API Service (unverified — requirement not mapped to that node)
 
 ## Interface Contracts
 
@@ -888,3 +867,21 @@ Startup/initialization order based on edge directions and interaction patterns.
 - HTTP errors from Lifecycle API Service ("Lifecycle Operator API"): handle 4xx (client error), 5xx (server error), timeouts, and connection refused
 
 **Parent Container:** Cloud Run: lifecycle-api (docker-container)
+
+## Existing Implementation
+
+| File | Kind | Language | Status |
+|------|------|----------|--------|
+| `services/console/src/RequestList.tsx` | source | --- | draft |
+| `services/console/src/main.tsx` | source | --- | draft |
+| `services/console/src/pickers.tsx` | source | --- | draft |
+| `services/console/tsconfig.json` | config | --- | draft |
+| `services/console/src/RequestDetail.tsx` | source | --- | draft |
+| `services/console/src/api.ts` | source | --- | draft |
+| `services/console/src/Approvals.tsx` | source | --- | draft |
+| `services/console/src/App.tsx` | source | --- | draft |
+| `services/console/package.json` | config | --- | draft |
+| `services/console/vite.config.ts` | config | --- | draft |
+| `services/console/src/identity.tsx` | source | --- | draft |
+| `services/console/index.html` | source | --- | draft |
+| `services/console/src/RequestForm.tsx` | source | --- | draft |

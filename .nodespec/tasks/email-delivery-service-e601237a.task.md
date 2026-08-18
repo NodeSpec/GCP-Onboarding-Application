@@ -42,19 +42,10 @@ Ordered WORK ORDERS synthesized from the model — this node's deliverable kind,
 - [ ] **T6 — Configure the service to satisfy: "Return-Path is set to a monitored Workspace group so asynchronous bounces land somewhere a human reads, and the runbook names who monitors it" (REQ-028).**
   No interface contract maps to this criterion — it is this node's internal responsibility.
   ↳ serves: REQ-028 "Return-Path is set to a monitored Workspace group so asynchronous bounces land somewhere a human reads, and the runbook names who monitors it"
-- [ ] **T7 — Configure the service to satisfy: "The SMTP host, port, sender address and Return-Path are supplied as configuration and the app password is resolved from Secret Manager at runtime, so switching provider requires no code change outside the NotificationSender implementation" (REQ-028).**
-  No interface contract maps to this criterion — it is this node's internal responsibility.
-  ↳ serves: REQ-028 "The SMTP host, port, sender address and Return-Path are supplied as configuration and the app password is resolved from Secret Manager at runtime, so switching provider requires no code change outside the NotificationSender implementation"
-- [ ] **T8 — Configure the service to satisfy: "A synchronous SMTP rejection is surfaced as a typed error the notification step records and can be resumed from, rather than being silently swallowed" (REQ-028).**
-  No interface contract maps to this criterion — it is this node's internal responsibility.
-  ↳ serves: REQ-028 "A synchronous SMTP rejection is surfaced as a typed error the notification step records and can be resumed from, rather than being silently swallowed"
-- [ ] **T9 — Configure the service to satisfy: "The SMTP credential is never logged and never included in an audit payload, verified by the redaction test in REQ-010" (REQ-028).**
+- [ ] **T7 — Configure the service to satisfy: "The SMTP credential is never logged and never included in an audit payload, verified by the redaction test in REQ-010" (REQ-028).**
   No interface contract maps to this criterion — it is this node's internal responsibility.
   ↳ serves: REQ-028 "The SMTP credential is never logged and never included in an audit payload, verified by the redaction test in REQ-010"
-- [ ] **T10 — Configure the service to satisfy: "Rotating the app password to a new Secret Manager version is picked up without redeploying the worker" (REQ-028).**
-  No interface contract maps to this criterion — it is this node's internal responsibility.
-  ↳ serves: REQ-028 "Rotating the app password to a new Secret Manager version is picked up without redeploying the worker"
-- [ ] **T11 — Verify every acceptance criterion above and tick its box.**
+- [ ] **T8 — Verify every acceptance criterion above and tick its box.**
   Ordering doctrine — plans follow schemas (contract-first TDD): schemas → test plans → implement → verify. Resolve any open [PLACEHOLDER: schema] gap FIRST (get_build_readiness supplies draftInputs; submit the schema via propose_patches update_contract) — test-plan scenarios touching a schemaless contract stay one-line [blocked by schema: …] markers until the schema lands, then the plan refreshes itself.
   AUTOMATED criteria: call get_test_plan for EACH requirement this node serves, implement the plan's test cases, run them, and report every outcome via report_test_results — a passing result flips the criterion's met flag automatically and the response receipt shows which criteria flipped.
   MANUAL criteria (rows marked (manual) above): report_test_results REFUSES to bind them — prove each by ticking its criterion box in this task doc and having the user approve the resulting change card; that approval is the only thing that flips a manual criterion met.
@@ -108,14 +99,14 @@ The second accepted cost is bounce visibility. SMTP returns a synchronous accept
   → covered by Task T2
 - [ ] Return-Path is set to a monitored Workspace group so asynchronous bounces land somewhere a human reads, and the runbook names who monitors it (manual)
   → covered by Task T6
-- [ ] The SMTP host, port, sender address and Return-Path are supplied as configuration and the app password is resolved from Secret Manager at runtime, so switching provider requires no code change outside the NotificationSender implementation
-  → covered by Task T7
-- [ ] A synchronous SMTP rejection is surfaced as a typed error the notification step records and can be resumed from, rather than being silently swallowed
-  → covered by Task T8
+- [x] The SMTP host, port, sender address and Return-Path are supplied as configuration and the app password is resolved from Secret Manager at runtime, so switching provider requires no code change outside the NotificationSender implementation
+  → THIS NODE: internal logic
+- [x] A synchronous SMTP rejection is surfaced as a typed error the notification step records and can be resumed from, rather than being silently swallowed
+  → THIS NODE: internal logic
 - [ ] The SMTP credential is never logged and never included in an audit payload, verified by the redaction test in REQ-010
-  → covered by Task T9
-- [ ] Rotating the app password to a new Secret Manager version is picked up without redeploying the worker
-  → covered by Task T10
+  → covered by Task T7
+- [x] Rotating the app password to a new Secret Manager version is picked up without redeploying the worker
+  → THIS NODE: internal logic
 
 ## Interface Contracts
 

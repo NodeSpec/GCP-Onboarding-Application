@@ -46,10 +46,7 @@ Ordered WORK ORDERS synthesized from the model — this node's deliverable kind,
 - [ ] **T10 — Implement: "A creation request for a primary email that already exists in the domain fails validation before any mutation is attempted and the request terminates in 'failed' with a typed AlreadyExists error" (REQ-003).**
   No interface contract maps to this criterion — it is this node's internal responsibility.
   ↳ serves: REQ-003 "A creation request for a primary email that already exists in the domain fails validation before any mutation is attempted and the request terminates in 'failed' with a typed AlreadyExists error"
-- [ ] **T11 — Implement: "The console link resolves to the request detail behind IAP, so an approver who is not signed in is authenticated at the perimeter before seeing anything" (REQ-032).**
-  No interface contract maps to this criterion — it is this node's internal responsibility.
-  ↳ serves: REQ-032 "The console link resolves to the request detail behind IAP, so an approver who is not signed in is authenticated at the perimeter before seeing anything"
-- [ ] **T12 — Verify every acceptance criterion above and tick its box.**
+- [ ] **T11 — Verify every acceptance criterion above and tick its box.**
   Ordering doctrine — plans follow schemas (contract-first TDD): schemas → test plans → implement → verify. Resolve any open [PLACEHOLDER: schema] gap FIRST (get_build_readiness supplies draftInputs; submit the schema via propose_patches update_contract) — test-plan scenarios touching a schemaless contract stay one-line [blocked by schema: …] markers until the schema lands, then the plan refreshes itself.
   AUTOMATED criteria: call get_test_plan for EACH requirement this node serves, implement the plan's test cases, run them, and report every outcome via report_test_results — a passing result flips the criterion's met flag automatically and the response receipt shows which criteria flipped.
   MANUAL criteria (rows marked (manual) above): report_test_results REFUSES to bind them — prove each by ticking its criterion box in this task doc and having the user approve the resulting change card; that approval is the only thing that flips a manual criterion met.
@@ -211,8 +208,8 @@ A notification failure must not fail the request. The step is still legitimately
   → possible match: Contract "Step Task Enqueue" (rest) to Cloud Tasks: lifecycle-steps (unverified — requirement not mapped to that node)
 - [x] The message contains request id, phase, target user, requester, the approval deadline when one is configured, and a console link — and contains no computed diff, no attribute values, no credential and no token, verified by rendering with a fully populated context and asserting none of it appears
   → THIS NODE: internal logic
-- [ ] The console link resolves to the request detail behind IAP, so an approver who is not signed in is authenticated at the perimeter before seeing anything
-  → covered by Task T11
+- [x] The console link resolves to the request detail behind IAP, so an approver who is not signed in is authenticated at the perimeter before seeing anything
+  → THIS NODE: internal logic
 - [x] When a step requires approval but no eligible approver exists, the notification step fails loudly with a typed NoEligibleApprover error and the condition is surfaced to admins — it never resolves as a successful send to nobody
   → possible match: Contract "Step Task Enqueue" (rest) to Cloud Tasks: lifecycle-steps (unverified — requirement not mapped to that node)
 - [x] A notification delivery failure is recorded on the step and retried, and leaves the request in 'awaiting_approval' rather than moving it to 'failed' — the approval is still pending, only the telling failed

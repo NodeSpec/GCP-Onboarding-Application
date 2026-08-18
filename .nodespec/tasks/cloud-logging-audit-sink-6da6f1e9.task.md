@@ -31,7 +31,6 @@ Ordered WORK ORDERS synthesized from the model — this node's deliverable kind,
   Record the endpoint/identifiers Lifecycle Step Executor needs in this node's config artifacts — coordinate with Lifecycle Step Executor.
   Dependency contract — capture the reference/identifier wiring in this node's config artifacts; no payload schema expected.
   ↳ serves (unverified match): REQ-018 "Every audit event is mirrored to the dedicated Cloud Logging bucket with the same eventId, so the log copy can be reconciled against the Firestore copy" — requirement not mapped to that node; verify or reassign before relying on it
-  ↳ serves (unverified match): REQ-018 "A reconciliation check over a sample window reports any audit event present in one store and absent from the other" — requirement not mapped to that node; verify or reassign before relying on it
   ↳ serves (unverified match): REQ-018 "No application runtime service account holds permission to delete log entries or shorten the bucket's retention policy, verified against the deployed IAM policy" — requirement not mapped to that node; verify or reassign before relying on it
   ↳ serves (unverified match): REQ-018 "The audit log bucket carries a locked retention policy, and the retention period is set to Company's stated compliance requirement rather than a default" — requirement not mapped to that node; verify or reassign before relying on it
 - [ ] **T3 — Expose the interface Lifecycle API Service consumes, per Contract "Audit Log Sink" (dependency).**
@@ -82,8 +81,8 @@ Owned by the Cloud Logging node. Application-layer append-only discipline (REQ-0
 **Acceptance criteria — your task boxes:**
 - [ ] Every audit event is mirrored to the dedicated Cloud Logging bucket with the same eventId, so the log copy can be reconciled against the Firestore copy
   → covered by Task T2
-- [ ] A reconciliation check over a sample window reports any audit event present in one store and absent from the other
-  → covered by Task T2
+- [x] A reconciliation check over a sample window reports any audit event present in one store and absent from the other
+  → possible match: Contract "Audit Log Sink" (dependency) from Lifecycle Step Executor (unverified — requirement not mapped to that node)
 - [ ] No application runtime service account holds permission to delete log entries or shorten the bucket's retention policy, verified against the deployed IAM policy
   → covered by Task T2
 - [ ] The audit log bucket carries a locked retention policy, and the retention period is set to Company's stated compliance requirement rather than a default (manual)

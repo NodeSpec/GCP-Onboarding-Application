@@ -1,7 +1,7 @@
 {
   "modelVersion": 1,
   "generatedBy": "nodespec",
-  "modelHash": "17e64ca00481b30b6be9db4c73753d1f4296b4584c51174a17bce5a14fa73692",
+  "modelHash": "e23216649792aa56c9129bc81c624e850af27973e86b44ee0739938f071e1e62",
   "nodes": [
     {
       "id": "1c81cf63-c51e-4b0e-b6ad-7d318332d2fe",
@@ -592,6 +592,12 @@
       "contentHash": "0000000078aa44c8"
     },
     {
+      "id": "0c83b6f5-1e79-4a24-8f56-d3719ba0c4e2",
+      "nodeId": "9af301aa-2191-4532-9871-82179a5500c1",
+      "path": "services/console/src/RequestList.tsx",
+      "kind": "source"
+    },
+    {
       "id": "0f5b5098-35a3-4fcb-998f-f04c64afdd05",
       "nodeId": "db8e5409-dc6f-4052-887a-7ba1dd5fb717",
       "path": "services/worker/src/notify/templates.test.ts",
@@ -648,6 +654,12 @@
       "kind": "doc"
     },
     {
+      "id": "1d7be540-8c92-4a03-b6f1-25de84c930ab",
+      "nodeId": "9af301aa-2191-4532-9871-82179a5500c1",
+      "path": "services/console/src/main.tsx",
+      "kind": "source"
+    },
+    {
       "id": "23c255fd-55b1-495a-bbdf-81b50fbea74e",
       "nodeId": "db8e5409-dc6f-4052-887a-7ba1dd5fb717",
       "path": "services/worker/src/notify/approvers.ts",
@@ -672,6 +684,12 @@
       "nodeId": "c424e85a-6584-4bb7-a48e-2175ebc6a41b",
       "path": ".nodespec/tests/req-012.tests.md",
       "kind": "test-plan"
+    },
+    {
+      "id": "2e58c1d9-4f70-4b36-8a05-c71d92e4b038",
+      "nodeId": "9af301aa-2191-4532-9871-82179a5500c1",
+      "path": "services/console/src/pickers.tsx",
+      "kind": "source"
     },
     {
       "id": "32a6af8e-e959-4d04-b912-a0b13bfb2608",
@@ -733,6 +751,12 @@
       "kind": "source"
     },
     {
+      "id": "3f82d5b7-9c14-4a6e-8b02-71fd3ac6e295",
+      "nodeId": "9af301aa-2191-4532-9871-82179a5500c1",
+      "path": "services/console/tsconfig.json",
+      "kind": "config"
+    },
+    {
       "id": "4038fb45-11ae-474b-8fd2-d6bf72d410e8",
       "nodeId": "db8e5409-dc6f-4052-887a-7ba1dd5fb717",
       "path": "services/worker/src/tasks/dispatcher.ts",
@@ -752,9 +776,21 @@
       "kind": "test-plan"
     },
     {
+      "id": "47b0c8e1-9d36-4a5f-8c24-1b7ea039d685",
+      "nodeId": "9af301aa-2191-4532-9871-82179a5500c1",
+      "path": "services/console/src/RequestDetail.tsx",
+      "kind": "source"
+    },
+    {
       "id": "4b8d21f7-9c53-4e60-a7d1-5f2e8b0c6a94",
       "nodeId": "db8e5409-dc6f-4052-887a-7ba1dd5fb717",
       "path": "services/worker/src/phases/update.ts",
+      "kind": "source"
+    },
+    {
+      "id": "4c9a2e61-b035-4d7f-8ea2-93c50b17d6f4",
+      "nodeId": "9af301aa-2191-4532-9871-82179a5500c1",
+      "path": "services/console/src/api.ts",
       "kind": "source"
     },
     {
@@ -762,6 +798,12 @@
       "nodeId": "db8e5409-dc6f-4052-887a-7ba1dd5fb717",
       "path": "services/worker/src/steps/advance.emulator.test.ts",
       "kind": "test-plan"
+    },
+    {
+      "id": "5a27e94c-8b13-4f60-a2d7-6c40b98e153f",
+      "nodeId": "9af301aa-2191-4532-9871-82179a5500c1",
+      "path": "services/console/src/Approvals.tsx",
+      "kind": "source"
     },
     {
       "id": "5a8e2f41-7c93-4b60-a2d5-9e1f0c8b6d47",
@@ -841,6 +883,13 @@
       "kind": "test-plan"
     },
     {
+      "id": "6f14a83b-2c95-4e07-9d68-30ab5c7f21e9",
+      "nodeId": "9af301aa-2191-4532-9871-82179a5500c1",
+      "path": "services/console/src/App.tsx",
+      "kind": "source",
+      "contentHash": "000000006cd0112e"
+    },
+    {
       "id": "73ef538f-595b-46ec-b343-890a39a6a018",
       "nodeId": "c424e85a-6584-4bb7-a48e-2175ebc6a41b",
       "path": "services/api/src/routes/roleBindings.ts",
@@ -857,6 +906,12 @@
       "nodeId": "db8e5409-dc6f-4052-887a-7ba1dd5fb717",
       "path": ".nodespec/tests/req-013.tests.md",
       "kind": "test-plan"
+    },
+    {
+      "id": "7a1c9e02-4b6d-4f18-9c31-2ea5b70d4c81",
+      "nodeId": "9af301aa-2191-4532-9871-82179a5500c1",
+      "path": "services/console/package.json",
+      "kind": "config"
     },
     {
       "id": "7b2e4c81-6a95-4d30-8f27-1e5b3c9d0a64",
@@ -898,6 +953,12 @@
       "kind": "test-plan"
     },
     {
+      "id": "8e04a1c6-73bd-4592-a0f3-4c9b18de7602",
+      "nodeId": "9af301aa-2191-4532-9871-82179a5500c1",
+      "path": "services/console/vite.config.ts",
+      "kind": "config"
+    },
+    {
       "id": "8e3f7a92-4c15-4b60-9d28-6a0f5c3e1b47",
       "nodeId": "db8e5409-dc6f-4052-887a-7ba1dd5fb717",
       "path": "services/worker/src/phases/delete.ts",
@@ -915,6 +976,12 @@
       "path": ".nodespec/tasks/google-workspace-admin-sdk-directory-1c81cf63.task.md",
       "kind": "task",
       "contentHash": "00000000267c573d"
+    },
+    {
+      "id": "9b30f7a2-6d41-48c5-a913-7e2b04f8c651",
+      "nodeId": "9af301aa-2191-4532-9871-82179a5500c1",
+      "path": "services/console/src/identity.tsx",
+      "kind": "source"
     },
     {
       "id": "9c1f4a83-2d76-4e50-b1a9-6f3c8e0d5b27",
@@ -1022,6 +1089,12 @@
       "nodeId": "c424e85a-6584-4bb7-a48e-2175ebc6a41b",
       "path": "services/api/src/protectedAccounts.test.ts",
       "kind": "test-plan"
+    },
+    {
+      "id": "b62f9d13-0a87-45ce-9d24-6f13c8b0a4e7",
+      "nodeId": "9af301aa-2191-4532-9871-82179a5500c1",
+      "path": "services/console/index.html",
+      "kind": "source"
     },
     {
       "id": "b7c41e93-5a2d-4f18-9e60-3d8a1c72f4b5",
@@ -1258,6 +1331,12 @@
       "path": "services/worker/src/phases/credentialExposure.emulator.test.ts",
       "kind": "source",
       "contentHash": "000000006e7f2368"
+    },
+    {
+      "id": "e719d34a-5b28-4c91-b7f0-4a68d2915c73",
+      "nodeId": "9af301aa-2191-4532-9871-82179a5500c1",
+      "path": "services/console/src/RequestForm.tsx",
+      "kind": "source"
     },
     {
       "id": "e7a4c136-8b25-4d90-a3f7-52d1096be714",
