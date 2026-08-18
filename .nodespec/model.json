@@ -1,7 +1,7 @@
 {
   "modelVersion": 1,
   "generatedBy": "nodespec",
-  "modelHash": "5914af5cdf27c869dfff57e0f71e75795d0c76fd3ff669e0273db96ad0fd1e2a",
+  "modelHash": "c7a91dcd2b495fafe44654b381f1cd39cb638c5ebc8a731a48445a72096ece92",
   "nodes": [
     {
       "id": "1c81cf63-c51e-4b0e-b6ad-7d318332d2fe",
@@ -1062,6 +1062,12 @@
       "contentHash": "000000007f65a93f"
     },
     {
+      "id": "c2d3e4f5-a6b7-4c8d-9e0f-1a2b3c4d5e6f",
+      "nodeId": "c424e85a-6584-4bb7-a48e-2175ebc6a41b",
+      "path": "packages/shared/src/stepPlans.test.ts",
+      "kind": "test-plan"
+    },
+    {
       "id": "c3d4e5f6-7a8b-9c0d-1e2f-a3b4c5d6e7f8",
       "nodeId": "db8e5409-dc6f-4052-887a-7ba1dd5fb717",
       "path": "services/worker/src/phases/update.emulator.test.ts",
@@ -1181,6 +1187,12 @@
       "id": "d63fb149-8e25-4c7a-b134-0a27c95df8e3",
       "nodeId": "c424e85a-6584-4bb7-a48e-2175ebc6a41b",
       "path": "packages/shared/src/requestFactory.test.ts",
+      "kind": "test-plan"
+    },
+    {
+      "id": "d7e8f9a0-b1c2-4d3e-4f5a-6b7c8d9e0f1a",
+      "nodeId": "c424e85a-6584-4bb7-a48e-2175ebc6a41b",
+      "path": "services/api/src/routes/protectedAdmission.emulator.test.ts",
       "kind": "test-plan"
     },
     {
@@ -1325,13 +1337,6 @@
       "nodeId": "c424e85a-6584-4bb7-a48e-2175ebc6a41b",
       "path": "packages/schemas/src/index.test.ts",
       "kind": "test-plan"
-    },
-    {
-      "id": "f9b520e8-3a74-4c61-8d05-1e73b8c94a2f",
-      "nodeId": "c424e85a-6584-4bb7-a48e-2175ebc6a41b",
-      "path": "packages/shared/src/stepPlans.test.ts",
-      "kind": "test-plan",
-      "contentHash": "000000007358e1fe"
     }
   ]
 }

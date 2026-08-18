@@ -1,5 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { InvalidPhasePayload, deriveIdempotencyKey, stepPlanFor } from './stepPlans.js';
+import {
+  COMPENSATING_STEP,
+  InvalidPhasePayload,
+  deriveIdempotencyKey,
+  stepPlanFor,
+} from './stepPlans.js';
 
 /**
  * TC-REQ-013-2 and the plan half of TC-REQ-001-3.
@@ -52,12 +57,6 @@ describe('the create step plan', () => {
     for (const groups of ['engineering@company.com', [''], [42], [null]]) {
       expect(() => stepPlanFor('create', { ...PAYLOAD, groups })).toThrow(InvalidPhasePayload);
     }
-  });
-
-  it.each(['update', 'delete'] as const)('refuses the unimplemented %s phase', (phase) => {
-    // An empty plan would persist a request with no steps, which sits in
-    // pending forever looking like a stuck job rather than an unbuilt one.
-    expect(() => stepPlanFor(phase, PAYLOAD)).toThrow(InvalidPhasePayload);
   });
 
   it('plans the notify phase as validate, settle the credential, then send', () => {
@@ -185,5 +184,178 @@ describe('AC-2: the idempotency key is stable across attempts and distinct acros
     for (const key of keys) {
       expect(key).toMatch(/^[A-Za-z0-9:_-]+$/);
     }
+  });
+});
+
+/**
+ * REQ-005: the phase 3 plan.
+ *
+ * The plan is where two of the criteria are decided before any handler runs.
+ * The diff step has to sit ahead of everything that mutates, or an approver
+ * could be shown a request with no change set (AC-2); and each group change has
+ * to be its own step, or one failing group would discard the rest (AC-7).
+ */
+describe('the update step plan', () => {
+  const TARGET = { primaryEmail: 'ada.lovelace@company.com' };
+
+  it('validates, computes the diff, then applies', () => {
+    const plan = stepPlanFor('update', { ...TARGET, title: 'Principal Engineer' });
+
+    expect(plan.map((s) => s.name)).toEqual([
+      'validate-update-request',
+      'compute-update-diff',
+      'apply-update-attributes',
+      'verify-update',
+    ]);
+  });
+
+  it('puts the diff ahead of every step that mutates', () => {
+    // Stated as an ordering rather than an index, so inserting a step cannot
+    // quietly move the diff behind an apply.
+    const plan = stepPlanFor('update', {
+      ...TARGET,
+      title: 'Lead',
+      addGroups: ['platform@company.com'],
+      removeGroups: ['research@company.com'],
+    });
+    const names = plan.map((s) => s.name);
+    const diffAt = names.indexOf('compute-update-diff');
+
+    for (const mutating of ['apply-update-attributes', 'add-group', 'remove-group']) {
+      expect(names.indexOf(mutating)).toBeGreaterThan(diffAt);
+    }
+  });
+
+  it('gives every group change its own step, named on its input', () => {
+    const plan = stepPlanFor('update', {
+      ...TARGET,
+      addGroups: ['platform@company.com', 'oncall@company.com'],
+      removeGroups: ['research@company.com'],
+    });
+
+    expect(plan.filter((s) => s.name === 'add-group').map((s) => s.input)).toEqual([
+      { groupKey: 'platform@company.com' },
+      { groupKey: 'oncall@company.com' },
+    ]);
+    expect(plan.filter((s) => s.name === 'remove-group').map((s) => s.input)).toEqual([
+      { groupKey: 'research@company.com' },
+    ]);
+  });
+
+  it('omits the attribute step when no attribute was submitted', () => {
+    // A step that exists only to skip tells an operator a change was
+    // considered when none was ever asked for.
+    const plan = stepPlanFor('update', { ...TARGET, addGroups: ['platform@company.com'] });
+
+    expect(plan.map((s) => s.name)).not.toContain('apply-update-attributes');
+  });
+
+  it('includes the attribute step when a field is being CLEARED', () => {
+    // The case a truthiness check would drop. Clearing a manager is a change,
+    // and dropping the step would leave the request reporting success having
+    // left the relation in place.
+    const plan = stepPlanFor('update', { ...TARGET, managerEmail: null });
+
+    expect(plan.map((s) => s.name)).toContain('apply-update-attributes');
+  });
+
+  it('is pure: the same payload always produces the same plan', () => {
+    const payload = { ...TARGET, title: 'Lead', addGroups: ['platform@company.com'] };
+
+    expect(stepPlanFor('update', payload)).toEqual(stepPlanFor('update', payload));
+  });
+
+  it('refuses a group list that is not an array of non-empty strings', () => {
+    for (const bad of ['platform@company.com', [''], [42], [null]]) {
+      expect(() => stepPlanFor('update', { ...TARGET, addGroups: bad })).toThrow(InvalidPhasePayload);
+      expect(() => stepPlanFor('update', { ...TARGET, removeGroups: bad })).toThrow(
+        InvalidPhasePayload,
+      );
+    }
+  });
+});
+
+/**
+ * REQ-006: the phase 4 plan.
+ *
+ * The ordering IS the safety property. Suspension is the only reversible move,
+ * so everything destructive has to sit behind it, and the account has to still
+ * exist when its Drive is handed over.
+ */
+describe('the delete step plan', () => {
+  const TARGET = { primaryEmail: 'ada.lovelace@company.com' };
+
+  it('suspends, revokes, removes memberships, then deletes', () => {
+    expect(stepPlanFor('delete', TARGET).map((s) => s.name)).toEqual([
+      'suspend-user',
+      'revoke-access',
+      'remove-memberships',
+      'delete-user',
+    ]);
+  });
+
+  it('puts suspension first, ahead of every destructive step (AC-2)', () => {
+    // Asserted as an ordering rather than an index, so inserting a step cannot
+    // quietly move something destructive in front of the access cut.
+    const names = stepPlanFor('delete', {
+      ...TARGET,
+      transferDriveTo: 'grace.hopper@company.com',
+    }).map((s) => s.name);
+    const suspendAt = names.indexOf('suspend-user');
+
+    for (const destructive of ['revoke-access', 'remove-memberships', 'transfer-drive', 'delete-user']) {
+      expect(names.indexOf(destructive)).toBeGreaterThan(suspendAt);
+    }
+  });
+
+  it('deletes last, after the Drive transfer', () => {
+    // The account has to still exist to own the files being handed over, and a
+    // transfer still running against a deleted owner does not finish.
+    const names = stepPlanFor('delete', {
+      ...TARGET,
+      transferDriveTo: 'grace.hopper@company.com',
+    }).map((s) => s.name);
+
+    expect(names[names.length - 1]).toBe('delete-user');
+    expect(names.indexOf('transfer-drive')).toBeLessThan(names.indexOf('delete-user'));
+  });
+
+  it('includes the transfer step only when a successor was named', () => {
+    expect(stepPlanFor('delete', TARGET).map((s) => s.name)).not.toContain('transfer-drive');
+    expect(
+      stepPlanFor('delete', { ...TARGET, transferDriveTo: 'grace.hopper@company.com' }).map(
+        (s) => s.name,
+      ),
+    ).toContain('transfer-drive');
+  });
+
+  it('carries the successor on the transfer step input', () => {
+    const plan = stepPlanFor('delete', { ...TARGET, transferDriveTo: 'grace.hopper@company.com' });
+
+    expect(plan.find((s) => s.name === 'transfer-drive')!.input).toEqual({
+      successor: 'grace.hopper@company.com',
+    });
+  });
+
+  it('ignores an empty successor rather than planning a transfer to nobody', () => {
+    expect(stepPlanFor('delete', { ...TARGET, transferDriveTo: '' }).map((s) => s.name)).not.toContain(
+      'transfer-drive',
+    );
+  });
+
+  it('is pure: the same payload always produces the same plan', () => {
+    const payload = { ...TARGET, transferDriveTo: 'grace.hopper@company.com' };
+
+    expect(stepPlanFor('delete', payload)).toEqual(stepPlanFor('delete', payload));
+  });
+
+  it('names the compensating step, which is in no plan', () => {
+    // It is appended to a request already in flight, never planned up front:
+    // there is nothing to compensate until something has been done.
+    for (const phase of ['create', 'notify', 'delete'] as const) {
+      const payload = phase === 'delete' ? TARGET : PAYLOAD;
+      expect(stepPlanFor(phase, payload).map((s) => s.name)).not.toContain(COMPENSATING_STEP);
+    }
+    expect(COMPENSATING_STEP).toBe('unsuspend-user');
   });
 });

@@ -1511,12 +1511,14 @@ Startup/initialization order based on edge directions and interaction patterns.
 | `services/api/src/logging.ts` | source | --- | draft |
 | `packages/shared/package.json` | config | --- | draft |
 | `packages/shared/src/store.emulator.test.ts` | test-plan | --- | draft |
+| `packages/shared/src/stepPlans.test.ts` | test-plan | --- | draft |
 | `services/api/src/routes/authorization.emulator.test.ts` | test-plan | --- | draft |
 | `services/api/src/routes/admin.ts` | source | --- | draft |
 | `packages/shared/src/requestFactory.ts` | source | --- | draft |
 | `packages/shared/src/logging.test.ts` | test-plan | --- | draft |
 | `services/api/src/config.test.ts` | test-plan | --- | draft |
 | `packages/shared/src/requestFactory.test.ts` | test-plan | --- | draft |
+| `services/api/src/routes/protectedAdmission.emulator.test.ts` | test-plan | --- | draft |
 | `services/api/src/protectedAccounts.ts` | source | --- | draft |
 | `services/api/src/routes/cancel.emulator.test.ts` | test-plan | --- | draft |
 | `packages/shared/src/stepPlans.ts` | source | --- | draft |
@@ -1526,4 +1528,3 @@ Startup/initialization order based on edge directions and interaction patterns.
 | `services/api/src/routes/lookup.ts` | source | --- | draft |
 | `services/api/src/config.ts` | source | --- | draft |
 | `packages/schemas/src/index.test.ts` | test-plan | --- | draft |
-| `packages/shared/src/stepPlans.test.ts` | test-plan | --- | draft |
