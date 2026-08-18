@@ -1,7 +1,7 @@
 {
   "modelVersion": 1,
   "generatedBy": "nodespec",
-  "modelHash": "a00dc1651139d40c1ff22ecec62226ac67f0454cf76a66921f6551ff557221b6",
+  "modelHash": "e7f8798b6f641acfe2e311ea9cf2eaaf92e7410ded6c1f101261dd87725c8126",
   "nodes": [
     {
       "id": "1c81cf63-c51e-4b0e-b6ad-7d318332d2fe",
@@ -798,7 +798,8 @@
       "id": "3f9c1a7e-2b64-4d05-9e18-7a2c5f0b1d63",
       "nodeId": "c424e85a-6584-4bb7-a48e-2175ebc6a41b",
       "path": "services/api/Dockerfile",
-      "kind": "build"
+      "kind": "build",
+      "contentHash": "000000005db51756"
     },
     {
       "id": "4038fb45-11ae-474b-8fd2-d6bf72d410e8",
@@ -829,7 +830,8 @@
       "id": "4a0d2b8f-3c75-4e16-af29-8b3d6a1c2e74",
       "nodeId": "db8e5409-dc6f-4052-887a-7ba1dd5fb717",
       "path": "services/worker/Dockerfile",
-      "kind": "build"
+      "kind": "build",
+      "contentHash": "00000000152cfdaf"
     },
     {
       "id": "4b7e19a0-8c53-4d26-91fa-6e0d38b52c74",

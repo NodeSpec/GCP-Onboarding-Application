@@ -16,8 +16,10 @@ FROM node:22-slim AS build
 WORKDIR /app
 
 # The workspace manifests first, so a build that changes only source reuses the
-# cached dependency install rather than reinstalling on every code change.
-COPY package.json package-lock.json ./
+# cached dependency install rather than reinstalling on every code change. The
+# glob matches package.json alone when no lockfile is committed, and picks up
+# package-lock.json as well when one is present.
+COPY package*.json ./
 COPY packages/schemas/package.json      packages/schemas/
 COPY packages/shared/package.json       packages/shared/
 COPY packages/test-support/package.json packages/test-support/
@@ -25,7 +27,9 @@ COPY services/api/package.json          services/api/
 COPY services/worker/package.json       services/worker/
 COPY services/console/package.json      services/console/
 
-RUN npm ci
+# install rather than ci, because the repository does not commit a lockfile. A
+# committed lockfile is still honoured when present.
+RUN npm install --no-audit --no-fund
 
 # The sources, then the build. npm run build compiles every workspace and emits
 # the console into services/api/public.
