@@ -43,10 +43,7 @@ Ordered WORK ORDERS synthesized from the model — this node's deliverable kind,
 - [ ] **T9 — Expose the interface Lifecycle API Service consumes, per Contract "Directory Lookup (read-only)" (rest).**
   Record the endpoint/identifiers Lifecycle API Service needs in this node's config artifacts — coordinate with Lifecycle API Service.
   Build to the contract schema EXACTLY (see Interface Contracts).
-- [ ] **T10 — Implement: "A creation request for a primary email that already exists in the domain fails validation before any mutation is attempted and the request terminates in 'failed' with a typed AlreadyExists error" (REQ-003).**
-  No interface contract maps to this criterion — it is this node's internal responsibility.
-  ↳ serves: REQ-003 "A creation request for a primary email that already exists in the domain fails validation before any mutation is attempted and the request terminates in 'failed' with a typed AlreadyExists error"
-- [ ] **T11 — Verify every acceptance criterion above and tick its box.**
+- [ ] **T10 — Verify every acceptance criterion above and tick its box.**
   Ordering doctrine — plans follow schemas (contract-first TDD): schemas → test plans → implement → verify. Resolve any open [PLACEHOLDER: schema] gap FIRST (get_build_readiness supplies draftInputs; submit the schema via propose_patches update_contract) — test-plan scenarios touching a schemaless contract stay one-line [blocked by schema: …] markers until the schema lands, then the plan refreshes itself.
   AUTOMATED criteria: call get_test_plan for EACH requirement this node serves, implement the plan's test cases, run them, and report every outcome via report_test_results — a passing result flips the criterion's met flag automatically and the response receipt shows which criteria flipped.
   MANUAL criteria (rows marked (manual) above): report_test_results REFUSES to bind them — prove each by ticking its criterion box in this task doc and having the user approve the resulting change card; that approval is the only thing that flips a manual criterion met.
@@ -174,8 +171,8 @@ Generation and protection of the one-time password belong to REQ-019: it is pers
   → THIS NODE: internal logic
 - [x] Every group listed in the request appears in the created user's membership list after the phase completes
   → THIS NODE: internal logic
-- [ ] A creation request for a primary email that already exists in the domain fails validation before any mutation is attempted and the request terminates in 'failed' with a typed AlreadyExists error
-  → covered by Task T10
+- [x] A creation request for a primary email that already exists in the domain fails validation before any mutation is attempted and the request terminates in 'failed' with a typed AlreadyExists error
+  → THIS NODE: internal logic
 - [x] The user is created with changePasswordAtNextLogin=true and a password meeting the configured generation policy
   → possible match: Contract "Audit Log Sink" (dependency) to Cloud Logging: audit sink (unverified — requirement not mapped to that node)
 - [x] If one group assignment fails, the successfully assigned groups are retained, the failing group is reported in the step error, and the request does not report success

@@ -1,7 +1,7 @@
 {
   "modelVersion": 1,
   "generatedBy": "nodespec",
-  "modelHash": "cf6638fe971b3cbe3308480571a56105b861a6906e9e67540e84473716c3beea",
+  "modelHash": "1ee0b7f5ab0bfa35ea167ec317ba29a1bc56e7e7d50ea1945dc75ad3e9901630",
   "nodes": [
     {
       "id": "1c81cf63-c51e-4b0e-b6ad-7d318332d2fe",
@@ -1540,7 +1540,8 @@
       "id": "f2186192-700c-4d99-8590-cb2aac591885",
       "nodeId": "565b92bd-2c2c-4a82-be62-b691decdbadf",
       "path": "README.md",
-      "kind": "doc"
+      "kind": "doc",
+      "contentHash": "0000000001302d05"
     },
     {
       "id": "f27d1a00-5bb9-4392-8008-33332460a094",

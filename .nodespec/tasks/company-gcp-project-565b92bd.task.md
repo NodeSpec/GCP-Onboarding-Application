@@ -60,10 +60,7 @@ Ordered WORK ORDERS synthesized from the model — this node's deliverable kind,
 - [ ] **T12 — Configure the service to satisfy: "The worker's runtime identity is the only one holding the Workspace admin role, and the API service's identity holds no Workspace admin role — verified by attempting a Directory API call with the API service's identity and observing it refused" (REQ-014).**
   No interface contract maps to this criterion — it is this node's internal responsibility.
   ↳ serves: REQ-014 "The worker's runtime identity is the only one holding the Workspace admin role, and the API service's identity holds no Workspace admin role — verified by attempting a Directory API call with the API service's identity and observing it refused"
-- [ ] **T13 — Configure the service to satisfy: "Rotating a secret version is picked up without redeploying the service" (REQ-014).**
-  No interface contract maps to this criterion — it is this node's internal responsibility.
-  ↳ serves: REQ-014 "Rotating a secret version is picked up without redeploying the service"
-- [ ] **T14 — Verify every acceptance criterion above and tick its box.**
+- [ ] **T13 — Verify every acceptance criterion above and tick its box.**
   Ordering doctrine — plans follow schemas (contract-first TDD): schemas → test plans → implement → verify. Resolve any open [PLACEHOLDER: schema] gap FIRST (get_build_readiness supplies draftInputs; submit the schema via propose_patches update_contract) — test-plan scenarios touching a schemaless contract stay one-line [blocked by schema: …] markers until the schema lands, then the plan refreshes itself.
   AUTOMATED criteria: call get_test_plan for EACH requirement this node serves, implement the plan's test cases, run them, and report every outcome via report_test_results — a passing result flips the criterion's met flag automatically and the response receipt shows which criteria flipped.
   MANUAL criteria (rows marked (manual) above): report_test_results REFUSES to bind them — prove each by ticking its criterion box in this task doc and having the user approve the resulting change card; that approval is the only thing that flips a manual criterion met.
@@ -142,8 +139,7 @@ Cloud KMS envelope encryption is the hardening path for the encryption key if Co
 - [x] The API service and the worker are bound to distinct runtime service accounts in the deployed configuration
 - [ ] The worker's runtime identity is the only one holding the Workspace admin role, and the API service's identity holds no Workspace admin role — verified by attempting a Directory API call with the API service's identity and observing it refused
   → covered by Task T12
-- [ ] Rotating a secret version is picked up without redeploying the service
-  → covered by Task T13
+- [x] Rotating a secret version is picked up without redeploying the service
 - [x] The deployment claims no per-collection Firestore IAM restriction anywhere, since Firestore IAM is database-scoped — a repository check finds no IAM binding or comment asserting collection-level Firestore permissions
 - [x] The two long-lived secrets are the only ones in the deployment, and each carries a recorded justification and removal path — notification-smtp-credentials is removable by the relay IP-allowlisting hardening path (REQ-028), credential-encryption-key by Cloud KMS envelope encryption
 

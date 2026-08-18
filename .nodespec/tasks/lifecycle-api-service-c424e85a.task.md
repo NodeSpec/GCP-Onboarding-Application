@@ -45,10 +45,7 @@ Ordered WORK ORDERS synthesized from the model — this node's deliverable kind,
 - [ ] **T9 — Expose the interface Operator Console UI consumes, per Contract "Lifecycle Operator API" (rest).**
   Record the endpoint/identifiers Operator Console UI needs in this node's config artifacts — coordinate with Operator Console UI.
   Build to the contract schema EXACTLY (see Interface Contracts).
-- [ ] **T10 — Implement: "The deployed system exposes no unauthenticated route: an unauthenticated request to every path in the application's route table is rejected, enumerated as a test rather than spot-checked" (REQ-007).**
-  No interface contract maps to this criterion — it is this node's internal responsibility.
-  ↳ serves: REQ-007 "The deployed system exposes no unauthenticated route: an unauthenticated request to every path in the application's route table is rejected, enumerated as a test rather than spot-checked"
-- [ ] **T11 — Verify every acceptance criterion above and tick its box.**
+- [ ] **T10 — Verify every acceptance criterion above and tick its box.**
   Ordering doctrine — plans follow schemas (contract-first TDD): schemas → test plans → implement → verify. Resolve any open [PLACEHOLDER: schema] gap FIRST (get_build_readiness supplies draftInputs; submit the schema via propose_patches update_contract) — test-plan scenarios touching a schemaless contract stay one-line [blocked by schema: …] markers until the schema lands, then the plan refreshes itself.
   AUTOMATED criteria: call get_test_plan for EACH requirement this node serves, implement the plan's test cases, run them, and report every outcome via report_test_results — a passing result flips the criterion's met flag automatically and the response receipt shows which criteria flipped.
   MANUAL criteria (rows marked (manual) above): report_test_results REFUSES to bind them — prove each by ticking its criterion box in this task doc and having the user approve the resulting change card; that approval is the only thing that flips a manual criterion met.
@@ -226,8 +223,8 @@ There is no end-user-facing surface anywhere in this system. Users being onboard
   → possible match: Contract "Step Task Enqueue" (rest) to Cloud Tasks: lifecycle-steps (unverified — requirement not mapped to that node)
 - [x] Every load-balancer backend service in the deployment has IAP enabled — asserted against the committed Terraform, so a backend added without IAP fails the check
   → possible match: Contract "IAP Assertion Verification (JWK Set)" (rest) to Identity-Aware Proxy (unverified — requirement not mapped to that node)
-- [ ] The deployed system exposes no unauthenticated route: an unauthenticated request to every path in the application's route table is rejected, enumerated as a test rather than spot-checked
-  → covered by Task T10
+- [x] The deployed system exposes no unauthenticated route: an unauthenticated request to every path in the application's route table is rejected, enumerated as a test rather than spot-checked
+  → THIS NODE: internal logic
 - [ ] IAP is enabled on the operator backend service and access is granted only to the intended operator group in the OAuth/IAM configuration (manual)
   → covered by Task T2
 
