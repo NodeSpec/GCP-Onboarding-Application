@@ -38,9 +38,22 @@ interface SourceFile {
 }
 
 /**
- * This file, which necessarily contains every pattern it forbids.
+ * The files that assert these patterns are ABSENT, and therefore necessarily
+ * contain them.
+ *
+ * This file is the obvious one. infra/infra.test.ts is the other: REQ-027 AC-5
+ * requires the deployment to configure no Domain-Wide Delegation, so it asserts
+ * that the Terraform contains no impersonation — and to do that it has to name
+ * the thing.
+ *
+ * The list is exact paths, not a `*.test.ts` exclusion. Excluding tests
+ * wholesale would let a test construct a delegated client and never be noticed,
+ * which is precisely the mechanism this scan exists to catch.
  */
-const SELF = join('services', 'worker', 'src', 'workspace', 'noDelegation.test.ts');
+const SCANNERS = [
+  join('services', 'worker', 'src', 'workspace', 'noDelegation.test.ts'),
+  join('infra', 'infra.test.ts'),
+];
 
 /**
  * Comments are stripped before scanning. Source that honours this constraint
@@ -76,7 +89,7 @@ function load(extensions: string[], extraNames: string[] = []): SourceFile[] {
 const rawCodeFiles = load(CODE_EXTENSIONS);
 
 const codeFiles = rawCodeFiles
-  .filter((f) => f.path !== SELF)
+  .filter((f) => !SCANNERS.includes(f.path))
   .map((f) => ({ path: f.path, text: stripComments(f.text, f.path) }));
 const iacFiles = load(IAC_EXTENSIONS, ['Dockerfile']).map((f) => ({
   path: f.path,
@@ -95,6 +108,16 @@ describe('the scan actually reaches the source', () => {
     const paths = codeFiles.map((f) => f.path);
     expect(paths).toContain(join('services', 'worker', 'src', 'workspace', 'directoryClient.ts'));
     expect(paths).toContain(join('services', 'api', 'src', 'index.ts'));
+  });
+
+  it('discovers the infrastructure as code', () => {
+    // AC-3 covers code "or IaC", and until the Terraform existed that half of
+    // the criterion was passing over an empty set — a scan of nothing finds
+    // nothing. This guard makes the IaC half fail if the configuration ever
+    // stops being scanned, rather than quietly reverting to vacuous.
+    const terraform = iacFiles.filter((f) => f.path.endsWith('.tf'));
+    expect(terraform.length).toBeGreaterThanOrEqual(5);
+    expect(terraform.map((f) => f.path)).toContain(join('infra', 'cloudrun.tf'));
   });
 });
 

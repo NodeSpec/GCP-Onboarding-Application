@@ -1,7 +1,7 @@
 {
   "modelVersion": 1,
   "generatedBy": "nodespec",
-  "modelHash": "dd009872faf142339c77b4331031e67d71de7fe5b2f970542519e3300e6505c7",
+  "modelHash": "62bd570682fc16e7907531ac0822053b2f9bd729c8fb90c3a6718ec04c25cc37",
   "nodes": [
     {
       "id": "1c81cf63-c51e-4b0e-b6ad-7d318332d2fe",
@@ -1205,7 +1205,8 @@
       "id": "b1c2d3e4-f5a6-4b7c-8d9e-0f1a2b3c4d5e",
       "nodeId": "db8e5409-dc6f-4052-887a-7ba1dd5fb717",
       "path": "services/worker/src/workspace/noDelegation.test.ts",
-      "kind": "test-plan"
+      "kind": "test-plan",
+      "contentHash": "00000000069f3d94"
     },
     {
       "id": "b2c847f0-91d3-4e56-a80b-6f4e21597c3d",
@@ -1236,7 +1237,8 @@
       "id": "b7c41e93-5a2d-4f18-9e60-3d8a1c72f4b5",
       "nodeId": "db8e5409-dc6f-4052-887a-7ba1dd5fb717",
       "path": "services/worker/src/auth/taskAuth.test.ts",
-      "kind": "test-plan"
+      "kind": "test-plan",
+      "contentHash": "000000006087e62c"
     },
     {
       "id": "b7d41c92-8e35-4f60-9a17-2c6d0f8e5b31",
@@ -1488,7 +1490,8 @@
       "id": "e4b8d215-7c93-4a06-b52f-8e1d94c30a67",
       "nodeId": "db8e5409-dc6f-4052-887a-7ba1dd5fb717",
       "path": "services/worker/src/workspace/retry.test.ts",
-      "kind": "test-plan"
+      "kind": "test-plan",
+      "contentHash": "000000001816e745"
     },
     {
       "id": "e57f2a91-4c68-4d03-b81a-96de4c705832",

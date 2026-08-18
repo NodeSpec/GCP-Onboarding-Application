@@ -34,7 +34,7 @@ function harness(options: { retry?: Partial<typeof DEFAULT_RETRY>; random?: () =
     sleep: async (ms) => {
       delays.push(ms);
     },
-    random: options.random,
+    ...(options.random === undefined ? {} : { random: options.random }),
   });
   return { client, delays };
 }

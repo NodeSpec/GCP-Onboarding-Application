@@ -1,10 +1,9 @@
 import express from 'express';
-import type { AddressInfo } from 'node:net';
-import type { Server } from 'node:http';
 import { Writable } from 'node:stream';
 import pino from 'pino';
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 import { requireCaller, type CallerClaims, type TokenVerifier } from './taskAuth.js';
+import { startTestServer, type TestServer } from '@lifecycle/test-support';
 
 /**
  * TC-REQ-016-8: route-class confinement on the worker.
@@ -69,7 +68,7 @@ const captured = capturingLogger();
 const executeStep = vi.fn();
 const lookupUsers = vi.fn();
 
-let server: Server;
+let harness: TestServer;
 let base: string;
 
 beforeAll(async () => {
@@ -114,15 +113,11 @@ beforeAll(async () => {
     lookup,
   );
 
-  server = await new Promise<Server>((resolve) => {
-    const s = app.listen(0, '127.0.0.1', () => resolve(s));
-  });
-  base = `http://127.0.0.1:${(server.address() as AddressInfo).port}`;
+  harness = await startTestServer(app);
+  base = harness.base;
 });
 
-afterAll(async () => {
-  await new Promise<void>((resolve) => server.close(() => resolve()));
-});
+afterAll(() => harness.close());
 
 function call(path: string, bearer?: string, method = 'POST') {
   return fetch(`${base}${path}`, {
@@ -131,7 +126,7 @@ function call(path: string, bearer?: string, method = 'POST') {
       'content-type': 'application/json',
       ...(bearer ? { authorization: bearer } : {}),
     },
-    body: method === 'POST' ? '{}' : undefined,
+    ...(method === 'POST' ? { body: '{}' } : {}),
   });
 }
 
