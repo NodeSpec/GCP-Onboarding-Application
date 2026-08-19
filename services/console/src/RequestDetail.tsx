@@ -1,15 +1,18 @@
 import { useEffect, useState } from 'react';
 import {
   ApiError,
+  adminCancelRequest,
+  adminResumeRequest,
   cancelRequest,
   decideStep,
   getRequest,
+  retrieveCredential,
   submitRequest,
   type RequestDetail as Detail,
   type StepView,
   type UpdateDiff,
 } from './api.js';
-import { Can } from './identity.tsx';
+import { Can, useIdentity } from './identity.tsx';
 
 /**
  * One request in full (REQ-011 AC-5, AC-7, AC-9, AC-10).
@@ -162,6 +165,150 @@ function ApprovalControls({
 }
 
 /**
+ * REQ-017: the one-time password, surfaced to the person it belongs with.
+ *
+ * The server enforces everything that matters: requester-only, read-once, the
+ * ciphertext destroyed in the transaction that releases the plaintext. What the
+ * console owes the operator is honesty about those properties, so the reveal
+ * says it will not come back, and a 410 explains itself instead of reading as
+ * an outage. The password lives in component state for as long as this view is
+ * open and is never written anywhere else.
+ */
+function CredentialControls({ requestId }: { requestId: string }) {
+  const [revealed, setRevealed] = useState<{ primaryEmail: string; password: string } | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+
+  async function retrieve() {
+    setBusy(true);
+    setError(null);
+    try {
+      const res = await retrieveCredential(requestId);
+      setRevealed({ primaryEmail: res.primaryEmail, password: res.oneTimePassword });
+    } catch (err) {
+      if (err instanceof ApiError && err.status === 410) {
+        setError(
+          'This password is no longer retrievable: it was already retrieved, expired, or was replaced by a regeneration. Use "Resend welcome letter" with "regenerate" ticked to issue a new one.',
+        );
+      } else if (err instanceof ApiError && err.status === 403) {
+        setError('Only the operator who submitted this request may retrieve its password.');
+      } else {
+        setError('the password could not be retrieved');
+      }
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <section aria-label="one-time password">
+      <h3>One-time password</h3>
+      {!revealed && !error && (
+        <>
+          <p>
+            Retrievable once, by you alone. Hand it to the account holder through a channel you
+            trust; it is never emailed.
+          </p>
+          <button type="button" disabled={busy} onClick={retrieve}>
+            {busy ? 'Retrieving…' : 'Retrieve one-time password'}
+          </button>
+        </>
+      )}
+      {revealed && (
+        <>
+          <p role="status">
+            Password for <strong>{revealed.primaryEmail}</strong>:
+          </p>
+          <p className="credential">
+            <code>{revealed.password}</code>
+          </p>
+          <p role="alert">
+            This will not be shown again. It is no longer stored anywhere, so copy it now.
+          </p>
+        </>
+      )}
+      {error && <p role="alert">{error}</p>}
+    </section>
+  );
+}
+
+/**
+ * REQ-012 AC-5: the powers over other people's work. Resume releases a failed
+ * request's halted step back to the queue; cancel here reaches ANY request,
+ * where the requester's own cancel control reaches only their own. Both are
+ * enforced server-side and both write an audit event naming the admin.
+ */
+function AdminControls({
+  requestId,
+  status,
+  onDone,
+}: {
+  requestId: string;
+  status: string;
+  onDone: () => void;
+}) {
+  const [reason, setReason] = useState('');
+  const [note, setNote] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  async function resume() {
+    setError(null);
+    try {
+      const res = await adminResumeRequest(requestId);
+      setNote(
+        res.dispatch === 'deferred'
+          ? `Resumed at ${res.resumedStep}; the dispatch is deferred and reconciliation will deliver it.`
+          : `Resumed at ${res.resumedStep}.`,
+      );
+      onDone();
+    } catch (err) {
+      setError(
+        err instanceof ApiError
+          ? ((err.body as { error?: string })?.error ?? `resume refused (${err.status})`)
+          : 'the resume could not be submitted',
+      );
+    }
+  }
+
+  async function cancel() {
+    setError(null);
+    try {
+      const res = await adminCancelRequest(requestId, reason);
+      setNote(res.status === 'compensating' ? 'Cancellation accepted; the account is being restored.' : 'Request cancelled.');
+      onDone();
+    } catch (err) {
+      setError(
+        err instanceof ApiError
+          ? (err.issues[0]?.message ?? (err.body as { error?: string })?.error ?? `cancel refused (${err.status})`)
+          : 'the cancellation could not be submitted',
+      );
+    }
+  }
+
+  return (
+    <section aria-label="admin actions">
+      <h3>Admin actions</h3>
+      {status === 'failed' && (
+        <button type="button" onClick={resume}>
+          Resume from the failed step
+        </button>
+      )}
+      <label htmlFor="admin-cancel-reason">Cancellation reason</label>
+      <input
+        id="admin-cancel-reason"
+        value={reason}
+        onChange={(e) => setReason(e.target.value)}
+      />
+      <button type="button" onClick={cancel}>
+        Cancel as admin
+      </button>
+      {note && <p role="status">{note}</p>}
+      {error && <p role="alert">{error}</p>}
+    </section>
+  );
+}
+
+/**
  * AC-10: resend, with the two decisions the operator actually has.
  *
  * The address is editable because the commonest reason to resend is that the
@@ -232,6 +379,7 @@ function ResendControls({ detail }: { detail: Detail }) {
 }
 
 export function RequestDetailView({ requestId }: { requestId: string }) {
+  const { identity } = useIdentity();
   const [detail, setDetail] = useState<Detail | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -251,6 +399,9 @@ export function RequestDetailView({ requestId }: { requestId: string }) {
   const awaiting = detail.steps.find((s) => s.status === 'awaiting_approval');
   const isCompletedOnboarding =
     detail.request.phase === 'create' && detail.request.status === 'succeeded';
+  // The retrieval control appears only for the operator the server would say
+  // yes to. Showing it to anyone else would render a button that can only 403.
+  const isOwn = identity?.email.toLowerCase() === detail.request.requestedBy;
 
   return (
     <article aria-label={`request ${requestId}`}>
@@ -274,12 +425,17 @@ export function RequestDetailView({ requestId }: { requestId: string }) {
 
       {isCompletedOnboarding && (
         <Can role="requester">
+          {isOwn && <CredentialControls requestId={requestId} />}
           <ResendControls detail={detail} />
         </Can>
       )}
 
       <Can role="requester">
         <CancelControl requestId={requestId} onDone={load} />
+      </Can>
+
+      <Can role="admin">
+        <AdminControls requestId={requestId} status={detail.request.status} onDone={load} />
       </Can>
     </article>
   );
