@@ -1,0 +1,86 @@
+# Every push and every pull request. No cloud credentials anywhere in this file,
+# on purpose: it has to run on a fork's pull request, and a workflow that needs
+# a secret to pass is a workflow that reports nothing useful about a contribution
+# from outside the repository.
+#
+# What it cannot do is listed at the top of infra/infra.test.ts. `terraform plan`
+# needs a project and would need credentials, so this stops at `validate`, which
+# is the last check that is honest without them.
+
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  application:
+    name: Build and test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      # The Firestore emulator is a Java process. Requested explicitly rather
+      # than relying on whatever JDK the runner image happens to ship, because
+      # that changes without notice and the failure it produces names Java, not
+      # the runner.
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      # install, not ci: the repository commits no lockfile, matching what both
+      # Dockerfiles do.
+      - run: npm install --no-audit --no-fund
+
+      # Build first. The libraries compile in dependency order and the console
+      # emits into services/api/public, and a type error in schemas surfaces
+      # here rather than as a confusing failure three packages downstream.
+      - run: npm run build
+      - run: npm run typecheck
+      - run: npm run test
+
+      # The emulator suite is where the store, the dispatcher and the phase
+      # handlers are actually exercised against Firestore semantics. Slower, and
+      # the only tests that would have caught several of the transaction bugs.
+      - run: npm run test:emulator
+
+  terraform:
+    name: Terraform
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.9.8
+          terraform_wrapper: false
+
+      # Formatting is checked rather than applied. A pipeline that rewrites the
+      # tree produces a passing build and an unformatted repository.
+      - run: terraform fmt -check -recursive
+        working-directory: infra
+
+      # -backend=false downloads the providers without touching the state
+      # bucket, which is what makes validate runnable with no credentials.
+      - run: terraform init -backend=false
+        working-directory: infra
+
+      # The check that the parser-based tests explicitly cannot make: provider
+      # schemas, argument names, types and expression references. Every
+      # deploy-time failure this repository hit that was not a live-API rejection
+      # would have been caught here.
+      - run: terraform validate
+        working-directory: infra

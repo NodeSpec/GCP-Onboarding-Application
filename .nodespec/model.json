@@ -1,7 +1,7 @@
 {
   "modelVersion": 1,
   "generatedBy": "nodespec",
-  "modelHash": "bed7e7e1c757b24336dee2abb597520fbd8e61034fa978bc6cc29718320d9b2b",
+  "modelHash": "687099d120a0a3c97387ca81758f03e6382b6357cbab01b861362a0e7a55d419",
   "nodes": [
     {
       "id": "1c81cf63-c51e-4b0e-b6ad-7d318332d2fe",
@@ -771,6 +771,12 @@
       "kind": "source"
     },
     {
+      "id": "3d5c8a12-7b64-4e09-a2f1-9c07b4e6d385",
+      "nodeId": "565b92bd-2c2c-4a82-be62-b691decdbadf",
+      "path": "infra/backend.tf",
+      "kind": "config"
+    },
+    {
       "id": "3e7a1c94-6b52-4d08-9f31-8c4d2e6b0a57",
       "nodeId": "db8e5409-dc6f-4052-887a-7ba1dd5fb717",
       "path": "services/worker/src/notify/notify.emulator.test.ts",
@@ -859,6 +865,12 @@
       "nodeId": "db8e5409-dc6f-4052-887a-7ba1dd5fb717",
       "path": "services/worker/src/phases/delete.test.ts",
       "kind": "test-plan"
+    },
+    {
+      "id": "5a71e2c8-0d43-4f96-b81c-6e29f047a3b1",
+      "nodeId": "565b92bd-2c2c-4a82-be62-b691decdbadf",
+      "path": ".github/workflows/ci.yml",
+      "kind": "build"
     },
     {
       "id": "5a8e2f41-7c93-4b60-a2d5-9e1f0c8b6d47",
@@ -1100,6 +1112,12 @@
       "nodeId": "9af301aa-2191-4532-9871-82179a5500c1",
       "path": "services/console/src/identity.tsx",
       "kind": "source"
+    },
+    {
+      "id": "9c04b7f3-2e58-41da-8067-3b15e8d92c47",
+      "nodeId": "565b92bd-2c2c-4a82-be62-b691decdbadf",
+      "path": ".github/workflows/deploy.yml",
+      "kind": "build"
     },
     {
       "id": "9c1f4a83-2d76-4e50-b1a9-6f3c8e0d5b27",

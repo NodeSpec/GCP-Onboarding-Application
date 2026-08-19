@@ -1,0 +1,173 @@
+# Build both images, push them by digest, and apply the infrastructure that
+# points at them. Setup is in docs/cicd.md.
+#
+# Nothing here names a project, a domain, an address or a group. Everything that
+# belongs to a particular deployment arrives as a repository variable, so this
+# file is the same in every fork and the values are the part that differs.
+#
+# There is no service account key. Authentication is Workload Identity
+# Federation: GitHub mints a short-lived OIDC token for this repository, and GCP
+# trades it for an access token. That is the same constraint the application
+# runs under, and for the same reason, so a key that could be leaked never
+# exists.
+
+name: Deploy
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write # required to mint the OIDC token WIF trades in
+
+# Never cancel a running apply. A cancelled apply leaves a held state lock and a
+# half-applied deployment, which costs more to sort out than waiting.
+concurrency:
+  group: deploy
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: Build, push, apply
+    runs-on: ubuntu-latest
+
+    # Declaring an environment does not gate anything on its own. It gives you
+    # somewhere to add required reviewers later if you decide an apply should
+    # not be automatic, without editing this file.
+    environment: production
+
+    env:
+      PROJECT_ID: ${{ vars.GCP_PROJECT_ID }}
+      REGION: ${{ vars.GCP_REGION }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ vars.WIF_PROVIDER }}
+          service_account: ${{ vars.DEPLOYER_SA }}
+
+      - uses: google-github-actions/setup-gcloud@v2
+
+      - name: Authenticate Docker to Artifact Registry
+        run: gcloud auth configure-docker "${REGION}-docker.pkg.dev" --quiet
+
+      # Tagged by commit rather than by a shared tag. Two runs cannot then
+      # overwrite each other's tag, and rolling back is a digest that is still
+      # in the registry rather than an image that has to be rebuilt.
+      - name: Build and push
+        id: images
+        run: |
+          set -euo pipefail
+          REGISTRY="${REGION}-docker.pkg.dev/${PROJECT_ID}/lifecycle"
+
+          for service in api worker; do
+            image="${REGISTRY}/${service}:${GITHUB_SHA}"
+            docker build -f "services/${service}/Dockerfile" -t "$image" .
+            docker push "$image"
+            # The registry is asked for the digest rather than the local daemon,
+            # so the value recorded is the one that is actually stored.
+            digest=$(gcloud artifacts docker images describe "$image" \
+              --format='value(image_summary.digest)')
+            echo "${service}=${REGISTRY}/${service}@${digest}" >> "$GITHUB_OUTPUT"
+            # Freed between builds; both images are large and the runner is not.
+            docker image rm "$image" || true
+          done
+
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.9.8
+          terraform_wrapper: false
+
+      - name: Terraform init
+        working-directory: infra
+        run: terraform init -backend-config="bucket=${{ vars.TF_STATE_BUCKET }}"
+
+      # Written as JSON so a list variable needs no shell quoting, and written
+      # here rather than committed because every value in it belongs to one
+      # deployment. It is gitignored alongside terraform.tfvars.
+      #
+      # worker_url is seeded from the existing state. The worker needs its own
+      # URL and that URL does not exist until the worker does, so on the very
+      # first run this is empty and the step after the apply fills it in.
+      - name: Write variables
+        working-directory: infra
+        env:
+          API_IMAGE: ${{ steps.images.outputs.api }}
+          WORKER_IMAGE: ${{ steps.images.outputs.worker }}
+        run: |
+          set -euo pipefail
+          worker_url=$(terraform output -raw worker_service_url 2>/dev/null || echo "")
+          echo "worker_url=$worker_url" >> "$GITHUB_ENV"
+
+          jq -n \
+            --arg project_id "${PROJECT_ID}" \
+            --arg project_number "${{ vars.GCP_PROJECT_NUMBER }}" \
+            --arg region "${REGION}" \
+            --arg api_image "${API_IMAGE}" \
+            --arg worker_image "${WORKER_IMAGE}" \
+            --arg domain "${{ vars.CONSOLE_DOMAIN }}" \
+            --arg operator_group "${{ vars.OPERATOR_GROUP }}" \
+            --arg iap_support_email "${{ vars.IAP_SUPPORT_EMAIL }}" \
+            --arg smtp_sender "${{ vars.SMTP_SENDER }}" \
+            --arg smtp_return_path "${{ vars.SMTP_RETURN_PATH }}" \
+            --arg workspace_customer_id "${{ vars.WORKSPACE_CUSTOMER_ID || 'my_customer' }}" \
+            --arg bootstrap_admins "${{ vars.BOOTSTRAP_ADMINS }}" \
+            --arg worker_url "$worker_url" \
+            --argjson audit_bucket_locked "${{ vars.AUDIT_BUCKET_LOCKED || 'true' }}" \
+            '{
+              project_id: $project_id,
+              project_number: $project_number,
+              region: $region,
+              api_image: $api_image,
+              worker_image: $worker_image,
+              domain: $domain,
+              operator_group: $operator_group,
+              iap_support_email: $iap_support_email,
+              smtp_sender: $smtp_sender,
+              smtp_return_path: $smtp_return_path,
+              workspace_customer_id: $workspace_customer_id,
+              worker_url: $worker_url,
+              audit_bucket_locked: $audit_bucket_locked,
+              bootstrap_admins: ($bootstrap_admins | split(",") | map(select(length > 0)))
+            }' > ci.auto.tfvars.json
+
+      - name: Terraform apply
+        working-directory: infra
+        run: terraform apply -auto-approve -input=false
+
+      # Only on a run where the worker was created or replaced, which is the
+      # first one and then almost never. The worker verifies incoming task
+      # tokens against this value and enqueues its own follow-on steps at it, so
+      # a worker holding the placeholder rejects every task it is given.
+      - name: Apply the worker URL, if this run produced a new one
+        working-directory: infra
+        run: |
+          set -euo pipefail
+          current=$(terraform output -raw worker_service_url)
+          if [ "$current" = "${worker_url:-}" ]; then
+            echo "worker_url unchanged; nothing to do."
+            exit 0
+          fi
+          echo "worker_url is now $current; applying it."
+          jq --arg u "$current" '.worker_url = $u' ci.auto.tfvars.json > tmp.json
+          mv tmp.json ci.auto.tfvars.json
+          terraform apply -auto-approve -input=false
+
+      - name: Summary
+        working-directory: infra
+        run: |
+          {
+            echo "### Deployed"
+            echo
+            echo "| | |"
+            echo "|---|---|"
+            echo "| commit | \`${GITHUB_SHA}\` |"
+            echo "| api | \`${{ steps.images.outputs.api }}\` |"
+            echo "| worker | \`${{ steps.images.outputs.worker }}\` |"
+            echo "| console | $(terraform output -raw console_url) |"
+          } >> "$GITHUB_STEP_SUMMARY"
