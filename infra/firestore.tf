@@ -74,6 +74,31 @@ resource "google_firestore_index" "requests_by_status" {
   }
 }
 
+resource "google_firestore_index" "requests_awaiting_approval" {
+  project    = var.project_id
+  database   = google_firestore_database.lifecycle.name
+  collection = "lifecycleRequests"
+
+  # The approvals inbox (REQ-011). Close to requests_by_status above and not the
+  # same index: this one orders on updatedAt, because an approver wants the
+  # request that most recently stopped, not the one most recently raised. A
+  # request created on Monday and halted this morning belongs at the top.
+  #
+  # It has no requestId tie-break, unlike every other index in this file, and
+  # that is not an oversight. The tie-break exists to keep a paging cursor from
+  # skipping or repeating a row across pages, and this list does not page: it is
+  # one bounded read capped at 100, with no startAfter. Adding a third field
+  # would put a column in the index that no query orders on.
+  fields {
+    field_path = "status"
+    order      = "ASCENDING"
+  }
+  fields {
+    field_path = "updatedAt"
+    order      = "DESCENDING"
+  }
+}
+
 resource "google_firestore_index" "requests_by_target_user" {
   project    = var.project_id
   database   = google_firestore_database.lifecycle.name
