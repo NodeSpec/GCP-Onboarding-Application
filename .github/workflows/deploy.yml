@@ -115,7 +115,7 @@ jobs:
             --arg iap_support_email "${{ vars.IAP_SUPPORT_EMAIL }}" \
             --arg smtp_sender "${{ vars.SMTP_SENDER }}" \
             --arg smtp_return_path "${{ vars.SMTP_RETURN_PATH }}" \
-            --arg workspace_customer_id "${{ vars.WORKSPACE_CUSTOMER_ID || 'my_customer' }}" \
+            --arg workspace_customer_id "${{ vars.WORKSPACE_CUSTOMER_ID }}" \
             --arg bootstrap_admins "${{ vars.BOOTSTRAP_ADMINS }}" \
             --arg worker_url "$worker_url" \
             --argjson audit_bucket_locked "${{ vars.AUDIT_BUCKET_LOCKED || 'true' }}" \

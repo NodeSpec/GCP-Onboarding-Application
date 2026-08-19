@@ -319,6 +319,22 @@ describe('REQ-023: IAP', () => {
     expect(outputs).toContain('iap_client_id');
   });
 
+  it('provisions the IAP service agent, and the invoker grant waits for it', () => {
+    // The agent is minted on request, not at project creation, and the
+    // run.invoker grant on the API service names it. A fresh project used to
+    // fail the first apply with "service-<number>@gcp-sa-iap... does not exist"
+    // until an operator ran a gcloud command the docs had to carry. Terraform
+    // owns it now; this keeps it that way.
+    const identity = named('google_project_service_identity', 'iap');
+    expect(attr(identity.body, 'service')).toBe('"iap.googleapis.com"');
+
+    const grant = resources(BLOCKS, 'google_cloud_run_v2_service_iam_member').find((b) =>
+      (attr(b.body, 'member') ?? '').includes('gcp-sa-iap'),
+    );
+    expect(grant).toBeDefined();
+    expect(attr(grant!.body, 'depends_on')).toContain('google_project_service_identity.iap');
+  });
+
   it('AC-2: grants access to the operator group only', () => {
     const grants = resources(BLOCKS, 'google_iap_web_backend_service_iam_member');
     expect(grants).toHaveLength(1);
