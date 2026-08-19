@@ -49,6 +49,17 @@ export interface EnqueueStepInput {
   idempotencyKey: string;
   /** Set for the offboarding hold period. */
   scheduleAt?: ScheduleAt;
+  /**
+   * Set ONLY by an explicit re-dispatch of a step whose previous task already
+   * executed, which today means an admin resume. Cloud Tasks remembers an
+   * EXECUTED task's name for about an hour and refuses to recreate it, and the
+   * dispatcher treats that refusal as successful deduplication, so a resume
+   * that reused the plain name was silently swallowed: the request sat in
+   * 'running' with nothing queued, forever. Found live, on the first resume
+   * ever attempted. The nonce scopes the name to that one human action;
+   * ordinary enqueues must never set it, or deduplication stops working.
+   */
+  dispatchNonce?: string;
 }
 
 export interface TaskDispatcher {
@@ -66,7 +77,8 @@ export interface TaskDispatcher {
  * notification and one expiry per step however many times a halt is retried.
  */
 export const discriminators = {
-  step: (idempotencyKey: string): string => `execute:${idempotencyKey}`,
+  step: (idempotencyKey: string, dispatchNonce?: string): string =>
+    dispatchNonce ? `execute:${idempotencyKey}:r:${dispatchNonce}` : `execute:${idempotencyKey}`,
   approverNotification: (requestId: string, stepId: string): string => `notify:${requestId}:${stepId}`,
   approvalExpiry: (requestId: string, stepId: string): string => `expire:${requestId}:${stepId}`,
 } as const;
@@ -150,7 +162,11 @@ export class CloudTasksDispatcher implements TaskDispatcher {
       });
     } catch (err) {
       // ALREADY_EXISTS means the deduplication window caught a repeat enqueue.
-      // That is the mechanism working, not a failure.
+      // That is the mechanism working, not a failure. It is also why an
+      // explicit re-dispatch of an already-executed step must carry a nonce
+      // (see EnqueueStepInput.dispatchNonce): Cloud Tasks answers this same
+      // code for a name whose task already RAN, and swallowing it there means
+      // swallowing the delivery.
       if (isAlreadyExists(err)) {
         this.log.info(
           { route: params.route, discriminator: params.discriminator },
@@ -171,7 +187,7 @@ export class CloudTasksDispatcher implements TaskDispatcher {
         idempotencyKey: input.idempotencyKey,
         attempt: 1,
       },
-      discriminator: discriminators.step(input.idempotencyKey),
+      discriminator: discriminators.step(input.idempotencyKey, input.dispatchNonce),
       ...(input.scheduleAt === undefined ? {} : { scheduleAt: input.scheduleAt }),
     });
   }

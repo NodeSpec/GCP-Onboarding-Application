@@ -185,14 +185,20 @@ export function adminRoutes(deps: AdminRouteDeps): Router {
     }
 
     // Enqueued after the commit, as everywhere else. The idempotency key is
-    // unchanged across attempts, so a resume of a step whose task is somehow
-    // still in the queue collapses onto the same task rather than doubling it.
+    // unchanged, but the dispatch carries a nonce: the step's previous task
+    // already EXECUTED, and Cloud Tasks remembers an executed task's name for
+    // about an hour, treating a recreate as a duplicate. Without the nonce this
+    // enqueue was silently swallowed as "already enqueued" and the request sat
+    // in 'running' with nothing coming, which is exactly what the first live
+    // resume did. The nonce makes this delivery unique to this resume; the
+    // executor's transactional claim remains the replay guard.
     let dispatch: 'enqueued' | 'deferred' = 'enqueued';
     try {
       await deps.dispatcher.enqueueStep({
         requestId: req.params.requestId!,
         stepId: outcome.step.stepId,
         idempotencyKey: outcome.step.idempotencyKey,
+        dispatchNonce: Date.now().toString(36),
       });
     } catch (err) {
       logger.error({ err }, 'resume committed but the enqueue failed; left for reconciliation');

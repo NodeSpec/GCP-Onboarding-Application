@@ -21,6 +21,28 @@ import { registerHandler, type StepContext, type StepResult } from '../steps/han
 /** How long an unretrieved one-time password remains recoverable. */
 const CREDENTIAL_TTL_HOURS = 72;
 
+/**
+ * Existence probe for an account this phase intends to CREATE.
+ *
+ * A super admin asking the Directory API for a missing user gets 404. The
+ * DELEGATED admin this system runs as (a custom role, REQ-027) gets 403 "Not
+ * Authorized", because the API will not confirm nonexistence to a scoped
+ * admin. For this probe alone, "not authorized to see it" and "does not
+ * exist" are the same answer: proceed, and let users.insert be the authority.
+ * A genuinely missing create privilege still fails loudly at insert, where the
+ * missing-privilege message is accurate. Found live: every create of a new
+ * address failed here as AdminRoleNotGrantedError while the role was correct,
+ * proven by users.get succeeding on existing accounts in the same tenant.
+ */
+async function probeExistence(ctx: StepContext, primaryEmail: string) {
+  try {
+    return await ctx.directory.getUser(primaryEmail);
+  } catch (err) {
+    if (err instanceof WorkspaceError && err.errorClass === 'permission') return null;
+    throw err;
+  }
+}
+
 interface CreatePayload {
   primaryEmail: string;
   givenName: string;
@@ -45,7 +67,7 @@ registerHandler({
   name: 'validate-request',
   async execute(ctx: StepContext): Promise<StepResult> {
     const payload = payloadOf(ctx);
-    const existing = await ctx.directory.getUser(payload.primaryEmail);
+    const existing = await probeExistence(ctx, payload.primaryEmail);
 
     if (existing) {
       throw new UserAlreadyExistsError(payload.primaryEmail, 'validate-request');
@@ -62,7 +84,7 @@ registerHandler({
 
     // Pre-mutation read. If a previous attempt created the account and then
     // timed out, this is where we notice rather than failing on AlreadyExists.
-    const existing = await ctx.directory.getUser(payload.primaryEmail);
+    const existing = await probeExistence(ctx, payload.primaryEmail);
     if (existing) {
       return { status: 'skipped', output: { reason: 'user already exists', id: existing.id } };
     }
