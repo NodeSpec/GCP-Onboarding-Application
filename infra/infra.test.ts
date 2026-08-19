@@ -23,8 +23,9 @@ import {
  * test can.
  *
  * WHAT THIS CANNOT DO, stated plainly. `terraform validate` and `terraform
- * plan` need the provider registry and a GCP project, and neither is reachable
- * from the test environment, so REQ-009 AC-1 is not proven here. Nor is
+ * plan` need the provider registry and a GCP project. `validate` now runs in
+ * CI, where the registry is reachable (.github/workflows/ci.yml); `plan` still
+ * needs credentials and does not, so REQ-009 AC-1 is only partly proven. Nor is
  * anything about the DEPLOYED state: that the retention lock actually refuses a
  * shortening attempt, that an account outside the operator group is turned away
  * at the perimeter, that an expired credential document is really removed. Each
@@ -88,10 +89,6 @@ describe('REQ-020: Firestore', () => {
     // Firestore refuses a composite query with no index at RUNTIME, so a
     // missing one here is not a slow list — it is a 500 the first time an
     // operator applies that filter.
-    expect(has('lifecycleRequests', ['status:ASCENDING', 'createdAt:DESCENDING'])).toBe(true);
-    expect(has('lifecycleRequests', ['targetUser:ASCENDING', 'createdAt:DESCENDING'])).toBe(true);
-    expect(has('lifecycleRequests', ['phase:ASCENDING', 'status:ASCENDING'])).toBe(true);
-    expect(has('lifecycleRequests', ['targetUser:ASCENDING', 'status:ASCENDING'])).toBe(true);
     expect(has('auditEvents', ['requestId:ASCENDING', 'timestamp:ASCENDING'])).toBe(true);
 
     // The approvals inbox, which orders on updatedAt rather than createdAt: an
@@ -99,6 +96,49 @@ describe('REQ-020: Firestore', () => {
     // recently raised. Missing this one is a 500 on the one screen an approver
     // opens, which is how it was found.
     expect(has('lifecycleRequests', ['status:ASCENDING', 'updatedAt:DESCENDING'])).toBe(true);
+  });
+
+  it('AC-2: covers every filter combination the request list can issue, including none', () => {
+    // listRequests takes three INDEPENDENT optional filters and always sorts on
+    // (createdAt desc, requestId desc). The console exposes them as three
+    // separate controls, so an operator reaches all eight combinations, and
+    // Firestore treats each as a distinct index. Enumerated rather than listed
+    // by hand, because a hand-written list is how the unfiltered case went
+    // missing: it is the one nobody thinks of as a query with an index.
+    const FILTERS = ['phase', 'status', 'targetUser'] as const;
+    const SORT = ['createdAt:DESCENDING', 'requestId:DESCENDING'];
+
+    const declaredIndexes = resources(BLOCKS, 'google_firestore_index')
+      .filter((b) => attr(b.body, 'collection') === '"lifecycleRequests"')
+      .map((b) =>
+        nested(b.body, 'fields').map(
+          (f) =>
+            `${attr(f.body, 'field_path')?.replace(/"/g, '')}:${attr(f.body, 'order')?.replace(/"/g, '')}`,
+        ),
+      );
+
+    // Firestore matches equality fields in any order among themselves, so the
+    // comparison is set-wise on the leading fields and exact on the sort tail.
+    const served = (equalities: string[]) =>
+      declaredIndexes.some((fields) => {
+        if (fields.length !== equalities.length + SORT.length) return false;
+        const lead = fields.slice(0, equalities.length);
+        const tail = fields.slice(equalities.length);
+        const wanted = equalities.map((f) => `${f}:ASCENDING`);
+        return (
+          [...lead].sort().join() === [...wanted].sort().join() && tail.join() === SORT.join()
+        );
+      });
+
+    const missing: string[] = [];
+    for (let mask = 0; mask < 1 << FILTERS.length; mask += 1) {
+      const equalities = FILTERS.filter((_, i) => mask & (1 << i));
+      if (!served([...equalities])) {
+        missing.push(equalities.length ? equalities.join(' + ') : '(no filter)');
+      }
+    }
+
+    expect(missing).toEqual([]);
   });
 
   it('AC-2: every paging index tie-breaks on requestId, matching the cursor the API pages with', () => {
@@ -544,7 +584,8 @@ describe('REQ-014: least-privilege identities and secrets', () => {
     walk(REPO);
 
     // A downloaded key is the thing the whole no-delegation design exists to
-    // avoid; ADC from the metadata server is the only credential path.
+    // avoid; ADC from the metadata server is the only credential path, and the
+    // deploy pipeline federates rather than holding a key for the same reason.
     const keyFiles = files.filter((f) => /service-account.*\.json$|.*-key\.json$/.test(f));
     expect(keyFiles.map((f) => relative(REPO, f))).toEqual([]);
 
