@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { AdminView } from './Admin.tsx';
 import { Approvals } from './Approvals.tsx';
 import { RequestDetailView } from './RequestDetail.tsx';
 import { RequestForm } from './RequestForm.tsx';
@@ -18,13 +19,19 @@ import { Can, useIdentity } from './identity.tsx';
  * these tabs is authorized again server-side.
  */
 
-type Route = { view: 'list' } | { view: 'new' } | { view: 'approvals' } | { view: 'request'; id: string };
+type Route =
+  | { view: 'list' }
+  | { view: 'new' }
+  | { view: 'approvals' }
+  | { view: 'admin' }
+  | { view: 'request'; id: string };
 
 function segmentRoute(segment: string): Route {
   const detail = /^requests\/(.+)$/.exec(segment);
   if (detail?.[1]) return { view: 'request', id: decodeURIComponent(detail[1]) };
   if (segment === 'new') return { view: 'new' };
   if (segment === 'approvals') return { view: 'approvals' };
+  if (segment === 'admin') return { view: 'admin' };
   return { view: 'list' };
 }
 
@@ -87,12 +94,16 @@ export function App() {
           <Can role="approver">
             <button type="button" onClick={() => go('#/approvals')}>Approvals</button>
           </Can>
+          <Can role="admin">
+            <button type="button" onClick={() => go('#/admin')}>Admin</button>
+          </Can>
         </nav>
       </header>
 
       {route.view === 'list' && <RequestList onOpen={openRequest} />}
       {route.view === 'new' && <RequestForm onSubmitted={openRequest} />}
       {route.view === 'approvals' && <Approvals onOpen={openRequest} />}
+      {route.view === 'admin' && <AdminView />}
       {route.view === 'request' && <RequestDetailView requestId={route.id} />}
     </main>
   );

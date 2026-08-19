@@ -1,7 +1,7 @@
 {
   "modelVersion": 1,
   "generatedBy": "nodespec",
-  "modelHash": "623dd45c5c0b989a2653909e7b9bc0973799b773c16ac59ff9f8c48978d40bb5",
+  "modelHash": "d42e946b71d7a95b0f2bc49d691afdf019a273249cdb7b06978ec20dd3155a8c",
   "nodes": [
     {
       "id": "1c81cf63-c51e-4b0e-b6ad-7d318332d2fe",
@@ -915,7 +915,8 @@
       "id": "4c9a2e61-b035-4d7f-8ea2-93c50b17d6f4",
       "nodeId": "9af301aa-2191-4532-9871-82179a5500c1",
       "path": "services/console/src/api.ts",
-      "kind": "source"
+      "kind": "source",
+      "contentHash": "0000000072d7dbfd"
     },
     {
       "id": "5957afb4-f5ed-479a-b53b-5890149cfcbb",
@@ -1053,7 +1054,8 @@
       "id": "6f14a83b-2c95-4e07-9d68-30ab5c7f21e9",
       "nodeId": "9af301aa-2191-4532-9871-82179a5500c1",
       "path": "services/console/src/App.tsx",
-      "kind": "source"
+      "kind": "source",
+      "contentHash": "00000000737798ca"
     },
     {
       "id": "6f8b204d-c317-4a95-8e70-1d94e6a37b58",
@@ -1553,6 +1555,12 @@
       "kind": "config"
     },
     {
+      "id": "d8f3a627-1e94-4b50-a7c3-82e60b91f5d4",
+      "nodeId": "9af301aa-2191-4532-9871-82179a5500c1",
+      "path": "services/console/src/Admin.tsx",
+      "kind": "source"
+    },
+    {
       "id": "dc658fc7-51f2-4753-9b4e-df6fbd47599f",
       "nodeId": "6da6f1e9-97b5-4c0b-8ba5-0b81f3bc5e4b",
       "path": ".nodespec/tasks/cloud-logging-audit-sink-6da6f1e9.task.md",
@@ -1604,7 +1612,8 @@
       "id": "e719d34a-5b28-4c91-b7f0-4a68d2915c73",
       "nodeId": "9af301aa-2191-4532-9871-82179a5500c1",
       "path": "services/console/src/RequestForm.tsx",
-      "kind": "source"
+      "kind": "source",
+      "contentHash": "0000000041670723"
     },
     {
       "id": "e7a4c136-8b25-4d90-a3f7-52d1096be714",

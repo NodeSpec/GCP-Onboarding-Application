@@ -172,6 +172,19 @@ export const cancelRequest = (requestId: string, reason: string) =>
     body: JSON.stringify({ reason }),
   });
 
+/**
+ * The one-time password, retrievable exactly once and only by the operator who
+ * submitted the request (REQ-017). The server refuses everyone else including
+ * admins, deletes the ciphertext inside the same transaction that releases the
+ * plaintext, and answers 410 for anything already taken, expired, or replaced.
+ * Nothing is cached here: the value exists in this tab until it is dismissed
+ * and nowhere else.
+ */
+export const retrieveCredential = (requestId: string) =>
+  request<{ requestId: string; primaryEmail: string; oneTimePassword: string }>(
+    `/api/requests/${encodeURIComponent(requestId)}/credential`,
+  );
+
 // ---------------------------------------------------------------- approvals
 
 export interface InboxEntry {
@@ -219,3 +232,82 @@ export const listGroups = () =>
 
 export const listOrgUnits = () =>
   request<{ orgUnits: { orgUnitPath: string; name: string }[] }>('/api/lookup/org-units');
+
+// ------------------------------------------------------------------- admin
+//
+// Every call below is refused server-side without the admin role. The console
+// renders these behind <Can role="admin">, but that is presentation: the
+// server's requireRole('admin') is the enforcement (REQ-012 AC-5, AC-8).
+
+export interface RoleBindingRow {
+  subject: string;
+  kind: 'user' | 'group';
+  roles: OperatorRole[];
+  updatedBy: string;
+}
+
+export const listRoleBindings = () =>
+  request<{ bindings: RoleBindingRow[] }>('/api/role-bindings');
+
+export const putRoleBinding = (subject: string, kind: 'user' | 'group', roles: OperatorRole[]) =>
+  request<{ subject: string; roles: OperatorRole[]; previousRoles: OperatorRole[] | null }>(
+    `/api/role-bindings/${encodeURIComponent(subject)}`,
+    { method: 'PUT', body: JSON.stringify({ kind, roles }) },
+  );
+
+export const deleteRoleBinding = (subject: string) =>
+  request<{ subject: string; previousRoles: OperatorRole[] }>(
+    `/api/role-bindings/${encodeURIComponent(subject)}`,
+    { method: 'DELETE' },
+  );
+
+/** One step's approval knobs, keyed by step name inside each phase. */
+export interface StepPolicy {
+  requiresApproval: boolean;
+  approverRole: 'approver' | 'admin';
+  expiryHours?: number;
+}
+
+export type ApprovalPolicyDoc = Record<Phase, Record<string, StepPolicy>>;
+
+export const getApprovalPolicy = () =>
+  request<{ policy: ApprovalPolicyDoc | null }>('/api/admin/approval-policy');
+
+export const putApprovalPolicy = (policy: ApprovalPolicyDoc) =>
+  request<{ policy: ApprovalPolicyDoc; appliesTo: string }>('/api/admin/approval-policy', {
+    method: 'PUT',
+    body: JSON.stringify(policy),
+  });
+
+export const adminCancelRequest = (requestId: string, reason: string) =>
+  request<{ status: string; stepsStopped?: number }>(
+    `/api/admin/requests/${encodeURIComponent(requestId)}/cancel`,
+    { method: 'POST', body: JSON.stringify({ reason }) },
+  );
+
+export const adminResumeRequest = (requestId: string) =>
+  request<{ status: string; resumedStep: string; dispatch: 'enqueued' | 'deferred' }>(
+    `/api/admin/requests/${encodeURIComponent(requestId)}/resume`,
+    { method: 'POST', body: JSON.stringify({}) },
+  );
+
+export interface AuditRow {
+  eventId: string;
+  requestId: string | null;
+  stepId: string | null;
+  action: string;
+  actor: { kind: string; email: string };
+  targetUser: string | null;
+  outcome: 'success' | 'failure' | 'denied';
+  timestamp: string;
+}
+
+export const listAudit = (options: { limit?: number; before?: number } = {}) => {
+  const q = new URLSearchParams();
+  if (options.limit) q.set('limit', String(options.limit));
+  if (options.before) q.set('before', String(options.before));
+  const qs = q.toString();
+  return request<{ events: AuditRow[]; nextBefore: number | null }>(
+    `/api/admin/audit${qs ? `?${qs}` : ''}`,
+  );
+};

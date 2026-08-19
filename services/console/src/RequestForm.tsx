@@ -13,8 +13,10 @@ import { GroupPicker, OrgUnitPicker, UserPicker } from './pickers.tsx';
  * same payloads because they are running the same code, not because two
  * implementations were kept in agreement.
  *
- * The pickers replace free text for the three things that must exist in the
- * domain: the target user, the groups, the org unit (AC-2, AC-3).
+ * The pickers replace free text for the things that must exist in the domain:
+ * the groups, the org unit, and — on the phases that act on an existing
+ * account — the target user (AC-2, AC-3). The create phase's target is the one
+ * value that must NOT exist, so it alone is typed.
  *
  * Client validation is a courtesy, never a gate. The submission goes to the
  * server regardless of what this thinks, and a server 400 is rendered as the
@@ -146,7 +148,30 @@ export function RequestForm({ onSubmitted }: { onSubmitted?: (requestId: string)
         ))}
       </select>
 
-      <UserPicker value={target} onSelect={selectUser} />
+      {phase === 'create' ? (
+        /* The one phase whose target must NOT exist. The picker can only emit
+           accounts the directory already holds, which the create phase must
+           refuse, so offering it here made creation impossible by construction.
+           A typed address is safe: the schema validates its shape on submit and
+           validate-request checks live Workspace state before create-user runs,
+           so a typo becomes a refused request rather than a broken account. */
+        <div className="field">
+          <label htmlFor="new-account-email">New account email *</label>
+          <input
+            id="new-account-email"
+            type="email"
+            autoComplete="off"
+            placeholder="new.starter@yourdomain.com"
+            value={(values.primaryEmail as string) ?? ''}
+            onChange={(e) => {
+              setTarget(e.target.value);
+              set('primaryEmail', e.target.value);
+            }}
+          />
+        </div>
+      ) : (
+        <UserPicker value={target} onSelect={selectUser} />
+      )}
       {issueFor('primaryEmail') && <p role="alert">{issueFor('primaryEmail')}</p>}
 
       {fields
