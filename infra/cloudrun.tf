@@ -60,6 +60,23 @@ resource "google_cloud_run_v2_service" "api" {
     max_instance_request_concurrency = var.api_max_concurrency
     timeout                          = "${var.api_request_timeout_seconds}s"
 
+    # Egress through the VPC (infra/network.tf). ALL_TRAFFIC rather than
+    # PRIVATE_RANGES_ONLY because the destination that matters is the worker's
+    # own run.app URL, which is a public address: routing only RFC1918 ranges
+    # would leave that call going out over the internet, where the worker's
+    # ingress restriction refuses it with a 404 and nothing reaches the worker
+    # to log why.
+    #
+    # This is what lets the API reach the worker's lookup routes at all
+    # (REQ-029) without relaxing REQ-026 AC-1.
+    vpc_access {
+      network_interfaces {
+        network    = google_compute_network.lifecycle.id
+        subnetwork = google_compute_subnetwork.lifecycle.id
+      }
+      egress = "ALL_TRAFFIC"
+    }
+
     containers {
       image = var.api_image
 

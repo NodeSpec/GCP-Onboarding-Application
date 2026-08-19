@@ -1,7 +1,7 @@
 {
   "modelVersion": 1,
   "generatedBy": "nodespec",
-  "modelHash": "b5b50c03682d4a832c45336a457513e48bd6b606aad4b843b019f74a1baaf631",
+  "modelHash": "1e1c5ecc96c55c760dcf58961276a6d35fd44f371c93b8c54681b3ff2000ed40",
   "nodes": [
     {
       "id": "1c81cf63-c51e-4b0e-b6ad-7d318332d2fe",
@@ -1023,6 +1023,12 @@
       "kind": "source"
     },
     {
+      "id": "7b2e4f19-6a35-4c80-9d1e-42a8b0f7c536",
+      "nodeId": "565b92bd-2c2c-4a82-be62-b691decdbadf",
+      "path": "infra/network.tf",
+      "kind": "config"
+    },
+    {
       "id": "7c0bb8ce-04db-4651-b75a-5bad75c9ffc1",
       "nodeId": "e601237a-48ea-4941-95f4-6fb53c7c6736",
       "path": ".nodespec/tasks/email-delivery-service-e601237a.task.md",
@@ -1457,7 +1463,7 @@
       "nodeId": "a7ee091d-3d58-4624-96ed-8292a596f6d1",
       "path": "infra/cloudrun.tf",
       "kind": "config",
-      "contentHash": "00000000350b1f6d"
+      "contentHash": "00000000310cd5a5"
     },
     {
       "id": "d7e8f9a0-b1c2-4d3e-4f5a-6b7c8d9e0f1a",
