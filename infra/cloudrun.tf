@@ -130,7 +130,12 @@ resource "google_cloud_run_v2_service" "api" {
     }
   }
 
-  depends_on = [google_project_service.required]
+  # The NAT is in this list because of an ordering failure that happened, not
+  # one that might. Without it, Terraform updates this service as soon as the
+  # subnet exists, a new instance comes up with ALL_TRAFFIC egress and no
+  # internet route yet, the IAP JWK fetch to www.gstatic.com fails, and every
+  # sign-in gets 503 until the NAT finishes creating behind it.
+  depends_on = [google_project_service.required, google_compute_router_nat.lifecycle]
 }
 
 resource "google_cloud_run_v2_service" "worker" {

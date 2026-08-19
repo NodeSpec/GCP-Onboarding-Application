@@ -1,7 +1,7 @@
 {
   "specVersion": 1,
   "generatedBy": "nodespec",
-  "specHash": "c490ce41178b6dee76d3d38ccee00c2cedd1ec343e2d27ef1d3aef94140b8001",
+  "specHash": "504d4daeafe136da78b4a8a5a49296103b98b265d4069177e93ff8871e1db732",
   "vision": "Company wants an application that supports the full user lifecycle in four phases:\n\n1. User creation, including assignment of attributes and groups\n2. Notifying the user of their new account with a welcome letter and initial password setting instructions\n3. Updating a user's roles/attributes over time\n4. Account deletion\n\nScope and constraints as stated by the customer:\n\n- The application should only worry about one IDP for now — Google Workspace.\n- All of the steps in account creation must be stateful and have optional two-party approval features.\n- The application should run serverless — Cloud Run on GCP.\n- Because it uses Google Workspace, the app must include instructions on how to configure a GCP service account to have admin permissions in Workspace WITHOUT using Domain-Wide Delegation.\n- The serverless application must be protected by IAP, and must include code to verify the IAP JWT header so the security controls cannot be bypassed by reaching the service directly.\n\nThe product is an internal, operator-facing lifecycle console: an IAP-protected web UI plus an API where a requester drafts a lifecycle action, an optional second approver signs off, and a durable state machine executes the Workspace changes step by step — every step resumable, auditable, and idempotent, so a partially-completed onboarding is never left in an unknown state.",
   "constraints": [],
   "preferences": {
@@ -585,6 +585,16 @@
     {
       "requirementId": "REQ-009",
       "nodeId": "565b92bd-2c2c-4a82-be62-b691decdbadf",
+      "mappingType": "implements"
+    },
+    {
+      "requirementId": "REQ-009",
+      "nodeId": "6c9a0f47-2d81-4e35-b7a0-38f612d5ce94",
+      "mappingType": "implements"
+    },
+    {
+      "requirementId": "REQ-009",
+      "nodeId": "b41d7c68-95a2-4e07-8f36-2c0e5a97b1d4",
       "mappingType": "implements"
     },
     {

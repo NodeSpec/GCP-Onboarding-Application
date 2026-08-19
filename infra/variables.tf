@@ -230,9 +230,27 @@ variable "audit_mirror_schedule" {
 # --------------------------------------------------------------- Application
 
 variable "workspace_customer_id" {
-  description = "Workspace customer id for Directory API calls. `my_customer` resolves to the caller's own tenant."
+  description = <<-EOT
+    The Workspace tenant's real customer id, shaped like C01ab2cd3. Find it with
+
+      gcloud organizations list --format='value(owner.directoryCustomerId)'
+
+    or in the Admin console under Account > Account settings > Profile.
+
+    The `my_customer` alias is NOT accepted, and the validation below is why:
+    the alias means "the customer the authenticated user belongs to", and this
+    system's worker is a service account acting as itself (REQ-027, no
+    Domain-Wide Delegation), which belongs to no Workspace customer. Every
+    Directory call that scopes by customer then fails with a bare 400 Bad
+    Request that names nothing. A deployment that would fail at runtime should
+    fail at plan time instead.
+  EOT
   type        = string
-  default     = "my_customer"
+
+  validation {
+    condition     = can(regex("^C[a-z0-9]+$", var.workspace_customer_id))
+    error_message = "workspace_customer_id must be the tenant's real customer id (like C01ab2cd3), never the my_customer alias, which a service account cannot use. Find it: gcloud organizations list --format='value(owner.directoryCustomerId)'"
+  }
 }
 
 variable "smtp_sender" {
