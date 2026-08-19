@@ -199,14 +199,17 @@ password, key or token appears in either workflow.
 | `IAP_SUPPORT_EMAIL` | `you@example.com` | shown on the consent screen |
 | `SMTP_SENDER` | `no-reply@example.com` | the sending account |
 | `SMTP_RETURN_PATH` | `lifecycle-bounces@example.com` | may be empty |
-| `WORKSPACE_CUSTOMER_ID` | `my_customer` | leave as `my_customer` unless you have a reason |
+| `WORKSPACE_CUSTOMER_ID` | `C01ab2cd3` | `gcloud organizations list --format='value(owner.directoryCustomerId)'` |
 | `BOOTSTRAP_ADMINS` | `you@example.com,other@example.com` | comma separated, no spaces |
 | `AUDIT_BUCKET_LOCKED` | `true` | `true` or `false`, unquoted |
 
 `AUDIT_BUCKET_LOCKED` is read as JSON, so it must be exactly `true` or `false`.
 Locking is irreversible; `docs/deployment.md` says what that commits you to. It
-and `WORKSPACE_CUSTOMER_ID` fall back to `true` and `my_customer` if you leave
-them unset, so the two you can reasonably skip are the two with a safe default.
+falls back to `true` if unset, and is the only variable that has a fallback.
+
+`WORKSPACE_CUSTOMER_ID` must be the tenant's real customer id. The
+`my_customer` alias cannot work for a service account acting as itself, and the
+Terraform refuses it at plan time; the deployment guide's step 5 explains why.
 
 `BOOTSTRAP_ADMINS` is split on commas, and empty entries are dropped, so a
 trailing comma is harmless and an empty variable produces an empty list.

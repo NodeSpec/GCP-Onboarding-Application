@@ -41,7 +41,7 @@ Two Cloud Run services, deliberately separated:
 
 The separation is the point. If the operator facing surface is ever compromised, it cannot modify the directory, because it does not hold the permission to do so.
 
-Supporting pieces: Firestore stores request state and the audit trail, Cloud Tasks delivers step execution reliably with retries, Secret Manager holds the two credentials the system needs, and Cloud Logging keeps a tamper evident copy of the audit record.
+Supporting pieces: Firestore stores request state and the audit trail, Cloud Tasks delivers step execution reliably with retries, Secret Manager holds the two credentials the system needs, and Cloud Logging keeps a tamper evident copy of the audit record. A small VPC carries the API service's outbound traffic so its calls to the worker arrive as internal traffic and pass the worker's ingress restriction, with Cloud NAT providing the one internet path sign-in itself depends on.
 
 For the full component list, connection topology and per component task documents, see [ARCHITECTURE.md](./ARCHITECTURE.md), which is generated from the NodeSpec model. For the reasoning behind the arrangement, including the trust boundaries and what each store holds, see [docs/architecture.md](./docs/architecture.md).
 
@@ -103,7 +103,7 @@ Terraform sets all of these on both Cloud Run services. The table is here so you
 | `BOOTSTRAP_ADMINS` | api | Comma separated. Holds `admin` before any role binding exists. |
 | `PROTECTED_ACCOUNTS` | api | Comma separated extra addresses no request may target |
 | `CONSOLE_BASE_URL` | worker | Where approval notices link to |
-| `WORKSPACE_CUSTOMER_ID` | worker | Workspace customer id, or `my_customer` |
+| `WORKSPACE_CUSTOMER_ID` | worker | The tenant's real customer id (`C01ab2cd3` shape). The `my_customer` alias cannot work for a service account and is refused at plan time |
 | `WORKSPACE_MODE` | worker | Accepts `live` and `dry-run`, but only `live` is implemented. See the note under Running locally. |
 | `SMTP_HOST`, `SMTP_PORT` | worker | Relay endpoint, `smtp-relay.gmail.com` and `587` |
 | `SMTP_SENDER` | api, worker | The no reply address letters are sent from. Protected automatically. |
@@ -178,9 +178,9 @@ Order matters, because the application needs values that only exist after the in
 
 2. **Build and push the images.** Both are referenced by immutable digest; Terraform refuses a mutable tag at plan time. The console has no deployment of its own, it is built into the API image and served behind IAP, which is what keeps the browser's IAP cookie the only credential in play.
 
-3. **Write `infra/terraform.tfvars`.** Your deployment values, ignored by git and never tracked. Four of them are specific to your organisation. Note `audit_bucket_locked`: locking the audit retention policy is **IRREVERSIBLE**, so set it false for a scratch project you intend to delete.
+3. **Write `infra/terraform.tfvars`.** Your deployment values, ignored by git and never tracked. Five of them are specific to your organisation. Note `audit_bucket_locked`: locking the audit retention policy is **IRREVERSIBLE**, so set it false for a scratch project you intend to delete.
 
-4. **Run `terraform apply`.** About 65 resources. On Cloud Shell use `-parallelism=3`, because the default concurrency provokes transient network failures against Google's APIs.
+4. **Run `terraform apply`.** About 70 resources. On Cloud Shell use `-parallelism=3`, because the default concurrency provokes transient network failures against Google's APIs.
 
 5. **Point DNS at the load balancer.** The managed certificate cannot issue until the record resolves, and the console is unreachable until it does. Fifteen minutes to an hour is normal.
 

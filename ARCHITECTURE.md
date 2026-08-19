@@ -7,7 +7,7 @@ component inventory, connection topology, and links to per-component task docume
 
 | Component | Role | Technology | Parent | Task Document | Test Plan |
 |-----------|------|------------|--------|---------------|-----------|
-| Google Workspace (Admin SDK Directory) | external-service | --- | --- | --- | --- |
+| Google Workspace (Admin SDK Directory) | external-service | --- | --- | [`.nodespec/tasks/google-workspace-admin-sdk-directory-1c81cf63.task.md`](./.nodespec/tasks/google-workspace-admin-sdk-directory-1c81cf63.task.md) | --- |
 | Firestore: lifecycle state and audit | database | gcp-firestore | Company GCP Project | --- | --- |
 | Identity-Aware Proxy | auth-provider | gcp-identity-aware-proxy | Company GCP Project | --- | --- |
 | Cloud NAT: lifecycle egress | vpc | gcp-cloud-nat | Company GCP Project | --- | --- |
@@ -64,6 +64,14 @@ component inventory, connection topology, and links to per-component task docume
 | Lifecycle API Service | Firestore: lifecycle state and audit | nosql | Lifecycle State Store |
 | Cloud NAT: lifecycle egress | Identity-Aware Proxy | dependency | VPC Network Path |
 | Lifecycle API Service | Lifecycle Step Executor | rest | Directory Lookup (read-only) |
+
+## Task Documents
+
+Each component has a task document containing the full implementation context:
+requirements, contracts, technology guidance, and connected components.
+Use these as the primary brief when implementing or modifying a component.
+
+- **Google Workspace (Admin SDK Directory)**: [`.nodespec/tasks/google-workspace-admin-sdk-directory-1c81cf63.task.md`](./.nodespec/tasks/google-workspace-admin-sdk-directory-1c81cf63.task.md)
 
 ## Test Plans
 

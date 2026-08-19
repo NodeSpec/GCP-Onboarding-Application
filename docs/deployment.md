@@ -10,7 +10,7 @@ earlier one, and the Workspace side needs a service account identity that does
 not exist until Terraform has run.
 
 Everything here is copy and paste. Set the variables in step 1 and the rest of
-the guide pastes without editing, except for four values in step 5 that are
+the guide pastes without editing, except for five values in step 5 that are
 specific to your organisation and are marked where they appear.
 
 Read `docs/workspace-admin-setup.md` alongside this. The GCP side and the
@@ -150,12 +150,10 @@ gcloud services enable \
   --project "$PROJECT_ID"
 ```
 
-Then provision the IAP service agent. It does not exist until something asks for
-it, and the apply needs it in order to let IAP invoke Cloud Run:
-
-```bash
-gcloud beta services identity create --service=iap.googleapis.com --project "$PROJECT_ID"
-```
+The IAP service agent, which earlier versions of this guide had you provision
+here with `gcloud beta services identity create`, is now a Terraform resource
+(`google_project_service_identity.iap` in `infra/iap.tf`), so there is nothing
+more to do in this step.
 
 ## 4. Build and push the images
 
@@ -210,8 +208,10 @@ what did not arrive.
 `infra/terraform.tfvars` is your deployment, not part of the repository. It is
 ignored by git, and no tfvars file is tracked.
 
-This writes it, filling in everything the earlier steps produced. **Four values
-are yours to set** and are marked:
+This writes it, filling in everything the earlier steps produced. **Five values
+are yours to set** and are marked. Four are edited by hand; the customer id is
+filled in by the command substitution, and after the `cat` at the end it must
+read like `C01ab2cd3`, not `my_customer` and not an empty string:
 
 ```bash
 cat > infra/terraform.tfvars <<EOF
@@ -222,11 +222,12 @@ region         = "$REGION"
 api_image    = "$REGISTRY/api@$API_DIGEST"
 worker_image = "$REGISTRY/worker@$WORKER_DIGEST"
 
-# ---- SET THESE FOUR FOR YOUR ORGANISATION ----
-domain            = "lifecycle.example.com"
-operator_group    = "lifecycle-operators@example.com"
-iap_support_email = "you@example.com"
-smtp_sender       = "no-reply@example.com"
+# ---- SET THESE FIVE FOR YOUR ORGANISATION ----
+domain                = "lifecycle.example.com"
+operator_group        = "lifecycle-operators@example.com"
+iap_support_email     = "you@example.com"
+smtp_sender           = "no-reply@example.com"
+workspace_customer_id = "$(gcloud organizations list --format='value(owner.directoryCustomerId)')"
 # ----------------------------------------------
 
 smtp_return_path = "lifecycle-bounces@example.com"
@@ -241,7 +242,21 @@ EOF
 cat infra/terraform.tfvars
 ```
 
-Three of these are worth pausing on.
+Four of these are worth pausing on.
+
+`workspace_customer_id` must be the tenant's REAL customer id. The Directory
+API's `my_customer` alias means "the customer the authenticated user belongs
+to", and this system's worker is a service account acting as itself, which
+belongs to no Workspace customer. With the alias, every customer-scoped
+Directory call fails with a bare `400 Bad Request` that names nothing. The
+Terraform refuses the alias at plan time for exactly that reason. It is also in
+the Admin console under **Account > Account settings > Profile > Customer ID**.
+
+The command substitution above exists so the value is never typed. A customer id
+mixes digits and letters, and `1` against `l` is the same glyph in most fonts;
+one deployment lost an evening to a hand-copied id that differed from the real
+one by exactly that character, and the validation cannot catch it because the
+transposed id is still shaped like a customer id.
 
 `bootstrap_admins` is the only way into an empty role binding store. Without it
 nobody can reach the admin routes and nobody can grant anybody else a role. Put
@@ -285,7 +300,7 @@ Versioning matters more than it looks. State is the only record of what is
 deployed, and an apply that corrupts it is recoverable from a previous version
 and not otherwise.
 
-The first apply creates about 65 resources and takes several minutes.
+The first apply creates about 70 resources and takes several minutes.
 
 On Cloud Shell, reduce the concurrency. Terraform's default of ten parallel
 operations opens enough simultaneous connections to trigger sporadic
@@ -512,6 +527,11 @@ means the perimeter is bypassable.
 
 Repeat it against `worker_service_url`, which should behave the same way.
 
+That 404 is the perimeter refusing *you*. It is worth knowing that the API
+service is subject to the same rule when it calls the worker, which is why the
+API is given VPC egress in `infra/network.tf`. Without it the API gets this same
+404 on every directory lookup and the worker never sees the request.
+
 **The perimeter asks for authentication:**
 
 ```bash
@@ -556,8 +576,11 @@ apply.** Terraform enabled the APIs during the same run and raced itself. Step 3
 prevents it. If you are already here, run step 3 and apply again.
 
 **`Service account service-PROJECT_NUMBER@gcp-sa-iap.iam.gserviceaccount.com
-does not exist`.** The IAP service agent has not been provisioned. The
-`gcloud beta services identity create` line in step 3.
+does not exist`.** The IAP service agent has not been provisioned. Current
+checkouts provision it in Terraform (`infra/iap.tf`) and the invoker grant
+waits for it, so seeing this means the checkout predates that change. Pull, or
+run `gcloud beta services identity create --service=iap.googleapis.com
+--project "$PROJECT_ID"` once by hand.
 
 **`Group ... does not exist`** on the IAP binding. `operator_group` names a group
 that is not in the tenant, or was created seconds ago and has not propagated.
@@ -571,6 +594,11 @@ the same read keeps dying.
 **`docker push` fails partway with `connection refused`.** The same flakiness.
 Run the push again; it resumes.
 
+**`"/package-lock.json": not found` during a docker build.** The Dockerfiles in
+the current `main` install with `npm install` and need no lockfile, so this
+error means the checkout predates that change. Pull, or generate one with
+`npm install --package-lock-only --no-audit --no-fund` from the repository root.
+
 **`gcloud builds submit --config -` fails with `Unable to read file [-]`.** That
 `gcloud` cannot take a build config on stdin. Write the config to a file and
 pass its path.
@@ -579,9 +607,43 @@ pass its path.
 DNS does not resolve to `console_ip`. Check for a doubled domain suffix in the
 record. Step 7.
 
-**The console loads but the pickers are empty.** The Workspace custom role is not
-assigned to the worker service account, or is missing Users read. Step 8, item
-5, and give it a few minutes to propagate.
+**The console loads but the pickers are empty.** Two different causes, and the
+worker's logs tell you which in one query:
+
+```bash
+gcloud logging read 'resource.type="cloud_run_revision" AND resource.labels.service_name="lifecycle-worker" AND jsonPayload.message="directory lookup failed"' --project="$PROJECT_ID" --limit=5 --freshness=15m --format='table(timestamp,jsonPayload.operation,jsonPayload.status,jsonPayload.err)'
+```
+
+If you get rows with **status 403**, the Workspace custom role is not assigned
+to the worker service account, or is missing Users read. Step 8, item 5, and
+give it a few minutes to propagate.
+
+If you get **no rows at all**, the request is not reaching the worker. Check the
+API service's own request log for `/api/lookup`:
+
+```bash
+gcloud logging read 'resource.type="cloud_run_revision" AND resource.labels.service_name="lifecycle-api" AND httpRequest.requestUrl:"/api/lookup"' --project="$PROJECT_ID" --limit=5 --freshness=15m --format='table(timestamp,httpRequest.status,httpRequest.requestUrl)'
+```
+
+A **404** there, with nothing on the worker, means the API is calling the worker
+over the public internet and the worker's ingress restriction is refusing it
+before any code runs. Confirm the API service has a network interface:
+
+```bash
+gcloud run services describe lifecycle-api --region "$REGION" --project "$PROJECT_ID" --format=yaml | grep -iA3 "network-interfaces\|vpc-access"
+```
+
+If that prints nothing, the VPC in `infra/network.tf` was never applied. Pull
+the latest `main` and apply. This one is worth recognising on sight, because a
+404 looks like a missing route and sends you reading application code that is
+fine.
+
+**Every directory lookup fails with `400 Bad Request` or `404 Domain not
+found`, with the admin role correctly assigned.** The worker is calling the
+Directory API with a `workspace_customer_id` that does not name your tenant:
+unset, the `my_customer` alias, or a mistyped id. Step 5 explains why and how to
+set the real customer id without typing it. Current checkouts refuse the alias
+at plan time, so the mistyped-but-well-shaped id is the case to check here.
 
 **A create request fails at `create-user` with a quota error.** The tenant has no
 free Workspace licence. See "Workspace licences".
