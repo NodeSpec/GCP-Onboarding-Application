@@ -353,12 +353,22 @@ export class DirectoryClient {
   }
 
   async listMemberships(memberEmail: string): Promise<string[]> {
-    // userKey ONLY. The Directory API reads userKey as "the groups this user is
-    // in" and customer as "all groups in this tenant"; supplying both is
-    // rejected with a bare 400 Bad Request that names neither parameter. Found
-    // live: every membership resolution failed with exactly that.
+    // BOTH parameters, and the history is worth keeping because the obvious
+    // reading of each failure was wrong twice.
+    //
+    // customer scopes the search to a tenant; userKey narrows it to one
+    // member's groups. With customer set to the `my_customer` alias this
+    // returned a bare 400, which looked like the two parameters conflicting.
+    // Dropping customer replaced it with 404 "Domain not found": a service
+    // account's own domain is *.iam.gserviceaccount.com, so with nothing to
+    // scope by, the API has no tenant to search. Both errors were the same
+    // cause wearing different clothes, which is that the alias cannot resolve
+    // for an identity that belongs to no customer.
+    //
+    // A real customer id makes this shape correct, which is why
+    // workspace_customer_id is validated at plan time (infra/variables.tf).
     const res = await this.call('groups.list.byMember', (api) =>
-      api.groups.list({ userKey: memberEmail, maxResults: 200 }),
+      api.groups.list({ customer: this.customerId, userKey: memberEmail, maxResults: 200 }),
     );
     return (res.data.groups ?? []).map((group) => group.email ?? '').filter(Boolean);
   }

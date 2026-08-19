@@ -1,7 +1,7 @@
 {
   "modelVersion": 1,
   "generatedBy": "nodespec",
-  "modelHash": "4d44094e042aee7a12e023f73c38de8906fd1a72d6d15723f7be3f71a966fe67",
+  "modelHash": "c4923b651a44aa24d5f9c1391e840d1abcf4dc6cf7117fdd261e84c595e806c0",
   "nodes": [
     {
       "id": "1c81cf63-c51e-4b0e-b6ad-7d318332d2fe",
@@ -1481,7 +1481,7 @@
       "nodeId": "db8e5409-dc6f-4052-887a-7ba1dd5fb717",
       "path": "services/worker/src/workspace/directoryClient.ts",
       "kind": "source",
-      "contentHash": "00000000163e3d8d"
+      "contentHash": "0000000027d98eb6"
     },
     {
       "id": "ceeaf1e6-c9fc-478a-8720-e9169693274c",
