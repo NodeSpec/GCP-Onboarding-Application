@@ -523,6 +523,62 @@ describe('REQ-025 and REQ-026: the Cloud Run services', () => {
   });
 });
 
+// ====================================================== REQ-009 AC-7 / AC-8
+
+describe('REQ-009: the API service can actually reach the worker', () => {
+  const api = () => named('google_cloud_run_v2_service', 'api');
+  const template = () => nested(api().body, 'template')[0]!.body;
+
+  it('AC-7: routes the API service egress through the VPC', () => {
+    // The worker refuses non-internal ingress (REQ-026 AC-1) and the API has to
+    // call it for every directory picker. A Cloud Run service with no VPC
+    // egress makes that call over the public internet, where the worker's own
+    // perimeter refuses it. The refusal is a 404, which reads as a missing
+    // route, and nothing is logged on the worker because nothing reaches it.
+    const vpc = nested(template(), 'vpc_access')[0];
+    expect(vpc, 'the API service has no vpc_access block').toBeDefined();
+
+    const nic = nested(vpc!.body, 'network_interfaces')[0];
+    expect(nic, 'the API service has no network interface').toBeDefined();
+    expect(nic!.body).toContain('google_compute_network.lifecycle');
+    expect(nic!.body).toContain('google_compute_subnetwork.lifecycle');
+  });
+
+  it('AC-7: sends ALL traffic through it, not only private ranges', () => {
+    // PRIVATE_RANGES_ONLY would route RFC1918 and leave the worker's run.app
+    // address going out over the internet, which is the exact call this exists
+    // to fix. The setting looks conservative and breaks the thing.
+    const vpc = nested(template(), 'vpc_access')[0]!;
+    expect(attr(vpc.body, 'egress')).toBe('"ALL_TRAFFIC"');
+  });
+
+  it('AC-8: keeps a route to the public internet, because sign-in depends on one', () => {
+    // With ALL_TRAFFIC the API loses its default internet route, and it has one
+    // destination out there that is not a Google API: the IAP JWKS at
+    // www.gstatic.com, fetched on a cold start and on an unfamiliar key id.
+    // Private Google Access does not cover gstatic.com. Removing this NAT does
+    // not degrade the pickers, it stops anyone signing in at all, and nothing
+    // about that failure would point back here.
+    const nat = named('google_compute_router_nat', 'lifecycle');
+    expect(attr(nat.body, 'nat_ip_allocate_option')).toBe('"AUTO_ONLY"');
+    expect(nested(nat.body, 'subnetwork')[0]!.body).toContain(
+      'google_compute_subnetwork.lifecycle',
+    );
+
+    // And Google APIs still go the short way rather than out through NAT.
+    const subnet = named('google_compute_subnetwork', 'lifecycle');
+    expect(attr(subnet.body, 'private_ip_google_access')).toBe('true');
+  });
+
+  it('does not attach the worker to the VPC, which needs no egress interface', () => {
+    // The worker reaches Google APIs and the Workspace SMTP relay and has no
+    // reason to call a Cloud Run service. An interface it does not need is a
+    // dependency that can fail.
+    const worker = named('google_cloud_run_v2_service', 'worker');
+    expect(nested(nested(worker.body, 'template')[0]!.body, 'vpc_access')).toEqual([]);
+  });
+});
+
 // ============================================================== REQ-009
 
 describe('REQ-009: serverless deployment', () => {
@@ -537,6 +593,9 @@ describe('REQ-009: serverless deployment', () => {
       'google_cloud_tasks_queue',
       'google_secret_manager_secret',
       'google_iap_client',
+      'google_compute_network',
+      'google_compute_subnetwork',
+      'google_compute_router_nat',
     ]) {
       expect(present, `missing ${type}`).toContain(type);
     }
@@ -558,7 +617,10 @@ describe('REQ-009: serverless deployment', () => {
 
   it('AC-6: contains no VM, instance group, or Kubernetes cluster', () => {
     // "Serverless" is a constraint from the customer, so it is checked rather
-    // than assumed. A future compute_instance would fail here.
+    // than assumed. A VPC, a subnet, a Cloud Router and Cloud NAT are none of
+    // these: they are managed network resources with nothing running in them,
+    // and the services attached to them still scale to zero. A future
+    // compute_instance would fail here.
     const forbidden = resources(BLOCKS).filter((b) =>
       /^google_(compute_instance|compute_instance_group|compute_instance_template|container_cluster|container_node_pool)/.test(
         b.labels[0] ?? '',
