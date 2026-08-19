@@ -164,6 +164,9 @@ describe('AC-2 and AC-3: the target, groups and org unit are chosen, not typed',
     vi.stubGlobal('fetch', fetchMock);
 
     render(<RequestForm />);
+    // A phase that acts on an EXISTING account. The create phase deliberately
+    // has no picker; the test below this block owns that behaviour.
+    await userEvent.selectOptions(screen.getByLabelText(/^phase$/i), 'delete');
     await userEvent.type(screen.getByLabelText(/target user/i), 'ada');
 
     const results = await screen.findByRole('list', { name: /user results/i });
@@ -739,5 +742,192 @@ describe('REQ-032 AC-6: the notification link resolves to the request detail', (
     renderApp();
 
     expect(await screen.findByRole('article', { name: /request req-7/i })).toBeTruthy();
+  });
+});
+
+// ------------------------------------------------- the create-phase target
+
+describe('the create phase takes a typed address, because its target must not exist', () => {
+  // The picker can only emit accounts the directory already holds, and the
+  // create phase must refuse exactly those, so wiring it to the create target
+  // made creation impossible by construction. Found live: every selectable
+  // account failed validate-request with already_exists.
+  it('offers a typed email field and no directory search on create', async () => {
+    vi.stubGlobal('fetch', stubFetch(BASE_ROUTES));
+
+    render(<RequestForm />);
+
+    const field = await screen.findByLabelText(/new account email/i);
+    expect((field as HTMLInputElement).type).toBe('email');
+    expect(screen.queryByPlaceholderText(/search the directory/i)).toBeNull();
+
+    await userEvent.type(field, 'new.starter@company.com');
+    expect((field as HTMLInputElement).value).toBe('new.starter@company.com');
+  });
+
+  it('returns to the picker when the phase acts on an existing account', async () => {
+    vi.stubGlobal('fetch', stubFetch(BASE_ROUTES));
+
+    render(<RequestForm />);
+    await userEvent.selectOptions(screen.getByLabelText(/^phase$/i), 'update');
+
+    expect(await screen.findByPlaceholderText(/search the directory/i)).toBeTruthy();
+    expect(screen.queryByLabelText(/new account email/i)).toBeNull();
+  });
+});
+
+// ------------------------------------------------ REQ-017: the password
+
+describe('REQ-017: the requester retrieves the one-time password, once', () => {
+  const CREATED = {
+    request: {
+      requestId: 'req-cred',
+      phase: 'create',
+      status: 'succeeded',
+      targetUser: 'new.starter@company.com',
+      requestedBy: 'operator@company.com',
+      computedDiff: null,
+      payload: { givenName: 'New', familyName: 'Starter' },
+    },
+    steps: [],
+    audit: [],
+  };
+
+  it('reveals the password and says it will not come back', async () => {
+    vi.stubGlobal(
+      'fetch',
+      stubFetch({
+        ...BASE_ROUTES,
+        '/api/requests/req-cred/credential': {
+          requestId: 'req-cred',
+          primaryEmail: 'new.starter@company.com',
+          oneTimePassword: 'not-a-real-password',
+        },
+        '/api/requests/req-cred': CREATED,
+      }),
+    );
+
+    render(
+      <IdentityProvider>
+        <RequestDetailView requestId="req-cred" />
+      </IdentityProvider>,
+    );
+
+    await userEvent.click(
+      await screen.findByRole('button', { name: /retrieve one-time password/i }),
+    );
+
+    expect(await screen.findByText('not-a-real-password')).toBeTruthy();
+    expect(screen.getByText(/will not be shown again/i)).toBeTruthy();
+  });
+
+  it('explains a 410 as spent rather than rendering an outage', async () => {
+    vi.stubGlobal(
+      'fetch',
+      stubFetch(
+        {
+          ...BASE_ROUTES,
+          '/api/requests/req-cred/credential': { error: 'credential_unavailable' },
+          '/api/requests/req-cred': CREATED,
+        },
+        { '/api/requests/req-cred/credential': 410 },
+      ),
+    );
+
+    render(
+      <IdentityProvider>
+        <RequestDetailView requestId="req-cred" />
+      </IdentityProvider>,
+    );
+
+    await userEvent.click(
+      await screen.findByRole('button', { name: /retrieve one-time password/i }),
+    );
+
+    expect(await screen.findByText(/no longer retrievable/i)).toBeTruthy();
+  });
+
+  it('does not offer retrieval to a requester who is not the one who asked', async () => {
+    vi.stubGlobal(
+      'fetch',
+      stubFetch({
+        ...BASE_ROUTES,
+        '/api/requests/req-cred': {
+          ...CREATED,
+          request: { ...CREATED.request, requestedBy: 'someone.else@company.com' },
+        },
+      }),
+    );
+
+    render(
+      <IdentityProvider>
+        <RequestDetailView requestId="req-cred" />
+      </IdentityProvider>,
+    );
+
+    expect(await screen.findByText(/resend welcome letter/i)).toBeTruthy();
+    expect(screen.queryByRole('button', { name: /retrieve one-time password/i })).toBeNull();
+  });
+});
+
+// ---------------------------------------------- REQ-012 AC-5: the admin view
+
+describe('REQ-012 AC-5: the admin surface is reachable, and only by admins', () => {
+  const ADMIN_ROUTES: Record<string, unknown> = {
+    ...BASE_ROUTES,
+    '/api/me': { email: 'root@company.com', subject: 'sub-9', roles: ['admin'] },
+    '/api/role-bindings': {
+      bindings: [
+        { subject: 'ops@company.com', kind: 'user', roles: ['requester'], updatedBy: 'root@company.com' },
+      ],
+    },
+    '/api/admin/approval-policy': { policy: null },
+    '/api/admin/audit': { events: [], nextBefore: null },
+  };
+
+  it('hides the Admin tab from an operator without the admin role', async () => {
+    vi.stubGlobal('fetch', stubFetch(BASE_ROUTES));
+    renderApp();
+
+    await screen.findByRole('button', { name: /approvals/i });
+    expect(screen.queryByRole('button', { name: /^admin$/i })).toBeNull();
+  });
+
+  it('renders the bindings the server holds', async () => {
+    vi.stubGlobal('fetch', stubFetch(ADMIN_ROUTES));
+    renderApp();
+
+    await userEvent.click(await screen.findByRole('button', { name: /^admin$/i }));
+    expect(await screen.findByText('ops@company.com')).toBeTruthy();
+    // The empty policy is stated as the default in force, not rendered as an
+    // error or a blank editor.
+    expect(await screen.findByText(/running on its built-in default/i)).toBeTruthy();
+  });
+
+  it('saves a binding as a PUT of the complete role set', async () => {
+    const fetchMock = stubFetch({
+      ...ADMIN_ROUTES,
+      '/api/role-bindings/new.admin%40company.com': {
+        subject: 'new.admin@company.com',
+        kind: 'user',
+        roles: ['approver'],
+        previousRoles: null,
+      },
+    });
+    vi.stubGlobal('fetch', fetchMock);
+    renderApp();
+
+    await userEvent.click(await screen.findByRole('button', { name: /^admin$/i }));
+    await userEvent.type(await screen.findByLabelText(/subject email/i), 'new.admin@company.com');
+    await userEvent.click(screen.getByLabelText(/^approver$/i));
+    await userEvent.click(screen.getByRole('button', { name: /save binding/i }));
+
+    expect(await screen.findByText(/granted approver to new\.admin@company\.com/i)).toBeTruthy();
+
+    const put = fetchMock.mock.calls.find(
+      ([input, init]) => String(input).includes('/api/role-bindings/') && init?.method === 'PUT',
+    );
+    expect(put).toBeTruthy();
+    expect(JSON.parse(String(put![1]!.body))).toEqual({ kind: 'user', roles: ['approver'] });
   });
 });

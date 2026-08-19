@@ -1,7 +1,7 @@
 {
   "modelVersion": 1,
   "generatedBy": "nodespec",
-  "modelHash": "c4923b651a44aa24d5f9c1391e840d1abcf4dc6cf7117fdd261e84c595e806c0",
+  "modelHash": "61841e0fc9747bb4f87df3e7afbc603567a5b7bfcc98c375986348141b96274a",
   "nodes": [
     {
       "id": "1c81cf63-c51e-4b0e-b6ad-7d318332d2fe",
@@ -1291,7 +1291,8 @@
       "id": "aa365f27-4c81-49d3-b0e6-5f92d178ac04",
       "nodeId": "9af301aa-2191-4532-9871-82179a5500c1",
       "path": "services/console/src/console.test.tsx",
-      "kind": "test-plan"
+      "kind": "test-plan",
+      "contentHash": "000000003e1b2e75"
     },
     {
       "id": "ac2c40e9-50ed-48a4-98b2-03a80c66aa34",

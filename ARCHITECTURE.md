@@ -13,7 +13,7 @@ component inventory, connection topology, and links to per-component task docume
 | Cloud NAT: lifecycle egress | vpc | gcp-cloud-nat | Company GCP Project | --- | --- |
 | Cloud Logging: audit sink | logging | gcp-cloud-logging | Company GCP Project | --- | --- |
 | Cloud Tasks: lifecycle-steps | queue | gcp-cloud-tasks | Company GCP Project | --- | --- |
-| Operator Console UI | frontend-app | react | Cloud Run: lifecycle-api | --- | --- |
+| Operator Console UI | frontend-app | react | Cloud Run: lifecycle-api | --- | [`services/console/src/console.test.tsx`](./services/console/src/console.test.tsx) |
 | VPC: lifecycle egress | vpc | gcp-vpc | Company GCP Project | --- | --- |
 | Lifecycle API Service | backend-service | nodejs | Cloud Run: lifecycle-api | --- | --- |
 | External HTTPS Load Balancer | load-balancer | gcp-cloud-load-balancing | Company GCP Project | --- | --- |
@@ -78,4 +78,5 @@ Use these as the primary brief when implementing or modifying a component.
 Each requirement has a test plan documenting acceptance criteria assessments,
 recommended test types, framework suggestions, and test scenarios.
 
+- **Operator Console UI**: [`services/console/src/console.test.tsx`](./services/console/src/console.test.tsx)
 - **Company GCP Project**: [`infra/infra.test.ts`](./infra/infra.test.ts)
