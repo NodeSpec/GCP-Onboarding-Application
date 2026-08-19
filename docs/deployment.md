@@ -131,19 +131,19 @@ resources against it. On a fresh project that race fails the first apply with
 up front removes the race entirely.
 
 ```bash
-gcloud services enable \\
-  cloudresourcemanager.googleapis.com \\
-  compute.googleapis.com \\
-  run.googleapis.com \\
-  iap.googleapis.com \\
-  firestore.googleapis.com \\
-  cloudtasks.googleapis.com \\
-  cloudscheduler.googleapis.com \\
-  secretmanager.googleapis.com \\
-  logging.googleapis.com \\
-  iam.googleapis.com \\
-  artifactregistry.googleapis.com \\
-  admin.googleapis.com \\
+gcloud services enable \
+  cloudresourcemanager.googleapis.com \
+  compute.googleapis.com \
+  run.googleapis.com \
+  iap.googleapis.com \
+  firestore.googleapis.com \
+  cloudtasks.googleapis.com \
+  cloudscheduler.googleapis.com \
+  secretmanager.googleapis.com \
+  logging.googleapis.com \
+  iam.googleapis.com \
+  artifactregistry.googleapis.com \
+  admin.googleapis.com \
   --project "$PROJECT_ID"
 ```
 
@@ -173,7 +173,7 @@ npm install --package-lock-only --no-audit --no-fund
 Create the registry and authenticate Docker to it:
 
 ```bash
-gcloud artifacts repositories create lifecycle \\
+gcloud artifacts repositories create lifecycle \
   --repository-format=docker --location="$REGION" --project "$PROJECT_ID" || true
 
 gcloud auth configure-docker "${REGION}-docker.pkg.dev" --quiet
@@ -265,6 +265,9 @@ cannot be deleted until every entry has aged out, by anyone, including a project
 owner. That is exactly the property REQ-018 asks for. For a scratch project, set
 it to false.
 
+One variable is missing on purpose. `worker_url` cannot be known until the
+worker exists, so you add it after the first apply. Step 6 covers it.
+
 ## 6. Apply
 
 ```bash
@@ -298,6 +301,38 @@ Record the outputs:
 ```bash
 terraform output
 ```
+
+### Apply a second time to set the worker URL
+
+The worker needs to know its own URL. It is the audience the worker checks
+incoming task tokens against, and the address it posts follow-on steps to. That
+URL is not knowable before the service exists, because Cloud Run puts a
+generated hash in it, and Terraform will not let the worker resource reference
+itself. So it is a variable you fill in after the first apply.
+
+Until you do, the worker runs with `https://worker-url-not-set.invalid`. Every
+task it receives is rejected with a 401 and no request ever leaves the
+`queued` state. Read the URL back and apply again:
+
+```bash
+cd infra
+WORKER_URL=$(terraform output -raw worker_service_url)
+echo "worker_url = \"$WORKER_URL\"" >> terraform.tfvars
+terraform apply -parallelism=3
+```
+
+The second apply changes one environment variable on one service, so it takes
+under a minute. Confirm it landed:
+
+```bash
+gcloud run services describe lifecycle-worker \
+  --region "$REGION" --project "$PROJECT_ID" \
+  --format=yaml | grep -A2 WORKER_BASE_URL
+```
+
+The value must be the worker's own `run.app` URL. If it is your console domain
+or the `.invalid` placeholder, `worker_url` did not make it into
+`terraform.tfvars`.
 
 ### The IAP OAuth brand and client
 
@@ -356,7 +391,7 @@ unreachable until the certificate is active. Fifteen minutes to an hour is
 normal:
 
 ```bash
-gcloud compute ssl-certificates describe lifecycle-console-cert \\
+gcloud compute ssl-certificates describe lifecycle-console-cert \
   --global --project "$PROJECT_ID" --format='value(managed.status)'
 ```
 
@@ -404,7 +439,7 @@ The credential encryption key, 32 bytes from a cryptographic source, generated
 straight into Secret Manager so it never touches disk:
 
 ```bash
-openssl rand -base64 32 | tr -d '\\n' | \\
+openssl rand -base64 32 | tr -d '\n' | \
   gcloud secrets versions add credential-encryption-key --data-file=- --project "$PROJECT_ID"
 ```
 
@@ -413,7 +448,7 @@ screen and out of shell history:
 
 ```bash
 read -rs APP_PASSWORD
-printf '%s' "$APP_PASSWORD" | \\
+printf '%s' "$APP_PASSWORD" | \
   gcloud secrets versions add notification-smtp-credentials --data-file=- --project "$PROJECT_ID"
 unset APP_PASSWORD
 ```
@@ -434,8 +469,8 @@ Neither needs a deployment or a Terraform apply, and revocation takes effect on
 their next request.
 
 ```bash
-gcloud identity groups memberships add \\
-  --group-email="lifecycle-operators@example.com" \\
+gcloud identity groups memberships add \
+  --group-email="lifecycle-operators@example.com" \
   --member-email="newjoiner@example.com"
 ```
 
@@ -458,7 +493,7 @@ In this order, because each depends on the last.
 **The platform refuses a direct request.** This one is expected to fail:
 
 ```bash
-curl -s -o /dev/null -w '%{http_code}\\n' "$(terraform output -raw api_service_url)"
+curl -s -o /dev/null -w '%{http_code}\n' "$(terraform output -raw api_service_url)"
 ```
 
 Expect **404**, 403, or a connection failure. Any of those is a pass. A 404 is
@@ -472,7 +507,7 @@ Repeat it against `worker_service_url`, which should behave the same way.
 **The perimeter asks for authentication:**
 
 ```bash
-curl -s -o /dev/null -w '%{http_code}\\n' "$(terraform output -raw console_url)"
+curl -s -o /dev/null -w '%{http_code}\n' "$(terraform output -raw console_url)"
 ```
 
 Expect a redirect into the Google sign-in flow.
@@ -545,6 +580,25 @@ assigned to the worker service account, or is missing Users read. Step 8, item
 
 **A create request fails at `create-user` with a quota error.** The tenant has no
 free Workspace licence. See "Workspace licences".
+
+**A request is approved and then nothing happens. It sits at `queued` and no
+step ever runs.** The worker is rejecting its own tasks. Check `WORKER_BASE_URL`
+on the worker service: it must be the worker's own `run.app` URL. If it is
+`https://worker-url-not-set.invalid`, you have not done the second apply in
+step 6. If it is your console domain, your checkout predates the fix; pull the
+latest `main` and then do the second apply.
+
+**An approvals inbox that will not load, with `9 FAILED_PRECONDITION: The query
+requires an index`.** The composite index on `lifecycleRequests` is missing.
+Create it and give it a few minutes to build:
+
+```bash
+gcloud firestore indexes composite create \
+  --collection-group=lifecycleRequests \
+  --field-config=field-path=status,order=ascending \
+  --field-config=field-path=updatedAt,order=descending \
+  --project="$PROJECT_ID"
+```
 
 ## Redeploying
 
