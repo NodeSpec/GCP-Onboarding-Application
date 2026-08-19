@@ -30,7 +30,7 @@ beforeAll(() => {
 });
 
 const { resolveHandler } = await import('../steps/handler.js');
-const { UserAlreadyExistsError, WorkspaceError } = await import('../workspace/directoryClient.js');
+const { AdminRoleNotGrantedError, UserAlreadyExistsError, WorkspaceError } = await import('../workspace/directoryClient.js');
 await import('./create.js');
 
 type User = admin_directory_v1.Schema$User;
@@ -190,6 +190,43 @@ async function runPhase(payload: Record<string, unknown> = PAYLOAD) {
   }
   return run('verify-account', { payload });
 }
+
+describe('the existence probe under a delegated admin', () => {
+  // A super admin gets 404 for a missing user; the custom-role admin this
+  // system runs as gets 403, because the Directory API will not confirm
+  // nonexistence to a scoped admin. The probe must read that as "absent",
+  // or no user can ever be created (found live). AdminRoleNotGrantedError is
+  // what the shared client raises for a Directory 403.
+  it('treats a 403 on validate-request as "does not exist" and passes validation', async () => {
+    domain.failures.set(
+      `getUser:${PAYLOAD.primaryEmail}`,
+      new AdminRoleNotGrantedError('users.get', 'Not Authorized to access this resource/api'),
+    );
+
+    const result = await run('validate-request');
+    expect(result.status).toBe('succeeded');
+  });
+
+  it('treats a 403 on the create-user probe the same way and proceeds to insert', async () => {
+    domain.failures.set(
+      `getUser:${PAYLOAD.primaryEmail}`,
+      new AdminRoleNotGrantedError('users.get', 'Not Authorized to access this resource/api'),
+    );
+
+    const result = await run('create-user');
+    expect(result.status).toBe('succeeded');
+    expect(domain.users.get(PAYLOAD.primaryEmail)).toBeDefined();
+  });
+
+  it('still surfaces a 403 from insert itself, where the message is accurate', async () => {
+    domain.failures.set(
+      `insertUser:${PAYLOAD.primaryEmail}`,
+      new AdminRoleNotGrantedError('users.insert', 'Not Authorized to access this resource/api'),
+    );
+
+    await expect(run('create-user')).rejects.toMatchObject({ errorClass: 'permission' });
+  });
+});
 
 describe('AC-1: a valid creation request produces a matching Workspace user', () => {
   it('creates the user with the requested email, names and org unit', async () => {

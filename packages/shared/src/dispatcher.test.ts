@@ -142,6 +142,23 @@ describe('task names are legal Cloud Tasks resource names', () => {
     expect(id).toMatch(/^[A-Za-z0-9_-]+$/);
   });
 
+  it('a resume nonce produces a DISTINCT legal name for the same step', () => {
+    // Cloud Tasks remembers an executed task's name for about an hour, so a
+    // resume that reuses the plain name is silently swallowed as a duplicate
+    // and nothing ever delivers. The nonce is what makes a resume deliverable;
+    // without it this test's two names would collide.
+    const path = queuePathFor(API_SETTINGS);
+    const key = deriveIdempotencyKey('req-1', '001-create-user', {});
+
+    const plain = taskNameFor(path, discriminators.step(key));
+    const resumed = taskNameFor(path, discriminators.step(key, 'abc123'));
+
+    expect(resumed).not.toBe(plain);
+    expect(resumed.split('/tasks/')[1]!).toMatch(/^[A-Za-z0-9_-]+$/);
+    // And a plain enqueue still collapses onto the plain name.
+    expect(taskNameFor(path, discriminators.step(key))).toBe(plain);
+  });
+
   it('is stable for the same discriminator', () => {
     const path = queuePathFor(API_SETTINGS);
     expect(taskNameFor(path, 'execute:abc')).toBe(taskNameFor(path, 'execute:abc'));

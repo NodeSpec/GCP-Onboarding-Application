@@ -328,15 +328,24 @@ describe('AC-5: the admin role can resume any request', () => {
     expect(first.attempts).toBe(steps[0]!.attempts);
   });
 
-  it('enqueues the resumed step with its unchanged idempotency key', async () => {
+  it('enqueues the resumed step with its unchanged idempotency key and a fresh dispatch nonce', async () => {
     const { requestId, steps } = await failed();
 
     const res = await call(`/api/admin/requests/${requestId}/resume`, { method: 'POST' });
 
     expect(((await res.json()) as { dispatch: string }).dispatch).toBe('enqueued');
-    expect(dispatcher.steps).toEqual([
-      { requestId, stepId: steps[0]!.stepId, idempotencyKey: steps[0]!.idempotencyKey },
-    ]);
+    expect(dispatcher.steps).toHaveLength(1);
+    const enqueued = dispatcher.steps[0]!;
+    // The key is unchanged: it is the executor's replay guard. The nonce is
+    // new: the previous task for this key already EXECUTED, and Cloud Tasks
+    // tombstones executed names, so a plain re-enqueue is silently swallowed
+    // and the request sits in 'running' forever. Found live.
+    expect(enqueued).toMatchObject({
+      requestId,
+      stepId: steps[0]!.stepId,
+      idempotencyKey: steps[0]!.idempotencyKey,
+    });
+    expect(enqueued.dispatchNonce).toBeTruthy();
   });
 
   it('audits the resume with the attempt count it is resuming from', async () => {
