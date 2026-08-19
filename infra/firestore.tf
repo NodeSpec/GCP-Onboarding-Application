@@ -53,6 +53,33 @@ resource "google_firestore_backup_schedule" "daily" {
 # (the audit mirror's scan over timestamp) is served by Firestore's automatic
 # single-field index, which already tie-breaks on __name__; declaring a
 # composite over one field plus __name__ is rejected by the API as unnecessary.
+#
+# The request list takes three INDEPENDENT filters (phase, status, targetUser),
+# each optional, and always sorts on (createdAt desc, requestId desc). That is
+# eight combinations, not three, and every one of them is a separate index as far
+# as Firestore is concerned. They are all declared below, including the one with
+# no filter at all. Two sort fields require a composite index even when nothing
+# is filtered, which is the case that is easiest to forget and is also the one
+# the console issues the moment it loads.
+
+resource "google_firestore_index" "requests_by_recency" {
+  project    = var.project_id
+  database   = google_firestore_database.lifecycle.name
+  collection = "lifecycleRequests"
+
+  # No filter: the list as it opens. Firestore needs a composite index for any
+  # query with more than one sort field, so this is not covered by the automatic
+  # single-field indexes, and it is not covered by requests_by_status either,
+  # because that one leads with an equality field this query does not supply.
+  fields {
+    field_path = "createdAt"
+    order      = "DESCENDING"
+  }
+  fields {
+    field_path = "requestId"
+    order      = "DESCENDING"
+  }
+}
 
 resource "google_firestore_index" "requests_by_status" {
   project    = var.project_id
@@ -120,6 +147,28 @@ resource "google_firestore_index" "requests_by_target_user" {
   }
 }
 
+resource "google_firestore_index" "requests_by_phase" {
+  project    = var.project_id
+  database   = google_firestore_database.lifecycle.name
+  collection = "lifecycleRequests"
+
+  # Phase alone. Not served by requests_by_phase_status below: an index that
+  # leads on (phase, status) cannot answer a query that supplies phase and
+  # leaves status empty, because status is still a field the scan orders on.
+  fields {
+    field_path = "phase"
+    order      = "ASCENDING"
+  }
+  fields {
+    field_path = "createdAt"
+    order      = "DESCENDING"
+  }
+  fields {
+    field_path = "requestId"
+    order      = "DESCENDING"
+  }
+}
+
 resource "google_firestore_index" "requests_by_phase_status" {
   project    = var.project_id
   database   = google_firestore_database.lifecycle.name
@@ -131,6 +180,31 @@ resource "google_firestore_index" "requests_by_phase_status" {
   }
   fields {
     field_path = "status"
+    order      = "ASCENDING"
+  }
+  fields {
+    field_path = "createdAt"
+    order      = "DESCENDING"
+  }
+  fields {
+    field_path = "requestId"
+    order      = "DESCENDING"
+  }
+}
+
+resource "google_firestore_index" "requests_by_phase_target_user" {
+  project    = var.project_id
+  database   = google_firestore_database.lifecycle.name
+  collection = "lifecycleRequests"
+
+  # Phase and target user, with no status. Reachable from the console because
+  # the three filters are independent selects, not one mode switch.
+  fields {
+    field_path = "phase"
+    order      = "ASCENDING"
+  }
+  fields {
+    field_path = "targetUser"
     order      = "ASCENDING"
   }
   fields {
@@ -156,6 +230,36 @@ resource "google_firestore_index" "requests_by_target_user_status" {
   }
   fields {
     field_path = "status"
+    order      = "ASCENDING"
+  }
+  fields {
+    field_path = "createdAt"
+    order      = "DESCENDING"
+  }
+  fields {
+    field_path = "requestId"
+    order      = "DESCENDING"
+  }
+}
+
+resource "google_firestore_index" "requests_by_phase_status_target_user" {
+  project    = var.project_id
+  database   = google_firestore_database.lifecycle.name
+  collection = "lifecycleRequests"
+
+  # All three at once. The narrowest query the list can issue, and the one an
+  # operator reaches by filling in the filter bar rather than by anything the
+  # application does on its own.
+  fields {
+    field_path = "phase"
+    order      = "ASCENDING"
+  }
+  fields {
+    field_path = "status"
+    order      = "ASCENDING"
+  }
+  fields {
+    field_path = "targetUser"
     order      = "ASCENDING"
   }
   fields {
