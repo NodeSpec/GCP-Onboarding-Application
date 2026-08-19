@@ -56,3 +56,10 @@ component inventory, connection topology, and links to per-component task docume
 | Operator Console UI | Lifecycle API Service | rest | Lifecycle Operator API |
 | Lifecycle API Service | Firestore: lifecycle state and audit | nosql | Lifecycle State Store |
 | Lifecycle API Service | Lifecycle Step Executor | rest | Directory Lookup (read-only) |
+
+## Test Plans
+
+Each requirement has a test plan documenting acceptance criteria assessments,
+recommended test types, framework suggestions, and test scenarios.
+
+- **Company GCP Project**: [`infra/infra.test.ts`](./infra/infra.test.ts)

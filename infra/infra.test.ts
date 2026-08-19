@@ -93,20 +93,43 @@ describe('REQ-020: Firestore', () => {
     expect(has('lifecycleRequests', ['phase:ASCENDING', 'status:ASCENDING'])).toBe(true);
     expect(has('lifecycleRequests', ['targetUser:ASCENDING', 'status:ASCENDING'])).toBe(true);
     expect(has('auditEvents', ['requestId:ASCENDING', 'timestamp:ASCENDING'])).toBe(true);
+
+    // The approvals inbox, which orders on updatedAt rather than createdAt: an
+    // approver wants the request that most recently stopped, not the one most
+    // recently raised. Missing this one is a 500 on the one screen an approver
+    // opens, which is how it was found.
+    expect(has('lifecycleRequests', ['status:ASCENDING', 'updatedAt:DESCENDING'])).toBe(true);
   });
 
-  it('AC-2: the request indexes tie-break on requestId, matching the cursor the API pages with', () => {
+  it('AC-2: every paging index tie-breaks on requestId, matching the cursor the API pages with', () => {
     // The list pages on (createdAt desc, requestId desc). An index ordered on
     // createdAt alone would work until two requests shared a timestamp, and
     // then the cursor would skip or repeat a row.
+    //
+    // Scoped to the indexes that back a paged query, which is what the tie-break
+    // is for. The approvals inbox does not page: it is one bounded read with no
+    // startAfter, so a trailing requestId would be a column no query orders on.
+    // Identified by ordering on createdAt, since paging and that cursor are the
+    // same decision.
     const requestIndexes = resources(BLOCKS, 'google_firestore_index').filter(
       (b) => attr(b.body, 'collection') === '"lifecycleRequests"',
     );
+    const fieldsOf = (b: Block) =>
+      nested(b.body, 'fields').map((f) => attr(f.body, 'field_path'));
 
-    expect(requestIndexes.length).toBeGreaterThan(0);
-    for (const index of requestIndexes) {
-      const fields = nested(index.body, 'fields').map((f) => attr(f.body, 'field_path'));
+    const paging = requestIndexes.filter((b) => fieldsOf(b).includes('"createdAt"'));
+
+    expect(paging.length).toBeGreaterThan(0);
+    for (const index of paging) {
+      const fields = fieldsOf(index);
       expect(fields[fields.length - 1]).toBe('"requestId"');
+    }
+
+    // And the exemption is narrow rather than a hole: an index that does not
+    // page must not order on createdAt at all, or it is a paged list that
+    // quietly lost its tie-break.
+    for (const index of requestIndexes.filter((b) => !paging.includes(b))) {
+      expect(fieldsOf(index)).not.toContain('"createdAt"');
     }
   });
 
