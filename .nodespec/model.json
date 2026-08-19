@@ -1,7 +1,7 @@
 {
   "modelVersion": 1,
   "generatedBy": "nodespec",
-  "modelHash": "1e1c5ecc96c55c760dcf58961276a6d35fd44f371c93b8c54681b3ff2000ed40",
+  "modelHash": "32c091e0a173a3d46ae1ba76351be16ed621a30a0917d9d739b46e730d8260da",
   "nodes": [
     {
       "id": "1c81cf63-c51e-4b0e-b6ad-7d318332d2fe",
@@ -65,6 +65,16 @@
       "technology": "gcp",
       "ports": [],
       "contentHash": "c4c2237b0bc13284cc59ff2daef34ae999800704831bf32cae8883adbaf2ee27"
+    },
+    {
+      "id": "6c9a0f47-2d81-4e35-b7a0-38f612d5ce94",
+      "type": "vpc",
+      "label": "Cloud NAT: lifecycle egress",
+      "technology": "gcp-cloud-nat",
+      "parentId": "565b92bd-2c2c-4a82-be62-b691decdbadf",
+      "placementKind": "contains",
+      "ports": [],
+      "contentHash": "97a321513ed83982784165ddf44f777a29d7134104b9073e93da62915242eda7"
     },
     {
       "id": "6da6f1e9-97b5-4c0b-8ba5-0b81f3bc5e4b",
@@ -148,6 +158,16 @@
       "placementKind": "contains",
       "ports": [],
       "contentHash": "fb5b88cb25e704bf92d3760f8251de95ce4e34b4456fdbe4479d28e37028da6f"
+    },
+    {
+      "id": "b41d7c68-95a2-4e07-8f36-2c0e5a97b1d4",
+      "type": "vpc",
+      "label": "VPC: lifecycle egress",
+      "technology": "gcp-vpc",
+      "parentId": "565b92bd-2c2c-4a82-be62-b691decdbadf",
+      "placementKind": "contains",
+      "ports": [],
+      "contentHash": "88c1b2ad339e6295a0257ee6b2f14b387b8b5dc677ce065405a903288b7fb538"
     },
     {
       "id": "c424e85a-6584-4bb7-a48e-2175ebc6a41b",
@@ -394,6 +414,16 @@
       "contentHash": "f4f4f1036e862b339f7bdac3ba1b46d37d2952f7532edb9b5489b6438dce3d86"
     },
     {
+      "id": "a03f5b91-7c46-4e28-95d0-1b8746ea20cf",
+      "source": "b41d7c68-95a2-4e07-8f36-2c0e5a97b1d4",
+      "target": "6c9a0f47-2d81-4e35-b7a0-38f612d5ce94",
+      "contractId": "3a7f92c4-1e58-4b06-9d27-64c05e8a3f1b",
+      "label": "outbound: non-Google destinations",
+      "direction": "unidirectional",
+      "criticality": "required",
+      "contentHash": "4744394a404539477db329f82a36e4a120a88f6149e39a3e55dbe27c527bfa5f"
+    },
+    {
       "id": "aee0d33c-b81c-4cb9-85ea-2b8bbb0d8094",
       "source": "d9e456a0-b079-4914-b8fc-f48f42fa7a7f",
       "target": "c424e85a-6584-4bb7-a48e-2175ebc6a41b",
@@ -414,6 +444,16 @@
       "contentHash": "81e13b39664bbccd7c10299e877b20ca3a16af4b735893c1ef35017048420397"
     },
     {
+      "id": "c8b0574e-7d31-49a5-b62f-018e4f3ca927",
+      "source": "a7ee091d-3d58-4624-96ed-8292a596f6d1",
+      "target": "b41d7c68-95a2-4e07-8f36-2c0e5a97b1d4",
+      "contractId": "3a7f92c4-1e58-4b06-9d27-64c05e8a3f1b",
+      "label": "egress: all traffic",
+      "direction": "unidirectional",
+      "criticality": "required",
+      "contentHash": "3bf0182ceb9b44b4917a9c8fee29022fde199f840f936e571a8b4859759ac8be"
+    },
+    {
       "id": "d05f7072-8e08-4d99-8fe1-0aa31c291545",
       "source": "9af301aa-2191-4532-9871-82179a5500c1",
       "target": "c424e85a-6584-4bb7-a48e-2175ebc6a41b",
@@ -424,6 +464,16 @@
       "contentHash": "13c7f15595b3ac3082a7a610a79b6f093381342d490455a736d417864bb7ccbd"
     },
     {
+      "id": "d2e64a10-3b57-4c92-8e01-6f4d09b7ea35",
+      "source": "b41d7c68-95a2-4e07-8f36-2c0e5a97b1d4",
+      "target": "e730eb23-4b12-43a4-b260-8758b3025114",
+      "contractId": "3a7f92c4-1e58-4b06-9d27-64c05e8a3f1b",
+      "label": "internal ingress: directory lookup",
+      "direction": "unidirectional",
+      "criticality": "required",
+      "contentHash": "6cf196fdafa7d83cc30685812139dd30ada9ac17f04fd3cc62a32af0bd8d12b5"
+    },
+    {
       "id": "f28a64ac-a95d-4cd5-9189-c577f310002f",
       "source": "c424e85a-6584-4bb7-a48e-2175ebc6a41b",
       "target": "268a782a-d132-4d5e-8f24-c4a969ad7f17",
@@ -432,6 +482,16 @@
       "direction": "bidirectional",
       "criticality": "required",
       "contentHash": "fc62bb15cdb2ddf135064e20fd5b709b0d86757713e59fb8f3eeecea7c9ad934"
+    },
+    {
+      "id": "f5091ab3-46c7-4d82-a0e1-79b3e2c86d40",
+      "source": "6c9a0f47-2d81-4e35-b7a0-38f612d5ce94",
+      "target": "4f626e62-3cc8-445a-9fbd-cb36407ad91e",
+      "contractId": "3a7f92c4-1e58-4b06-9d27-64c05e8a3f1b",
+      "label": "IAP JWK set fetch",
+      "direction": "unidirectional",
+      "criticality": "required",
+      "contentHash": "290362d6e821fa224c15ea69ac12202bb2cc9464b549c44348f64e49783509f0"
     },
     {
       "id": "fd727505-31d1-4b2f-9671-db28f4bcacb0",
@@ -460,6 +520,13 @@
       "transport": "grpc",
       "schemaHash": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a",
       "contentHash": "a412a8e1cff64c0e4cd362fe328f99edf7baf4e97348d616010066d76cb8a6fd"
+    },
+    {
+      "id": "3a7f92c4-1e58-4b06-9d27-64c05e8a3f1b",
+      "kind": "dependency",
+      "name": "VPC Network Path",
+      "transport": "none",
+      "contentHash": "dd17a472f951d870273ce6986737fa221593eae28fd246e07e0298ae84c589f2"
     },
     {
       "id": "549c47dd-706d-415b-9ecb-540e7abcba87",
@@ -1024,7 +1091,7 @@
     },
     {
       "id": "7b2e4f19-6a35-4c80-9d1e-42a8b0f7c536",
-      "nodeId": "565b92bd-2c2c-4a82-be62-b691decdbadf",
+      "nodeId": "b41d7c68-95a2-4e07-8f36-2c0e5a97b1d4",
       "path": "infra/network.tf",
       "kind": "config"
     },

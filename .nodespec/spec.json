@@ -1,7 +1,7 @@
 {
   "specVersion": 1,
   "generatedBy": "nodespec",
-  "specHash": "76bd2cf70a06a34f727abc5d354b63b61b36ef99341e6e1d987638e724fbca21",
+  "specHash": "c490ce41178b6dee76d3d38ccee00c2cedd1ec343e2d27ef1d3aef94140b8001",
   "vision": "Company wants an application that supports the full user lifecycle in four phases:\n\n1. User creation, including assignment of attributes and groups\n2. Notifying the user of their new account with a welcome letter and initial password setting instructions\n3. Updating a user's roles/attributes over time\n4. Account deletion\n\nScope and constraints as stated by the customer:\n\n- The application should only worry about one IDP for now — Google Workspace.\n- All of the steps in account creation must be stateful and have optional two-party approval features.\n- The application should run serverless — Cloud Run on GCP.\n- Because it uses Google Workspace, the app must include instructions on how to configure a GCP service account to have admin permissions in Workspace WITHOUT using Domain-Wide Delegation.\n- The serverless application must be protected by IAP, and must include code to verify the IAP JWT header so the security controls cannot be bypassed by reaching the service directly.\n\nThe product is an internal, operator-facing lifecycle console: an IAP-protected web UI plus an API where a requester drafts a lifecycle action, an optional second approver signs off, and a durable state machine executes the Workspace changes step by step — every step resumable, auditable, and idempotent, so a partially-completed onboarding is never left in an unknown state.",
   "constraints": [],
   "preferences": {
@@ -154,14 +154,16 @@
       "category": "technical",
       "acceptanceCriteria": [
         "terraform validate and terraform plan succeed against the committed configuration with no manual resource references",
-        "The Terraform configuration provisions both Cloud Run services, the load balancer with serverless NEG, IAP, Firestore, the Cloud Tasks queue, and Secret Manager secrets",
+        "The Terraform configuration provisions both Cloud Run services, the load balancer with serverless NEG, IAP, Firestore, the Cloud Tasks queue, Secret Manager secrets, and the VPC network, subnet and Cloud NAT the API service egresses through",
         "Both Cloud Run services are configured with min-instances 0 and scale to zero when idle",
         "The API service and the worker service are bound to distinct runtime service accounts, and only the worker's identity holds the Workspace admin role",
         "The Cloud Tasks queue targets the worker service with OIDC authentication, and the worker rejects task requests not carrying a valid OIDC token from the queue's service account",
         "No resource in the deployment is a VM, managed instance group, or Kubernetes cluster",
+        "The API service routes its egress through the VPC with all traffic, which is what allows it to reach the worker at all: the worker admits only internal-and-cloud-load-balancing ingress, so an API call over the public run.app address is refused before any code runs",
+        "Cloud NAT is provisioned for that subnet, because routing all egress through the VPC removes the API service's default internet route and the IAP assertion verifier fetches its JWK set from a host Private Google Access does not cover",
         "A from-scratch apply into an empty GCP project produces a reachable, IAP-protected endpoint following only the documented steps"
       ],
-      "contentHash": "0131f2a37ce6189d67b841296d63b13684399be33237d1b6bde5e13b875f73cf"
+      "contentHash": "c5dadd89be93b3897fc541c141a157ec9bf6088e6d73fa68070a583f84f95766"
     },
     {
       "requirementId": "REQ-010",

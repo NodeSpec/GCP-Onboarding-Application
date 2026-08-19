@@ -10,9 +10,11 @@ component inventory, connection topology, and links to per-component task docume
 | Google Workspace (Admin SDK Directory) | external-service | --- | --- | --- | --- |
 | Firestore: lifecycle state and audit | database | gcp-firestore | Company GCP Project | --- | --- |
 | Identity-Aware Proxy | auth-provider | gcp-identity-aware-proxy | Company GCP Project | --- | --- |
+| Cloud NAT: lifecycle egress | vpc | gcp-cloud-nat | Company GCP Project | --- | --- |
 | Cloud Logging: audit sink | logging | gcp-cloud-logging | Company GCP Project | --- | --- |
 | Cloud Tasks: lifecycle-steps | queue | gcp-cloud-tasks | Company GCP Project | --- | --- |
 | Operator Console UI | frontend-app | react | Cloud Run: lifecycle-api | --- | --- |
+| VPC: lifecycle egress | vpc | gcp-vpc | Company GCP Project | --- | --- |
 | Lifecycle API Service | backend-service | nodejs | Cloud Run: lifecycle-api | --- | --- |
 | External HTTPS Load Balancer | load-balancer | gcp-cloud-load-balancing | Company GCP Project | --- | --- |
 | Lifecycle Step Executor | worker | nodejs | Cloud Run: lifecycle-worker | --- | --- |
@@ -24,11 +26,13 @@ component inventory, connection topology, and links to per-component task docume
 - **Company GCP Project** [gcp] (gcp)
   - **Firestore: lifecycle state and audit** [gcp-firestore] (database)
   - **Identity-Aware Proxy** [gcp-identity-aware-proxy] (auth-provider)
+  - **Cloud NAT: lifecycle egress** [gcp-cloud-nat] (vpc)
   - **Cloud Logging: audit sink** [gcp-cloud-logging] (logging)
   - **Cloud Tasks: lifecycle-steps** [gcp-cloud-tasks] (queue)
   - **Cloud Run: lifecycle-api** [gcp-cloud-run] (docker-container)
     - **Operator Console UI** [react] (frontend-app)
     - **Lifecycle API Service** [nodejs] (backend-service)
+  - **VPC: lifecycle egress** [gcp-vpc] (vpc)
   - **External HTTPS Load Balancer** [gcp-cloud-load-balancing] (load-balancer)
   - **Cloud Run: lifecycle-worker** [gcp-cloud-run] (docker-container)
     - **Lifecycle Step Executor** [nodejs] (worker)
@@ -51,10 +55,14 @@ component inventory, connection topology, and links to per-component task docume
 | Lifecycle Step Executor | Email Delivery Service | rest | Welcome Letter Delivery |
 | External HTTPS Load Balancer | Identity-Aware Proxy | rest | IAP Authorization Check |
 | Lifecycle API Service | Cloud Tasks: lifecycle-steps | rest | Step Task Enqueue |
+| VPC: lifecycle egress | Cloud NAT: lifecycle egress | dependency | VPC Network Path |
 | External HTTPS Load Balancer | Lifecycle API Service | rest | IAP-Protected HTTPS Ingress |
 | Lifecycle Step Executor | Google Workspace (Admin SDK Directory) | rest | Google Admin SDK Directory API |
+| Cloud Run: lifecycle-api | VPC: lifecycle egress | dependency | VPC Network Path |
 | Operator Console UI | Lifecycle API Service | rest | Lifecycle Operator API |
+| VPC: lifecycle egress | Cloud Run: lifecycle-worker | dependency | VPC Network Path |
 | Lifecycle API Service | Firestore: lifecycle state and audit | nosql | Lifecycle State Store |
+| Cloud NAT: lifecycle egress | Identity-Aware Proxy | dependency | VPC Network Path |
 | Lifecycle API Service | Lifecycle Step Executor | rest | Directory Lookup (read-only) |
 
 ## Test Plans
