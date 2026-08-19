@@ -16,6 +16,9 @@ specific to your organisation and are marked where they appear.
 Read `docs/workspace-admin-setup.md` alongside this. The GCP side and the
 Workspace side both have to be done, and neither works without the other.
 
+Do this by hand once. After it works, `docs/cicd.md` turns the mechanical half
+of it into two GitHub Actions workflows, and shipping a change becomes a merge.
+
 ## What you need before you start
 
 - A GCP project, and its project **number** as well as its project id. The
@@ -161,15 +164,6 @@ pointer: the same Terraform state would describe different running code
 depending on when it was applied, and a rollback would have nothing exact to
 roll back to. The Terraform refuses a tag at plan time.
 
-The repository does not commit a lockfile, and the Dockerfiles install with
-`npm ci`, which requires one. Generate it first. This writes only
-`package-lock.json` and installs nothing:
-
-```bash
-cd ~/gcp-onboarding-application
-npm install --package-lock-only --no-audit --no-fund
-```
-
 Create the registry and authenticate Docker to it:
 
 ```bash
@@ -270,12 +264,26 @@ worker exists, so you add it after the first apply. Step 6 covers it.
 
 ## 6. Apply
 
+State lives in a GCS bucket, and `infra/backend.tf` deliberately does not name
+it. Create one and pass it at init:
+
 ```bash
+export STATE_BUCKET="${PROJECT_ID}-lifecycle-tfstate"
+
+gcloud storage buckets create "gs://${STATE_BUCKET}" \
+  --project "$PROJECT_ID" --location "$REGION" \
+  --uniform-bucket-level-access --public-access-prevention
+gcloud storage buckets update "gs://${STATE_BUCKET}" --versioning
+
 cd infra
-terraform init
+terraform init -backend-config="bucket=${STATE_BUCKET}"
 terraform plan -out=tfplan
 terraform apply tfplan
 ```
+
+Versioning matters more than it looks. State is the only record of what is
+deployed, and an apply that corrupts it is recoverable from a previous version
+and not otherwise.
 
 The first apply creates about 65 resources and takes several minutes.
 
@@ -563,9 +571,6 @@ the same read keeps dying.
 **`docker push` fails partway with `connection refused`.** The same flakiness.
 Run the push again; it resumes.
 
-**`"/package-lock.json": not found` during a docker build.** The lockfile step at
-the top of step 4.
-
 **`gcloud builds submit --config -` fails with `Unable to read file [-]`.** That
 `gcloud` cannot take a build config on stdin. Write the config to a file and
 pass its path.
@@ -588,22 +593,39 @@ on the worker service: it must be the worker's own `run.app` URL. If it is
 step 6. If it is your console domain, your checkout predates the fix; pull the
 latest `main` and then do the second apply.
 
-**An approvals inbox that will not load, with `9 FAILED_PRECONDITION: The query
-requires an index`.** The composite index on `lifecycleRequests` is missing.
-Create it and give it a few minutes to build:
+**A list that will not load, with `9 FAILED_PRECONDITION: The query requires an
+index`.** A composite index on `lifecycleRequests` is missing. Every index the
+application needs is declared in `infra/firestore.tf`, so the first thing to
+check is that your checkout is current and that the apply succeeded:
 
 ```bash
-gcloud firestore indexes composite create \
-  --collection-group=lifecycleRequests \
-  --field-config=field-path=status,order=ascending \
-  --field-config=field-path=updatedAt,order=descending \
-  --project="$PROJECT_ID"
+gcloud firestore indexes composite list --project="$PROJECT_ID" \
+  --format="table(name.basename(),state,fields[].fieldPath.list())"
+```
+
+An index in `CREATING` is not a fault, it is not finished. They take a few
+minutes on an empty database and longer on a full one.
+
+If one is genuinely absent, the full error text names it. Firestore's message
+ends in a console link that encodes the exact fields, and that link is the
+authoritative answer to which index is wanted:
+
+```bash
+gcloud logging read \
+  'resource.type="cloud_run_revision" AND textPayload:"FAILED_PRECONDITION"' \
+  --project="$PROJECT_ID" --limit=1 --format='value(textPayload)'
 ```
 
 ## Redeploying
 
-Build, push, take the new digests, update the tfvars, apply. Cloud Run shifts
-traffic to the new revision.
+Do this once by hand, then stop doing it by hand. `docs/cicd.md` sets up the two
+GitHub Actions workflows in this repository, after which a merge to `main`
+builds both images, pushes them, and applies. Everything in this guide that is
+mechanical is in those workflows; everything that is not, mainly the Workspace
+tenant and the secret values, stays here because it has no API to call.
+
+By hand: build, push, take the new digests, update the tfvars, apply. Cloud Run
+shifts traffic to the new revision.
 
 Rolling back is the same operation with the previous digest, which is why the
 digests are worth keeping somewhere other than your shell history.
