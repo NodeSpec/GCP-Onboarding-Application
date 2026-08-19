@@ -9,6 +9,35 @@
 # requirement (REQ-009 AC-3) and also the honest shape of the workload: an
 # onboarding console is idle almost all of the time.
 
+variable "worker_url" {
+  description = <<-EOT
+    The worker service's own URL. Declared here rather than in variables.tf
+    because it exists only to work around a Terraform limitation in this file,
+    and it is unreadable apart from the resource it feeds.
+
+    The worker needs its own URL for two things: the audience it verifies
+    incoming OIDC tokens against (REQ-007 AC-10), and the target it enqueues
+    follow-on steps at (REQ-016). It cannot be wired from
+    google_cloud_run_v2_service.worker.uri, because that is a self reference
+    inside the worker's own resource and Terraform rejects it as a cycle. The
+    URL embeds a generated hash, so it cannot be built from project and region
+    either.
+
+    So it is supplied. Leave it empty on the FIRST apply, then read it back and
+    set it before applying again:
+
+      terraform output -raw worker_service_url
+
+    Empty renders an obviously invalid host rather than a plausible wrong one.
+    An earlier version defaulted to the console domain, which looked correct,
+    verified every token against the wrong audience, and enqueued every step at
+    the load balancer instead of the worker. A deployment that is not finished
+    should say so.
+  EOT
+  type        = string
+  default     = ""
+}
+
 resource "google_cloud_run_v2_service" "api" {
   project  = var.project_id
   name     = "lifecycle-api"
@@ -130,8 +159,13 @@ resource "google_cloud_run_v2_service" "worker" {
         value = var.region
       }
       env {
-        name  = "WORKER_BASE_URL"
-        value = "https://${var.domain}"
+        name = "WORKER_BASE_URL"
+        # The worker's OWN url, not the console's. It is both the audience this
+        # service verifies incoming tokens against and the target it enqueues
+        # follow-on steps at, so a wrong value 401s every call and posts every
+        # step to the load balancer. Supplied as a variable because referencing
+        # google_cloud_run_v2_service.worker.uri here is a self reference.
+        value = var.worker_url != "" ? var.worker_url : "https://worker-url-not-set.invalid"
       }
       env {
         name  = "QUEUE_INVOKER_SA"
