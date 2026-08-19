@@ -8,6 +8,22 @@
 # drifts means every assertion is rejected and nobody can sign in, with no error
 # anywhere that says why.
 
+# The IAP service agent. It does not exist in a project until something asks
+# for it, and the run.invoker grant on the API service names it, so a
+# from-scratch apply into a fresh project used to fail with "Service account
+# service-<number>@gcp-sa-iap.iam.gserviceaccount.com does not exist" until an
+# operator ran `gcloud beta services identity create` by hand. This resource is
+# that command: it asks Google to mint the agent, and it is idempotent, so it is
+# also safe on a project where the agent already exists.
+resource "google_project_service_identity" "iap" {
+  provider = google-beta
+
+  project = var.project_id
+  service = "iap.googleapis.com"
+
+  depends_on = [google_project_service.required]
+}
+
 resource "google_iap_brand" "console" {
   provider = google-beta
 

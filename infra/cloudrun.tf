@@ -280,4 +280,9 @@ resource "google_cloud_run_v2_service_iam_member" "api_invoker" {
   name     = google_cloud_run_v2_service.api.name
   role     = "roles/run.invoker"
   member   = "serviceAccount:service-${var.project_number}@gcp-sa-iap.iam.gserviceaccount.com"
+
+  # The agent this member names is minted on request, not at project creation.
+  # Without the dependency a fresh project races the grant against the mint and
+  # loses (infra/iap.tf).
+  depends_on = [google_project_service_identity.iap]
 }
