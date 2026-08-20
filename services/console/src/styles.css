@@ -390,6 +390,35 @@ nav[aria-label='sections'] button:focus-visible {
   font-size: 0.7rem;
 }
 
+/* Sign out. Quiet on purpose: it ends the IAP session, which is a real act,
+   but it sits in the foot as reference furniture rather than a call to action. */
+.signout {
+  background: none;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  color: var(--text-muted);
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.8rem;
+  font-weight: 500;
+  padding: 7px 12px;
+  width: 100%;
+}
+
+.signout:hover {
+  background: var(--surface-alt);
+  color: var(--text);
+}
+
+/* Helper text under a control: explains what a field means without shouting. */
+.hint {
+  color: var(--text-faint);
+  font-size: 0.78rem;
+  line-height: 1.45;
+  margin: 6px 0 0;
+  max-width: 34rem;
+}
+
 /* The content column. */
 .shell > main {
   flex: 1 1 auto;

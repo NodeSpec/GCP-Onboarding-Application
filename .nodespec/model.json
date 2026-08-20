@@ -1,7 +1,7 @@
 {
   "modelVersion": 1,
   "generatedBy": "nodespec",
-  "modelHash": "ce4ced3aa2560bc10f687b6e7b860357f050e9ec5c776e4f636fba4a591feefd",
+  "modelHash": "96ff7905398f88c74b2bdd10877fcd38d0127d33a4ac95a8debd18633c5f3304",
   "nodes": [
     {
       "id": "1c81cf63-c51e-4b0e-b6ad-7d318332d2fe",
@@ -1553,7 +1553,8 @@
       "id": "d4e5f6a7-b8c9-4d0e-9f1a-2b3c4d5e6f70",
       "nodeId": "9af301aa-2191-4532-9871-82179a5500c1",
       "path": "services/console/src/styles.css",
-      "kind": "source"
+      "kind": "source",
+      "contentHash": "000000003159a2c2"
     },
     {
       "id": "d63fb149-8e25-4c7a-b134-0a27c95df8e3",
