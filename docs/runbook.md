@@ -259,7 +259,7 @@ undetectable. That is the honest limit of the control.
 | Everybody is authorized for nothing | Role bindings, then `BOOTSTRAP_ADMINS` |
 | Every Workspace call fails with `permission` | The custom admin role assignment on the worker service account |
 | No letters are going out | The SMTP secret, then the relay's sender and recipient settings |
-| Letters fail with SMTP 421 at EHLO | The relay is refusing the connection before authentication. Confirm the relay admits by SMTP authentication rather than by IP address; the worker has no fixed egress IP by design. New relay settings can take hours to propagate and new source IPs are greylisted, so the step's automatic retries often clear this on their own. |
+| Letters fail with SMTP 421 at EHLO | The relay is refusing the connection before authentication, which means it does not trust the source address. The worker sends from one reserved address, `terraform output -raw smtp_egress_ip`. Confirm that address is registered in the relay's allowed IP list in the Admin console, and remember relay setting changes can take hours to propagate; the step's automatic retries carry it across that window. |
 | Offboarding fails at `revoke-access` with `permission` | The custom admin role is missing Security, User Security Management. See `docs/workspace-admin-setup.md`. |
 | Steps queue but never run | The queue's run.invoker bindings, then the worker's ingress setting |
 | Audit reconciliation reports Firestore missing entries | Escalate. Do not investigate alone. |

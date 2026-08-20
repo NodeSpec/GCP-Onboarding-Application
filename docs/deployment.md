@@ -438,6 +438,17 @@ Follow `docs/workspace-admin-setup.md` in full. The shape of it:
    generate an app password.
 2. Configure the SMTP relay to allow that sender and to permit **any**
    recipient, since welcome letters go to personal addresses outside the domain.
+   Register the deployment's reserved egress address in the relay's allowed IP
+   list, keeping SMTP authentication and TLS required:
+
+   ```bash
+   terraform output -raw smtp_egress_ip
+   ```
+
+   This is not optional hardening. Without the address registered, the relay
+   treats every connection from the worker as a stranger and tarpits it with
+   421 at EHLO, before authentication is ever offered, and no credential or
+   sender setting can clear that.
 3. Configure SPF and DKIM, then send one real letter to an external address and
    confirm it lands in the inbox rather than spam.
 4. Create the custom admin role carrying only Users read, create, update and
@@ -688,6 +699,17 @@ checkout that predates the validation.
 
 **A create request fails at `create-user` with a quota error.** The tenant has no
 free Workspace licence. See "Workspace licences".
+
+**Every welcome letter fails with `SMTP 421` at EHLO, retrying forever.** The
+relay is refusing the connection before authentication, so no credential or
+sender setting is involved: it does not trust the source address. The worker
+sends through the deployment's reserved egress address, and that address must be
+registered in the relay's allowed IP list in the Admin console. Step 8, item 2.
+If the worker service has no network interface (check with the `gcloud run
+services describe` command above, against `lifecycle-worker`), the checkout
+predates the egress change; pull the latest `main` and apply. Relay setting
+changes can take a few hours to propagate, and the step's automatic retries
+carry it across that window.
 
 **A request is approved and then nothing happens. It sits at `queued` and no
 step ever runs.** The worker is rejecting its own tasks. Check `WORKER_BASE_URL`

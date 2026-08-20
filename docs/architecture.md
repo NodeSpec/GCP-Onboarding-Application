@@ -54,25 +54,35 @@ distinguish routes, so that confinement is enforced in the application.
 
 ### The network layer: VPC, subnet and Cloud NAT
 
-Small, and present for exactly one reason. The worker's ingress is restricted
+Small, and present for two reasons, one per service.
+
+The API service's reason is reachability. The worker's ingress is restricted
 to internal traffic, and the API service has to call the worker's lookup routes
 for every directory picker and every group membership resolution. A Cloud Run
 service with no VPC attachment makes that call over the public internet, where
-the worker's own perimeter refuses it before any code runs.
+the worker's own perimeter refuses it before any code runs. Direct VPC egress
+makes those calls count as internal.
 
-So the API service egresses through a small VPC using Direct VPC egress, which
-makes its calls to the worker's run.app address count as internal. With all
-traffic routed through the VPC the API loses its default internet route, and it
-has one public dependency that Private Google Access does not cover: the IAP
-signing keys fetched from www.gstatic.com on a cold start. Cloud NAT restores
-that one path. Removing the NAT does not degrade the pickers; it stops anyone
-signing in at all.
+The worker's reason is identity. The Workspace SMTP relay judges connections by
+source address, and a worker egressing from the shared Cloud Run pool presents
+a different, unfamiliar address on every attempt. The relay tarpits strangers
+with 421 at EHLO, before authentication is ever offered, so no credential and
+no relay setting can clear it. Routing the worker through the VPC sends its
+mail out through Cloud NAT's one reserved address, which is registered in the
+relay's allowed IP list on the Workspace side. This is the hardening path the
+email delivery requirement records, adopted after the shared-pool behaviour was
+observed in production.
 
-The worker is deliberately not attached to the VPC. It reaches Google APIs and
-the SMTP relay over default egress and has no reason to call another Cloud Run
-service. The services still scale to zero; a VPC, a subnet, a router and a NAT
-are managed network resources with nothing running in them, so the serverless
-constraint holds.
+With all traffic routed through the VPC each service loses its default internet
+route, and Private Google Access covers Google APIs but not the two public
+dependencies that remain: the IAP signing keys fetched from www.gstatic.com on
+a cold start, and the relay itself. Cloud NAT restores both paths through the
+reserved address. Removing the NAT does not degrade the pickers; it stops
+anyone signing in at all, and it stops every letter.
+
+The services still scale to zero; a VPC, a subnet, a router, a NAT and a
+reserved address are managed network resources with nothing running in them, so
+the serverless constraint holds.
 
 ### Cloud Tasks: lifecycle-steps
 

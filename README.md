@@ -41,7 +41,7 @@ Two Cloud Run services, deliberately separated:
 
 The separation is the point. If the operator facing surface is ever compromised, it cannot modify the directory, because it does not hold the permission to do so.
 
-Supporting pieces: Firestore stores request state and the audit trail, Cloud Tasks delivers step execution reliably with retries, Secret Manager holds the two credentials the system needs, and Cloud Logging keeps a tamper evident copy of the audit record. A small VPC carries the API service's outbound traffic so its calls to the worker arrive as internal traffic and pass the worker's ingress restriction, with Cloud NAT providing the one internet path sign-in itself depends on.
+Supporting pieces: Firestore stores request state and the audit trail, Cloud Tasks delivers step execution reliably with retries, Secret Manager holds the two credentials the system needs, and Cloud Logging keeps a tamper evident copy of the audit record. A small VPC carries both services' outbound traffic: the API service's calls to the worker arrive as internal traffic and pass the worker's ingress restriction, and the worker's mail leaves through Cloud NAT's one reserved address, which the Workspace relay is told to trust.
 
 For the full component list, connection topology and per component task documents, see [ARCHITECTURE.md](./ARCHITECTURE.md), which is generated from the NodeSpec model. For the reasoning behind the arrangement, including the trust boundaries and what each store holds, see [docs/architecture.md](./docs/architecture.md).
 
