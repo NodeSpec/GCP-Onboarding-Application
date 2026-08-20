@@ -5,6 +5,7 @@ import { logger } from '../logging.js';
 
 export const DIRECTORY_SCOPES = [
   'https://www.googleapis.com/auth/admin.directory.user',
+  'https://www.googleapis.com/auth/admin.directory.user.security',
   'https://www.googleapis.com/auth/admin.directory.group.member',
   'https://www.googleapis.com/auth/admin.directory.group.readonly',
   'https://www.googleapis.com/auth/admin.directory.orgunit.readonly',

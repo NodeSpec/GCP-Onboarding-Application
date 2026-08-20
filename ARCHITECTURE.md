@@ -82,5 +82,6 @@ recommended test types, framework suggestions, and test scenarios.
 - **Lifecycle API Service**: [`packages/shared/src/dispatcher.test.ts`](./packages/shared/src/dispatcher.test.ts)
 - **Lifecycle API Service**: [`services/api/src/routes/admin.emulator.test.ts`](./services/api/src/routes/admin.emulator.test.ts)
 - **Operator Console UI**: [`services/console/src/console.test.tsx`](./services/console/src/console.test.tsx)
+- **Lifecycle Step Executor**: [`services/worker/src/workspace/noDelegation.test.ts`](./services/worker/src/workspace/noDelegation.test.ts)
 - **Lifecycle Step Executor**: [`services/worker/src/phases/create.test.ts`](./services/worker/src/phases/create.test.ts)
 - **Company GCP Project**: [`infra/infra.test.ts`](./infra/infra.test.ts)

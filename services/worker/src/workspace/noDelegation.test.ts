@@ -178,8 +178,13 @@ describe('AC-4: every requested scope has a named consumer', () => {
       'setSuspended',
       'deleteUser',
       'searchUsers',
-      'revokeTokens',
     ],
+    // The tokens endpoints live behind their own scope, not the user scope,
+    // and behind their own Admin console privilege (Security > User Security
+    // Management). Listing revokeTokens under the user scope was a claim the
+    // live API refused with a 403 on the first real offboarding, at the
+    // revoke-access step.
+    'https://www.googleapis.com/auth/admin.directory.user.security': ['revokeTokens'],
     'https://www.googleapis.com/auth/admin.directory.group.member': [
       'hasMember',
       'addMember',

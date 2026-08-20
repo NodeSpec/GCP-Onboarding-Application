@@ -136,16 +136,18 @@ describe('AC-9: no admin-role management anywhere in the repository', () => {
     for (const scope of DIRECTORY_SCOPES) {
       expect(scope).not.toContain('rolemanagement');
     }
-    expect(DIRECTORY_SCOPES).toHaveLength(5);
+    expect(DIRECTORY_SCOPES).toHaveLength(6);
   });
 
-  it('requests exactly the five scopes the application consumes', () => {
-    // Pinned exactly, and the pin has already done its job once: adding the
-    // data-transfer scope for phase 4 failed this test, which is what makes a
-    // new scope a decision somebody takes rather than something that arrives
-    // with a feature.
+  it('requests exactly the six scopes the application consumes', () => {
+    // Pinned exactly, and the pin has done its job twice: the data-transfer
+    // scope for phase 4 failed this test when it arrived, and so did
+    // user.security when the first live offboarding proved the token endpoints
+    // sit behind their own scope. That is what makes a new scope a decision
+    // somebody takes rather than something that arrives with a feature.
     expect([...DIRECTORY_SCOPES]).toEqual([
       'https://www.googleapis.com/auth/admin.directory.user',
+      'https://www.googleapis.com/auth/admin.directory.user.security',
       'https://www.googleapis.com/auth/admin.directory.group.member',
       'https://www.googleapis.com/auth/admin.directory.group.readonly',
       'https://www.googleapis.com/auth/admin.directory.orgunit.readonly',

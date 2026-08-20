@@ -133,6 +133,9 @@ The narrow part. Grant only what the four phases use.
    **Organizational Units**
    - Read
 
+   **Security**
+   - User Security Management
+
    **Data Transfer**
    - Manage data transfers (only if you use the Drive transfer step in
      offboarding; omit it otherwise)
@@ -141,7 +144,7 @@ The narrow part. Grant only what the four phases use.
 
    - No **Services** privileges
    - No **Domain Settings**
-   - No **Security** privileges
+   - No other **Security** privileges beyond User Security Management
    - No **Reports**
    - **No role-management privilege of any kind**
 
@@ -149,6 +152,16 @@ That last exclusion is the important one. A role carrying role-management
 privilege lets the service account assign roles **to itself**, which means a
 compromise of this system could mint a Super Admin. Every other capability here
 is bounded by this privilege list; that one is not.
+
+User Security Management is what permits the offboarding phase to revoke a
+leaver's OAuth tokens at the revoke-access step. Suspension alone is not a
+session cut: tokens issued before the suspension keep working against some
+surfaces, so the revocation is a stated requirement rather than tidiness.
+Google gates the token endpoints behind this privilege and behind their own
+API scope, and an earlier version of this guide excluded all Security
+privileges, which made the first real offboarding fail at revoke-access with
+a 403 naming the missing privilege. The rest of the Security section stays
+unselected.
 
 Organizational Units is **read only** deliberately. The system places users into
 existing org units and never creates, moves or deletes them.
@@ -228,6 +241,12 @@ privilege rather than a generic API failure, so read the step error text.
 Groups **Update** was not selected. Read alone permits listing members and not
 changing them.
 
+**Offboarding fails at the revoke-access step with a permission error.**
+Security > **User Security Management** was not selected, which is exactly what
+an older version of this guide instructed. Add that single privilege to the
+role and resume the failed request; the role edit takes a few minutes to
+propagate. The rest of the Security section stays unselected.
+
 **The Drive transfer step fails.**
 Data Transfer privilege was not selected, or the Data Transfer API is not
 enabled. If you do not use Drive transfer, remove `transferDriveTo` from delete
@@ -249,7 +268,7 @@ gcloud services list --enabled --project "$PROJECT_ID" | grep admin.googleapis.c
 
 | What | Where | Value |
 | --- | --- | --- |
-| Custom admin role | Account > Admin roles | Users read/create/update/delete; Groups read/update; Org Units read; Data Transfer manage |
+| Custom admin role | Account > Admin roles | Users read/create/update/delete; Groups read/update; Org Units read; Security user security management; Data Transfer manage |
 | Assigned to | Assign service accounts | The worker runtime service account, by email |
 | Assigned to anything else | | Nothing |
 | Domain-Wide Delegation | Security > API controls | None, confirmed absent |

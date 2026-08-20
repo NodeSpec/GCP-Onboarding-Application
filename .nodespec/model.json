@@ -1,7 +1,7 @@
 {
   "modelVersion": 1,
   "generatedBy": "nodespec",
-  "modelHash": "da53b3df233b0f0bdfac6c9984d028f502bb3d5bb872af224999179124256867",
+  "modelHash": "c2313b4e5e3ff2f9f382904e7162af36addd118056172c359be2877db88f8b5e",
   "nodes": [
     {
       "id": "1c81cf63-c51e-4b0e-b6ad-7d318332d2fe",
@@ -1042,7 +1042,8 @@
       "id": "6d2f9b14-7a58-4c03-9e61-8b4d0f3c5a72",
       "nodeId": "db8e5409-dc6f-4052-887a-7ba1dd5fb717",
       "path": "services/worker/src/workspace/noAdminRoles.test.ts",
-      "kind": "source"
+      "kind": "source",
+      "contentHash": "00000000678d67a8"
     },
     {
       "id": "6d3f8b21-4a97-4e52-b8c6-1f70d5a9e3c4",
@@ -1321,7 +1322,8 @@
       "id": "b1c2d3e4-f5a6-4b7c-8d9e-0f1a2b3c4d5e",
       "nodeId": "db8e5409-dc6f-4052-887a-7ba1dd5fb717",
       "path": "services/worker/src/workspace/noDelegation.test.ts",
-      "kind": "test-plan"
+      "kind": "test-plan",
+      "contentHash": "000000000bb34506"
     },
     {
       "id": "b22df6ba-5a3c-4d9e-8f24-69a8c3b7e1d5",
@@ -1445,7 +1447,7 @@
       "nodeId": "1c81cf63-c51e-4b0e-b6ad-7d318332d2fe",
       "path": "docs/workspace-admin-setup.md",
       "kind": "doc",
-      "contentHash": "0000000043a74f11"
+      "contentHash": "00000000392c14c6"
     },
     {
       "id": "c52ea038-7d14-4b69-a023-9f16b8d4e7c2",
@@ -1507,7 +1509,7 @@
       "nodeId": "db8e5409-dc6f-4052-887a-7ba1dd5fb717",
       "path": "services/worker/src/workspace/directoryClient.ts",
       "kind": "source",
-      "contentHash": "0000000051d0b8b2"
+      "contentHash": "000000003e838ad6"
     },
     {
       "id": "ceeaf1e6-c9fc-478a-8720-e9169693274c",
