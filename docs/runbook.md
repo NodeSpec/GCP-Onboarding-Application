@@ -79,16 +79,24 @@ what is missing rather than failing on what is already there.
 
 ## Resuming a request
 
-There is no manual resume button, and that is deliberate. Resumption is what the
-queue does. A retryable step retries on its own schedule until its budget is
-spent.
+A running request needs no help. Resumption is what the queue does: a retryable
+step retries on its own schedule until its budget is spent.
 
-If the budget is spent, the request is `failed` and the route forward is a new
-request rather than reviving the old one. A new request gets a fresh plan, a
-fresh policy snapshot and a fresh audit trail, and the failed one stays in the
-record as what actually happened.
+Once the budget is spent the request is `failed`, and an **admin can resume it
+from the request detail view**. Fix the underlying cause first, because a resume
+re-runs the same step with the same inputs: a resumed step keeps its idempotency
+key, so a replay against work that already landed skips rather than repeats, and
+it keeps its attempt count, so the history never pretends the failure did not
+happen. The resume is audited with who did it and what state it moved.
 
-If a task was lost entirely (the queue was purged, say), raise a new request.
+Resume when the cause was environmental: a missing admin-role privilege since
+granted, a relay that was refusing mail, a quota that has recovered. Raise a new
+request instead when the payload itself was wrong, because a resume re-runs the
+same payload and a corrected request needs a fresh plan and a fresh policy
+snapshot.
+
+If a task was lost entirely (the queue was purged, say), resume the request; the
+resume re-dispatches the step.
 
 ## Cancelling a request
 
@@ -161,6 +169,13 @@ and the failure mode is an operator being told they may not delete a leaver with
 no obvious reason why. Protect accounts the system itself depends on. Do not
 use this as a general "important people" list; that is what the approval policy
 is for.
+
+One addition is worth making deliberately: the break-glass administrator
+accounts, including the bootstrap admin from `BOOTSTRAP_ADMINS`. Nothing stops
+two operators from offboarding the tenant's last working administrator through
+this system, and the two-party approval that guards deletion does not guard
+against two people agreeing to a mistake. Listing those accounts here closes
+that door without touching the approval policy.
 
 Review the list whenever the notification path changes. Moving to a different
 sending account without updating this leaves the old one protected and the new
@@ -244,5 +259,7 @@ undetectable. That is the honest limit of the control.
 | Everybody is authorized for nothing | Role bindings, then `BOOTSTRAP_ADMINS` |
 | Every Workspace call fails with `permission` | The custom admin role assignment on the worker service account |
 | No letters are going out | The SMTP secret, then the relay's sender and recipient settings |
+| Letters fail with SMTP 421 at EHLO | The relay is refusing the connection before authentication. Confirm the relay admits by SMTP authentication rather than by IP address; the worker has no fixed egress IP by design. New relay settings can take hours to propagate and new source IPs are greylisted, so the step's automatic retries often clear this on their own. |
+| Offboarding fails at `revoke-access` with `permission` | The custom admin role is missing Security, User Security Management. See `docs/workspace-admin-setup.md`. |
 | Steps queue but never run | The queue's run.invoker bindings, then the worker's ingress setting |
 | Audit reconciliation reports Firestore missing entries | Escalate. Do not investigate alone. |

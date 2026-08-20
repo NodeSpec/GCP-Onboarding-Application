@@ -52,6 +52,28 @@ two caller identities, each confined to its own routes:
 A token issued to either is rejected on the other's routes. The IAM grant cannot
 distinguish routes, so that confinement is enforced in the application.
 
+### The network layer: VPC, subnet and Cloud NAT
+
+Small, and present for exactly one reason. The worker's ingress is restricted
+to internal traffic, and the API service has to call the worker's lookup routes
+for every directory picker and every group membership resolution. A Cloud Run
+service with no VPC attachment makes that call over the public internet, where
+the worker's own perimeter refuses it before any code runs.
+
+So the API service egresses through a small VPC using Direct VPC egress, which
+makes its calls to the worker's run.app address count as internal. With all
+traffic routed through the VPC the API loses its default internet route, and it
+has one public dependency that Private Google Access does not cover: the IAP
+signing keys fetched from www.gstatic.com on a cold start. Cloud NAT restores
+that one path. Removing the NAT does not degrade the pickers; it stops anyone
+signing in at all.
+
+The worker is deliberately not attached to the VPC. It reaches Google APIs and
+the SMTP relay over default egress and has no reason to call another Cloud Run
+service. The services still scale to zero; a VPC, a subnet, a router and a NAT
+are managed network resources with nothing running in them, so the serverless
+constraint holds.
+
 ### Cloud Tasks: lifecycle-steps
 
 Step dispatch. At-least-once delivery, which is why every transition is
@@ -227,10 +249,11 @@ a user and greps the emitted records for the issued value.
 
 Who holds which role. Individual and group bindings.
 
-Note a live gap: the resolver accepts a group membership provider but the
-deployed entry point supplies none, so a `group` binding grants nothing in a
-deployed environment even though it resolves correctly in test. The membership
-source exists (the worker's lookup surface); wiring it is outstanding work.
+A `group` binding grants its roles to every member of the named Google group.
+Membership is read live from Workspace through the worker's lookup surface and
+cached for a few minutes, so removing somebody from a group revokes the
+group-granted roles within the cache window rather than instantly. Removing
+their individual binding, or the group's binding, takes effect immediately.
 
 ### `approvalPolicy/current`
 
@@ -282,6 +305,10 @@ requirement and to the threat model, and should be discussed rather than added.
 5. On success it evaluates the next step and either dispatches it or halts it.
 6. On a retryable failure the step is retried with backoff. On a terminal
    failure the step fails, the request fails, and no further step is dispatched.
+7. A failed request is not a dead end. An admin can resume it from the console
+   once the underlying cause is fixed: the failed step returns to ready and is
+   re-dispatched, keeping its idempotency key so a replay stays safe and its
+   attempt count so the history stays honest.
 
 ## Deliberate limitations
 
@@ -293,8 +320,9 @@ Recorded rather than discovered later.
 - **The audit mirror has a lag.** An event deleted between committing and the
   next sweep reaches neither store and is undetectable. The window is the sweep
   interval.
-- **Group role bindings do not resolve in deployment.** See `roleBindings`
-  above.
+- **Group-granted roles can be briefly stale.** Membership is cached for a few
+  minutes, so removal from a group outlives itself by up to the cache window.
+  See `roleBindings` above.
 - **Partial phases are not rolled back.** A create that fails at step four
   leaves the first three applied. This is visible in the timeline rather than
   reversed, because an automatic rollback of a partially provisioned account is

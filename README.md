@@ -1,4 +1,4 @@
-# GCP Onboarding Application
+# The Pack: GCP Onboarding Console
 
 A console for creating, updating and removing Google Workspace accounts, with an approval step and a full record of who did what.
 
@@ -172,6 +172,8 @@ Order matters, because the application needs values that only exist after the in
 
 **[docs/deployment.md](./docs/deployment.md) is the runbook.** It is copy and paste from an empty project to a working console, with one variables block at the top and a troubleshooting section covering everything that commonly goes wrong. [docs/workspace-admin-setup.md](./docs/workspace-admin-setup.md) covers the tenant side in the same way. This section is the map, not the commands.
 
+**You deploy by hand exactly once.** After the first deployment works, [docs/cicd.md](./docs/cicd.md) sets up two GitHub Actions workflows: one that builds, typechecks and tests every push, and one that builds both images, pushes them by digest and applies the Terraform on every merge to the default branch. Authentication is Workload Identity Federation, so no service account key ever exists. From then on, shipping a change is a merge, and nothing in the deployment is done by hand again except the parts that have no API: the Workspace tenant settings and the two secret values.
+
 ### The path
 
 1. **Install the tools and enable the APIs.** Cloud Shell no longer ships Terraform, so it is installed into your home directory. Every API is enabled with `gcloud` up front rather than left to Terraform, because `gcloud` blocks until each one is live and Terraform does not, which otherwise fails the first apply.
@@ -189,6 +191,8 @@ Order matters, because the application needs values that only exist after the in
 7. **Populate the secrets.** Both are created empty on purpose: a value passed through a Terraform variable is written to state in plaintext. Neither needs a redeploy, now or on any future rotation.
 
 8. **Grant operator access.** Add people to the operator group. Membership gets someone past IAP; a role binding decides what they may do once there. Someone in the group with no binding is authenticated and authorized for nothing, which is the right state for a person who should be able to look but not act.
+
+9. **Set up the pipeline.** One-time: a state bucket, a deployer service account, Workload Identity Federation, and a set of repository variables, all in `docs/cicd.md`. Every deployment after this one is a merge.
 
 ### Three things that catch people out
 
