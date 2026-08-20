@@ -26,13 +26,17 @@ export function Approvals({ onOpen }: { onOpen: (requestId: string) => void }) {
 
   return (
     <section aria-label="approvals inbox">
-      <h2>Awaiting your approval</h2>
+      <div className="page-head">
+        <h2>Awaiting your approval</h2>
+        <p>Requests paused for a decision only you can make. Your own requests never appear here.</p>
+      </div>
       {loaded && entries.length === 0 && <p role="status">Nothing is waiting on you.</p>}
-      <ul>
+      <ul className="inbox">
         {entries.map((e) => (
           <li key={`${e.requestId}:${e.step.stepId}`}>
             <button type="button" onClick={() => onOpen(e.requestId)}>
-              {e.phase} · {e.targetUser} · {e.step.name} (needs {e.step.requiredRole})
+              <span className="tag" data-phase={e.phase}>{e.phase}</span>{' '}
+              <span className="mono">{e.targetUser}</span> · {e.step.name} (needs {e.step.requiredRole})
             </button>
             <span> requested by {e.requestedBy}</span>
           </li>

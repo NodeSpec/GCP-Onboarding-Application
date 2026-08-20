@@ -2,74 +2,98 @@
  * The operator console's styling (REQ-011).
  *
  * This is an internal console for consequential, mostly irreversible actions,
- * so it is built to be read quickly rather than to be admired: dense rows, a
- * consistent status vocabulary, and weight given to the two screens somebody
- * stakes a decision on, which are the step timeline and the computed diff.
+ * so it is built to be read quickly rather than to be admired: a fixed status
+ * vocabulary, one accent used only for affirmative acts, and weight given to
+ * the two screens somebody stakes a decision on, which are the step timeline
+ * and the computed diff.
  *
- * Everything here is a stylesheet. The markup is already semantic, and the
- * component tests query by role, label and text, so nothing in this file is
- * load bearing for behaviour. Two structural facts the tests do rely on are
- * left alone: the org unit picker is a select, and the diff is a table.
+ * The look follows the accepted console redesign: green accent on dark
+ * neutrals, dark by default with a light theme the operator can switch to, a
+ * left sidebar that collapses to a drawer on small screens, and IBM Plex for
+ * text and identifiers. The theme is a data-theme attribute on <html>, set
+ * before first paint (index.html) and toggled from the shell; both palettes
+ * are complete, so neither theme borrows a colour from the other.
  *
- * No web fonts. A font request is a third party dependency on the critical path
- * of a console people open when something is wrong, and the system stack is
- * already what the operating system renders best.
+ * The IBM Plex faces load from Google Fonts with display=swap and a full
+ * system fallback stack, so a blocked or slow font host costs the console
+ * nothing but letterforms. This replaces the earlier no-web-font rule; the
+ * non-negotiable half of that rule, no third party on the CRITICAL path, is
+ * preserved by the swap.
+ *
+ * Everything here is a stylesheet. The markup is semantic and the component
+ * tests query by role, label and text, so nothing in this file is load bearing
+ * for behaviour. Two structural facts the tests do rely on are left alone: the
+ * org unit picker is a select, and the diff is a table.
  */
 
 :root {
-  color-scheme: light dark;
+  color-scheme: dark;
 
-  --bg: #f6f7f9;
-  --surface: #ffffff;
-  --surface-alt: #f0f2f5;
-  --border: #d9dee5;
-  --border-strong: #b9c2cd;
-  --text: #16191d;
-  --text-muted: #5b6673;
-  --accent: #1f6feb;
-  --accent-contrast: #ffffff;
+  --bg: #0c0e11;
+  --surface: #14171c;
+  --surface-alt: #1b1f26;
+  --surface-deep: #222831;
+  --border: #242a32;
+  --border-strong: #333c47;
+  --text: #e8ebef;
+  --text-muted: #98a2ae;
+  --text-faint: #69727d;
+
+  --accent: #3ddc84;
+  --accent-hover: #2fc873;
+  --accent-soft: rgba(61, 220, 132, 0.12);
+  --accent-contrast: #04120a;
+  --ring: rgba(61, 220, 132, 0.35);
 
   /* The status vocabulary. Used identically wherever a state is shown, so the
      colours can be learned once and read everywhere after that. */
-  --ok-bg: #e4f5e9;
-  --ok-fg: #14652c;
-  --bad-bg: #fdeaea;
-  --bad-fg: #a4232a;
-  --wait-bg: #fdf3d8;
-  --wait-fg: #8a5d00;
-  --busy-bg: #e5efff;
-  --busy-fg: #14448f;
-  --idle-bg: #eef0f3;
-  --idle-fg: #4a5561;
+  --ok-bg: rgba(61, 220, 132, 0.14);
+  --ok-fg: #5fe39a;
+  --bad-bg: rgba(240, 90, 95, 0.15);
+  --bad-fg: #ff8a8f;
+  --wait-bg: rgba(240, 190, 80, 0.14);
+  --wait-fg: #f2c65a;
+  --busy-bg: rgba(96, 150, 255, 0.15);
+  --busy-fg: #8fb4ff;
+  --idle-bg: rgba(150, 160, 175, 0.12);
+  --idle-fg: #aeb7c2;
 
-  --radius: 6px;
+  --radius: 10px;
+  --radius-card: 14px;
   --gap: 1rem;
-  --mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+  --sans: 'IBM Plex Sans', system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  --mono: 'IBM Plex Mono', ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, monospace;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --bg: #0f1115;
-    --surface: #171a20;
-    --surface-alt: #1e222a;
-    --border: #2a2f38;
-    --border-strong: #3a414c;
-    --text: #e6e9ee;
-    --text-muted: #9aa4b1;
-    --accent: #4c8dff;
-    --accent-contrast: #0f1115;
+[data-theme='light'] {
+  color-scheme: light;
 
-    --ok-bg: #10301c;
-    --ok-fg: #7fd39b;
-    --bad-bg: #3a1618;
-    --bad-fg: #f5949a;
-    --wait-bg: #382c10;
-    --wait-fg: #f0c66b;
-    --busy-bg: #14243f;
-    --busy-fg: #8fb8ff;
-    --idle-bg: #21262e;
-    --idle-fg: #a8b2be;
-  }
+  --bg: #f4f6f8;
+  --surface: #ffffff;
+  --surface-alt: #f3f5f8;
+  --surface-deep: #e9edf2;
+  --border: #e3e8ed;
+  --border-strong: #ccd4dd;
+  --text: #141821;
+  --text-muted: #5a6472;
+  --text-faint: #8a94a1;
+
+  --accent: #16a34a;
+  --accent-hover: #128a3f;
+  --accent-soft: rgba(22, 163, 74, 0.1);
+  --accent-contrast: #ffffff;
+  --ring: rgba(22, 163, 74, 0.3);
+
+  --ok-bg: #e3f5ea;
+  --ok-fg: #12692f;
+  --bad-bg: #fdeaea;
+  --bad-fg: #b0272e;
+  --wait-bg: #fdf3d6;
+  --wait-fg: #8a5d00;
+  --busy-bg: #e6efff;
+  --busy-fg: #1f4fa3;
+  --idle-bg: #eef1f4;
+  --idle-fg: #4a5561;
 }
 
 * {
@@ -80,110 +104,22 @@ body {
   margin: 0;
   background: var(--bg);
   color: var(--text);
-  font-family: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  font-family: var(--sans);
   font-size: 15px;
   line-height: 1.5;
 }
 
-/* ------------------------------------------------------------------ shell */
-
-main {
-  max-width: 1080px;
-  margin: 0 auto;
-  padding: 0 var(--gap) 4rem;
+a {
+  color: var(--accent);
+  text-decoration: none;
 }
 
-header {
-  padding: 1.5rem 0 0;
+a:hover {
+  color: var(--accent-hover);
 }
 
-header h1 {
-  font-size: 1.25rem;
-  font-weight: 650;
-  letter-spacing: -0.01em;
-  margin: 0;
-}
-
-/* The identity line. Small, because it is reference rather than content, but
-   never hidden: the console reads who you are from the server and an operator
-   should be able to see the answer it got (AC-8). */
-header > p {
-  color: var(--text-muted);
-  font-size: 0.875rem;
-  margin: 0.25rem 0 1rem;
-}
-
-header > p strong {
-  color: var(--text);
-  font-weight: 600;
-}
-
-/* Navigation as tabs. Only the sections the signed in operator may use are
-   rendered at all (AC-11), so the row is a statement of what you can do. */
-nav[aria-label='sections'] {
-  display: flex;
-  gap: 0.25rem;
-  border-bottom: 1px solid var(--border);
-  margin-bottom: 1.5rem;
-}
-
-nav[aria-label='sections'] button {
-  appearance: none;
-  background: none;
-  border: none;
-  border-bottom: 2px solid transparent;
-  color: var(--text-muted);
-  cursor: pointer;
-  font: inherit;
-  font-weight: 550;
-  margin-bottom: -1px;
-  padding: 0.6rem 0.9rem;
-}
-
-nav[aria-label='sections'] button:hover {
-  background: var(--surface-alt);
-  color: var(--text);
-}
-
-nav[aria-label='sections'] button:focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: -2px;
-}
-
-/* ---------------------------------------------------------------- surfaces */
-
-section,
-article {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  margin-bottom: var(--gap);
-  padding: 1.25rem;
-}
-
-/* A section nested inside a request keeps the grouping without stacking two
-   card borders, which reads as clutter on a long detail page. */
-article section {
-  background: none;
-  border: none;
-  border-top: 1px solid var(--border);
-  border-radius: 0;
-  margin: 1.5rem 0 0;
-  padding: 1.25rem 0 0;
-}
-
-h2 {
-  font-size: 1.125rem;
-  margin: 0 0 0.25rem;
-}
-
-h3 {
-  font-size: 0.8125rem;
-  font-weight: 650;
-  letter-spacing: 0.04em;
-  margin: 0 0 0.75rem;
-  text-transform: uppercase;
-  color: var(--text-muted);
+::selection {
+  background: var(--accent-soft);
 }
 
 /* ------------------------------------------------------------------ status */
@@ -222,38 +158,470 @@ h3 {
   --badge-fg: var(--busy-fg);
 }
 
-td[data-status],
-strong[data-status] {
+/* The pill form, for tables and headers. */
+.pill {
+  background: var(--badge-bg);
+  border-radius: 20px;
   color: var(--badge-fg);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.8rem;
   font-weight: 600;
+  padding: 3px 11px;
+  white-space: nowrap;
 }
 
-td[data-status] {
+.pill::before {
+  background: currentColor;
+  border-radius: 50%;
+  content: '';
+  height: 6px;
+  width: 6px;
+}
+
+/* The phase vocabulary: which of the four lifecycle actions a row is. */
+[data-phase] {
+  --tag-bg: var(--idle-bg);
+  --tag-fg: var(--idle-fg);
+}
+
+[data-phase='create'] {
+  --tag-bg: var(--ok-bg);
+  --tag-fg: var(--ok-fg);
+}
+
+[data-phase='update'] {
+  --tag-bg: var(--busy-bg);
+  --tag-fg: var(--busy-fg);
+}
+
+[data-phase='notify'] {
+  --tag-bg: var(--accent-soft);
+  --tag-fg: var(--accent);
+}
+
+[data-phase='delete'] {
+  --tag-bg: var(--bad-bg);
+  --tag-fg: var(--bad-fg);
+}
+
+.tag {
+  background: var(--tag-bg);
+  border-radius: 7px;
+  color: var(--tag-fg);
+  display: inline-block;
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  padding: 3px 10px;
+  text-align: center;
+  text-transform: uppercase;
+}
+
+/* ------------------------------------------------------------------- shell */
+
+.shell {
+  display: flex;
+  min-height: 100vh;
+}
+
+/* The sidebar. Sticky on desktop; a drawer on small screens (below). */
+.shell > aside {
+  background: var(--surface);
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex: 0 0 250px;
+  flex-direction: column;
+  height: 100vh;
+  padding: 22px 16px;
+  position: sticky;
+  top: 0;
+  width: 250px;
+}
+
+.brand {
+  align-items: center;
+  display: flex;
+  gap: 10px;
+  padding: 2px 8px 18px;
+}
+
+.brand-mark {
+  align-items: center;
+  background: var(--accent);
+  border-radius: 9px;
+  color: var(--accent-contrast);
+  display: flex;
+  flex: 0 0 auto;
+  height: 30px;
+  justify-content: center;
+  width: 30px;
+}
+
+.brand h1 {
+  font-size: 0.95rem;
+  font-weight: 600;
+  line-height: 1.15;
+  margin: 0;
+}
+
+.brand-sub {
+  color: var(--text-faint);
+  font-size: 0.72rem;
+  letter-spacing: 0.02em;
+  margin: 0;
+}
+
+/* Navigation. Only the sections the signed in operator may use are rendered
+   at all (AC-11), so the column is a statement of what you can do. */
+nav[aria-label='sections'] {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+nav[aria-label='sections'] button {
+  align-items: center;
+  appearance: none;
+  background: none;
+  border: none;
+  border-radius: var(--radius);
+  color: var(--text-muted);
+  cursor: pointer;
+  display: flex;
+  font: inherit;
+  font-size: 0.9rem;
+  font-weight: 500;
+  gap: 11px;
+  padding: 10px 12px;
+  text-align: left;
+  width: 100%;
+}
+
+nav[aria-label='sections'] button:hover {
+  background: var(--surface-alt);
+  color: var(--text);
+}
+
+nav[aria-label='sections'] button[data-active='true'] {
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+
+nav[aria-label='sections'] button:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+}
+
+.side-foot {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: auto;
+  padding-top: 18px;
+}
+
+.theme-toggle {
+  align-items: center;
+  background: var(--surface-alt);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  color: var(--text-muted);
+  cursor: pointer;
+  display: flex;
+  font: inherit;
+  font-size: 0.85rem;
+  font-weight: 500;
+  gap: 10px;
+  padding: 9px 12px;
+  text-align: left;
+  width: 100%;
+}
+
+.theme-toggle:hover {
+  color: var(--text);
+}
+
+/* The identity card. Small, because it is reference rather than content, but
+   never hidden: the console reads who you are from the server and an operator
+   should be able to see the answer it got (AC-8). */
+.operator {
+  align-items: center;
+  background: var(--surface-alt);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  display: flex;
+  gap: 10px;
+  padding: 10px;
+}
+
+.operator .avatar {
+  align-items: center;
+  background: var(--accent-soft);
+  border-radius: 50%;
+  color: var(--accent);
+  display: flex;
+  flex: 0 0 auto;
+  font-size: 0.8rem;
+  font-weight: 600;
+  height: 32px;
+  justify-content: center;
+  text-transform: uppercase;
+  width: 32px;
+}
+
+.operator p {
+  margin: 0;
+  min-width: 0;
+}
+
+.operator .email {
+  color: var(--text);
+  font-size: 0.78rem;
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.operator .roles {
+  color: var(--text-faint);
+  font-size: 0.7rem;
+}
+
+/* The content column. */
+.shell > main {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.content {
+  margin: 0 auto;
+  max-width: 1180px;
+  padding: 36px 40px 90px;
+}
+
+/* The mobile top bar and the drawer overlay exist only below the breakpoint. */
+.mobile-bar {
+  display: none;
+}
+
+.overlay {
+  display: none;
+}
+
+@media (max-width: 860px) {
+  .shell {
+    display: block;
+  }
+
+  .mobile-bar {
+    align-items: center;
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    gap: 12px;
+    height: 58px;
+    padding: 0 16px;
+    position: sticky;
+    top: 0;
+    z-index: 40;
+  }
+
+  .mobile-bar .brand-mark {
+    border-radius: 8px;
+    height: 26px;
+    width: 26px;
+  }
+
+  .mobile-bar .brand-name {
+    flex: 1;
+    font-size: 0.95rem;
+    font-weight: 600;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .mobile-bar button {
+    align-items: center;
+    background: var(--surface-alt);
+    border: 1px solid var(--border-strong);
+    border-radius: var(--radius);
+    color: var(--text);
+    cursor: pointer;
+    display: flex;
+    height: 38px;
+    justify-content: center;
+    padding: 0;
+    width: 38px;
+  }
+
+  .shell > aside {
+    bottom: 0;
+    box-shadow: none;
+    height: auto;
+    left: 0;
+    overflow-y: auto;
+    position: fixed;
+    top: 0;
+    transform: translateX(-100%);
+    transition: transform 0.25s ease;
+    width: 282px;
+    z-index: 46;
+  }
+
+  .shell.drawer-open > aside {
+    box-shadow: 0 0 40px rgba(0, 0, 0, 0.5);
+    transform: translateX(0);
+  }
+
+  .shell.drawer-open .overlay {
+    background: rgba(0, 0, 0, 0.5);
+    display: block;
+    inset: 0;
+    position: fixed;
+    z-index: 45;
+  }
+
+  .content {
+    padding: 20px 16px 90px;
+  }
+}
+
+/* -------------------------------------------------------------- page heads */
+
+.page-head {
+  margin-bottom: 22px;
+}
+
+.page-head h2 {
+  font-size: 1.4rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  margin: 0;
+}
+
+.page-head p {
+  color: var(--text-muted);
+  font-size: 0.9rem;
+  margin: 5px 0 0;
+}
+
+/* ---------------------------------------------------------------- surfaces */
+
+section,
+article,
+form[aria-label='new request'] {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-card);
+  margin-bottom: var(--gap);
+  padding: 1.35rem 1.5rem;
+}
+
+/* The page heads live inside the screen's outer section but must not read as
+   part of its card. The outer wrappers of the two card-list screens are
+   containers, not cards. */
+section[aria-label='requests'],
+section[aria-label='approvals inbox'] {
+  background: none;
+  border: none;
+  padding: 0;
+}
+
+/* The request detail is a page of cards, not one card of cards. */
+article[aria-label^='request'] {
+  background: none;
+  border: none;
+  padding: 0;
+}
+
+/* Bare status cells (the audit trail) colour the text without a pill. */
+td[data-status] {
+  color: var(--badge-fg);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+/* A section nested inside a request keeps the grouping without stacking two
+   card borders, which reads as clutter on a long detail page. */
+article section {
+  background: none;
+  border: none;
+  border-top: 1px solid var(--border);
+  border-radius: 0;
+  margin: 1.5rem 0 0;
+  padding: 1.25rem 0 0;
+}
+
+/* The detail page's two-column layout: the record on the left, the acts on the
+   right. Collapses to one column with the rest of the layout. */
+.detail-grid {
+  align-items: start;
+  display: grid;
+  gap: 16px;
+  grid-template-columns: minmax(0, 1fr) 320px;
+}
+
+.detail-grid article section,
+.detail-grid section {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-card);
+  margin: 0 0 var(--gap);
+  padding: 1.25rem;
+}
+
+@media (max-width: 1020px) {
+  .detail-grid {
+    display: flex;
+    flex-direction: column;
+  }
+}
+
+h2 {
+  font-size: 1.15rem;
+  margin: 0 0 0.25rem;
+}
+
+h3 {
+  color: var(--text-muted);
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  margin: 0 0 0.75rem;
+  text-transform: uppercase;
+}
+
+.mono {
+  font-family: var(--mono);
 }
 
 /* ------------------------------------------------------------------ tables */
 
 table {
   border-collapse: collapse;
-  font-size: 0.9375rem;
+  font-size: 0.9rem;
   width: 100%;
 }
 
 th {
   border-bottom: 1px solid var(--border-strong);
   color: var(--text-muted);
-  font-size: 0.75rem;
-  font-weight: 650;
+  font-size: 0.72rem;
+  font-weight: 600;
   letter-spacing: 0.04em;
-  padding: 0.5rem 0.75rem;
+  padding: 0.55rem 0.75rem;
   text-align: left;
   text-transform: uppercase;
 }
 
 td {
   border-bottom: 1px solid var(--border);
-  padding: 0.6rem 0.75rem;
+  padding: 0.7rem 0.75rem;
   vertical-align: top;
 }
 
@@ -265,7 +633,17 @@ tbody tr:hover {
    than they are read as words. */
 td:nth-child(2) {
   font-family: var(--mono);
-  font-size: 0.875rem;
+  font-size: 0.85rem;
+}
+
+/* The request list is a card holding its table; wide tables scroll inside
+   their card rather than the page. */
+.table-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-card);
+  overflow-x: auto;
+  padding: 0.25rem 0.5rem;
 }
 
 /* ------------------------------------------------------------------- diff */
@@ -276,7 +654,7 @@ td:nth-child(2) {
  * deliberately quiet. Both are shown: the operator asked for both.
  */
 section[aria-label='computed diff'] tr.unchanged td {
-  color: var(--text-muted);
+  color: var(--text-faint);
 }
 
 section[aria-label='computed diff'] tr.changed td:last-child {
@@ -299,7 +677,7 @@ section[aria-label='computed diff'] tr.changed td:nth-child(2) {
 section[aria-label='step timeline'] ol {
   list-style: none;
   margin: 0;
-  padding: 0 0 0 1.25rem;
+  padding: 0 0 0 1.4rem;
   position: relative;
 }
 
@@ -308,7 +686,7 @@ section[aria-label='step timeline'] ol::before {
   background: var(--border);
   bottom: 0.75rem;
   content: '';
-  left: 4px;
+  left: 5px;
   position: absolute;
   top: 0.75rem;
   width: 2px;
@@ -321,31 +699,50 @@ section[aria-label='step timeline'] li {
 
 /* The node, coloured by the step's own state. */
 section[aria-label='step timeline'] li::before {
-  background: var(--badge-bg);
+  background: var(--surface);
   border: 2px solid var(--badge-fg);
   border-radius: 50%;
   content: '';
   height: 10px;
-  left: -1.25rem;
+  left: -1.4rem;
   position: absolute;
   top: 1rem;
   width: 10px;
 }
 
+section[aria-label='step timeline'] li[data-status='running']::before {
+  animation: pulsering 1.8s ease-out infinite;
+}
+
+@keyframes pulsering {
+  0% {
+    box-shadow: 0 0 0 0 var(--ring);
+  }
+  70% {
+    box-shadow: 0 0 0 7px transparent;
+  }
+  100% {
+    box-shadow: 0 0 0 0 transparent;
+  }
+}
+
 section[aria-label='step timeline'] li strong {
   font-family: var(--mono);
-  font-size: 0.9375rem;
+  font-size: 0.9rem;
+  font-weight: 500;
 }
 
 section[aria-label='step timeline'] li span {
-  color: var(--text-muted);
-  font-size: 0.8125rem;
+  color: var(--text-faint);
+  font-family: var(--mono);
+  font-size: 0.76rem;
 }
 
 /* A skipped step happened correctly and did nothing, which is different from
    both success and failure and should not compete with either for attention. */
-section[aria-label='step timeline'] li[data-status='skipped'] {
-  opacity: 0.65;
+section[aria-label='step timeline'] li[data-status='skipped'],
+section[aria-label='step timeline'] li[data-status='pending'] {
+  opacity: 0.55;
 }
 
 section[aria-label='step timeline'] li[data-status='failed'] strong {
@@ -355,12 +752,12 @@ section[aria-label='step timeline'] li[data-status='failed'] strong {
 .step-error {
   background: var(--bad-bg);
   border-left: 3px solid var(--bad-fg);
-  border-radius: 0 var(--radius) var(--radius) 0;
+  border-radius: 0 8px 8px 0;
   color: var(--bad-fg);
   font-family: var(--mono);
-  font-size: 0.8125rem;
+  font-size: 0.78rem;
   margin: 0.5rem 0 0;
-  padding: 0.5rem 0.75rem;
+  padding: 0.55rem 0.75rem;
   white-space: pre-wrap;
 }
 
@@ -369,15 +766,16 @@ section[aria-label='step timeline'] li[data-status='failed'] strong {
 label {
   color: var(--text-muted);
   display: block;
-  font-size: 0.8125rem;
-  font-weight: 550;
-  margin-bottom: 0.25rem;
+  font-size: 0.82rem;
+  font-weight: 500;
+  margin-bottom: 0.3rem;
 }
 
 /* A checkbox label is a sentence, not a field heading. */
 label:has(input[type='checkbox']) {
   align-items: center;
   color: var(--text);
+  cursor: pointer;
   display: flex;
   gap: 0.5rem;
   margin: 0.75rem 0;
@@ -386,18 +784,24 @@ label:has(input[type='checkbox']) {
 input,
 select,
 textarea {
-  background: var(--surface);
+  background: var(--surface-alt);
   border: 1px solid var(--border-strong);
   border-radius: var(--radius);
   color: var(--text);
   font: inherit;
   margin-bottom: 0.875rem;
   max-width: 32rem;
-  padding: 0.45rem 0.6rem;
+  padding: 0.55rem 0.75rem;
   width: 100%;
 }
 
+input::placeholder,
+textarea::placeholder {
+  color: var(--text-faint);
+}
+
 input[type='checkbox'] {
+  accent-color: var(--accent);
   margin: 0;
   width: auto;
 }
@@ -407,21 +811,36 @@ textarea {
   resize: vertical;
 }
 
+select {
+  cursor: pointer;
+}
+
 input:focus-visible,
 select:focus-visible,
 textarea:focus-visible {
   border-color: var(--accent);
-  outline: 2px solid color-mix(in srgb, var(--accent) 35%, transparent);
+  outline: 2px solid var(--ring);
   outline-offset: 0;
+}
+
+/* Identifiers are typed and read in mono, like everywhere they are shown. */
+input[type='email'],
+input[type='search'] {
+  font-family: var(--mono);
+  font-size: 0.9rem;
 }
 
 /* The filter row reads as one control, not four stacked fields. */
 .filters {
   align-items: end;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-card);
   display: flex;
   flex-wrap: wrap;
   gap: 0.75rem;
   margin-bottom: 1rem;
+  padding: 0.9rem 1rem;
 }
 
 .filters label {
@@ -435,21 +854,119 @@ textarea:focus-visible {
   width: auto;
 }
 
+/* The directory pickers: results render as selectable rows, not bullets. */
+.picker ul {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  list-style: none;
+  margin: 0 0 0.875rem;
+  padding: 0;
+}
+
+.picker ul button {
+  background: var(--surface-alt);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  font-family: var(--mono);
+  font-size: 0.85rem;
+  padding: 0.6rem 0.75rem;
+  text-align: left;
+  width: 100%;
+}
+
+.picker ul button:hover {
+  background: var(--surface-deep);
+  border-color: var(--border-strong);
+}
+
+.picker .picked {
+  background: var(--accent-soft);
+  border: 1px solid var(--accent);
+  border-radius: var(--radius);
+  color: var(--text);
+  font-family: var(--mono);
+  font-size: 0.85rem;
+  margin: 0 0 0.875rem;
+  max-width: 32rem;
+  padding: 0.55rem 0.75rem;
+}
+
+fieldset.picker {
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  margin: 0 0 0.875rem;
+  max-width: 32rem;
+  padding: 0.75rem 1rem;
+}
+
+fieldset.picker legend {
+  color: var(--text-muted);
+  font-size: 0.82rem;
+  font-weight: 500;
+  padding: 0 0.35rem;
+}
+
+fieldset.picker label {
+  margin: 0.35rem 0;
+}
+
+/* The approvals inbox: each waiting decision is a card with one clear act. */
+.inbox {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  list-style: none;
+  margin: 0;
+  max-width: 820px;
+  padding: 0;
+}
+
+.inbox li {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-card);
+  padding: 1rem 1.25rem;
+}
+
+.inbox li > button {
+  background: none;
+  border: none;
+  display: block;
+  font-size: 0.9rem;
+  padding: 0;
+  text-align: left;
+  width: 100%;
+}
+
+.inbox li > button:hover:not(:disabled) {
+  background: none;
+  color: var(--accent);
+}
+
+.inbox li > span {
+  color: var(--text-faint);
+  display: block;
+  font-size: 0.8rem;
+  margin-top: 6px;
+}
+
 /* ---------------------------------------------------------------- buttons */
 
 button {
-  background: var(--surface);
+  background: var(--surface-alt);
   border: 1px solid var(--border-strong);
   border-radius: var(--radius);
   color: var(--text);
   cursor: pointer;
   font: inherit;
-  font-weight: 550;
-  padding: 0.45rem 0.9rem;
+  font-size: 0.9rem;
+  font-weight: 500;
+  padding: 0.5rem 1rem;
 }
 
 button:hover:not(:disabled) {
-  background: var(--surface-alt);
+  background: var(--surface-deep);
 }
 
 button:disabled {
@@ -462,19 +979,39 @@ button:focus-visible {
   outline-offset: 1px;
 }
 
-/* A decision is not the same kind of act as "Next", and should not look like
-   it. Approve commits work; reject and cancel end it. */
+/* The affirmative act on each screen carries the accent; nothing else does. */
+button[type='submit'],
 section[aria-label='approval'] button:first-of-type {
   background: var(--accent);
   border-color: var(--accent);
   color: var(--accent-contrast);
+  font-weight: 600;
+}
+
+button[type='submit']:hover:not(:disabled),
+section[aria-label='approval'] button:first-of-type:hover:not(:disabled) {
+  background: var(--accent-hover);
+  border-color: var(--accent-hover);
+}
+
+/* A decision is not the same kind of act as "Next", and should not look like
+   it. Approve commits work; reject and cancel end it. */
+section[aria-label='approval'] button:first-of-type {
   margin-right: 0.5rem;
 }
 
 section[aria-label='approval'] button:last-of-type,
-section[aria-label='cancel request'] button {
-  border-color: var(--bad-fg);
+section[aria-label='cancel request'] button,
+section[aria-label='admin actions'] button:last-of-type {
+  background: transparent;
+  border-color: color-mix(in srgb, var(--bad-fg) 45%, transparent);
   color: var(--bad-fg);
+}
+
+section[aria-label='approval'] button:last-of-type:hover:not(:disabled),
+section[aria-label='cancel request'] button:hover:not(:disabled),
+section[aria-label='admin actions'] button:last-of-type:hover:not(:disabled) {
+  background: var(--bad-bg);
 }
 
 .paging {
@@ -504,9 +1041,24 @@ section[aria-label='cancel request'] button {
 }
 
 /* An empty list is a result, not an error, and should not look like one. */
-table + [role='status'] {
-  background: var(--surface-alt);
-  border-radius: var(--radius);
+table + [role='status'],
+ul + [role='status'] {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-card);
   padding: 1.5rem;
   text-align: center;
+}
+
+/* The revealed one-time password: read once, copied carefully. */
+.credential code {
+  background: var(--surface-deep);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius);
+  display: inline-block;
+  font-family: var(--mono);
+  font-size: 1rem;
+  letter-spacing: 0.03em;
+  padding: 0.5rem 0.85rem;
+  user-select: all;
 }

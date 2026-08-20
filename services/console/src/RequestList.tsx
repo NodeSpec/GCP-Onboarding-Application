@@ -46,6 +46,11 @@ export function RequestList({ onOpen }: { onOpen: (requestId: string) => void })
 
   return (
     <section aria-label="requests">
+      <div className="page-head">
+        <h2>Requests</h2>
+        <p>Every lifecycle action across the tenant, newest first.</p>
+      </div>
+
       <div className="filters">
         <label htmlFor="filter-phase">Phase</label>
         <select id="filter-phase" value={phase} onChange={(e) => setPhase(e.target.value as Phase | '')}>
@@ -65,24 +70,26 @@ export function RequestList({ onOpen }: { onOpen: (requestId: string) => void })
 
       {error && <p role="alert">{error}</p>}
 
-      <table>
-        <thead>
-          <tr><th>Phase</th><th>Target</th><th>Status</th><th>Requested by</th><th /></tr>
-        </thead>
-        <tbody>
-          {rows.map((r) => (
-            <tr key={r.requestId}>
-              <td>{r.phase}</td>
-              <td>{r.targetUser}</td>
-              <td data-status={r.status}>{r.status}</td>
-              <td>{r.requestedBy}</td>
-              <td>
-                <button type="button" onClick={() => onOpen(r.requestId)}>open</button>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+      <div className="table-card">
+        <table>
+          <thead>
+            <tr><th>Phase</th><th>Target</th><th>Status</th><th>Requested by</th><th /></tr>
+          </thead>
+          <tbody>
+            {rows.map((r) => (
+              <tr key={r.requestId}>
+                <td><span className="tag" data-phase={r.phase}>{r.phase}</span></td>
+                <td>{r.targetUser}</td>
+                <td><span className="pill" data-status={r.status}>{r.status}</span></td>
+                <td>{r.requestedBy}</td>
+                <td>
+                  <button type="button" onClick={() => onOpen(r.requestId)}>open</button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
       {rows.length === 0 && !error && <p role="status">No requests match these filters.</p>}
 
       <div className="paging">
