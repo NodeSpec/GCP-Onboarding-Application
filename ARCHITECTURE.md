@@ -71,6 +71,7 @@ Each component has a task document containing the full implementation context:
 requirements, contracts, technology guidance, and connected components.
 Use these as the primary brief when implementing or modifying a component.
 
+- **Cloud Run: lifecycle-worker**: [`.nodespec/tasks/cloud-run-lifecycle-worker-e730eb23.task.md`](./.nodespec/tasks/cloud-run-lifecycle-worker-e730eb23.task.md)
 - **Google Workspace (Admin SDK Directory)**: [`.nodespec/tasks/google-workspace-admin-sdk-directory-1c81cf63.task.md`](./.nodespec/tasks/google-workspace-admin-sdk-directory-1c81cf63.task.md)
 
 ## Test Plans
@@ -80,6 +81,7 @@ recommended test types, framework suggestions, and test scenarios.
 
 - **Lifecycle Step Executor**: [`services/worker/src/workspace/directoryClient.test.ts`](./services/worker/src/workspace/directoryClient.test.ts)
 - **Lifecycle API Service**: [`packages/shared/src/dispatcher.test.ts`](./packages/shared/src/dispatcher.test.ts)
+- **Lifecycle API Service**: [`.nodespec/tests/req-001.tests.md`](./.nodespec/tests/req-001.tests.md)
 - **Lifecycle API Service**: [`services/api/src/routes/admin.emulator.test.ts`](./services/api/src/routes/admin.emulator.test.ts)
 - **Operator Console UI**: [`services/console/src/console.test.tsx`](./services/console/src/console.test.tsx)
 - **Lifecycle Step Executor**: [`services/worker/src/workspace/noDelegation.test.ts`](./services/worker/src/workspace/noDelegation.test.ts)

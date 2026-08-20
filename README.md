@@ -149,7 +149,7 @@ Workspace calls have no emulator, so point local development at a test tenant.
 Worth doing first, because a failure here is cheaper to diagnose than the same failure against a live tenant.
 
 ```bash
-npm ci
+npm install
 npm run build          # every package, plus the console into services/api/public
 npm run typecheck
 npm run test           # unit, component and infrastructure suites

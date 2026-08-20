@@ -36,3 +36,4 @@ crash.log
 firestore-debug.log
 *.log
 .DS_Store
+*.tsbuildinfo
