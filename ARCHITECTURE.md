@@ -17,7 +17,7 @@ component inventory, connection topology, and links to per-component task docume
 | VPC: lifecycle egress | vpc | gcp-vpc | Company GCP Project | --- | --- |
 | Lifecycle API Service | backend-service | nodejs | Cloud Run: lifecycle-api | --- | [`packages/shared/src/dispatcher.test.ts`](./packages/shared/src/dispatcher.test.ts) |
 | External HTTPS Load Balancer | load-balancer | gcp-cloud-load-balancing | Company GCP Project | --- | --- |
-| Lifecycle Step Executor | worker | nodejs | Cloud Run: lifecycle-worker | --- | [`services/worker/src/phases/create.test.ts`](./services/worker/src/phases/create.test.ts) |
+| Lifecycle Step Executor | worker | nodejs | Cloud Run: lifecycle-worker | --- | [`services/worker/src/workspace/directoryClient.test.ts`](./services/worker/src/workspace/directoryClient.test.ts) |
 | Email Delivery Service | external-service | --- | --- | --- | --- |
 | Secret Manager | secret-manager | gcp-secret-manager | Company GCP Project | --- | --- |
 
@@ -78,6 +78,7 @@ Use these as the primary brief when implementing or modifying a component.
 Each requirement has a test plan documenting acceptance criteria assessments,
 recommended test types, framework suggestions, and test scenarios.
 
+- **Lifecycle Step Executor**: [`services/worker/src/workspace/directoryClient.test.ts`](./services/worker/src/workspace/directoryClient.test.ts)
 - **Lifecycle API Service**: [`packages/shared/src/dispatcher.test.ts`](./packages/shared/src/dispatcher.test.ts)
 - **Lifecycle API Service**: [`services/api/src/routes/admin.emulator.test.ts`](./services/api/src/routes/admin.emulator.test.ts)
 - **Operator Console UI**: [`services/console/src/console.test.tsx`](./services/console/src/console.test.tsx)

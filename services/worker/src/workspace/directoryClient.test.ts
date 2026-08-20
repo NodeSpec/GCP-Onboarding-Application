@@ -1,5 +1,11 @@
-import { describe, expect, it, vi } from 'vitest';
-import { AdminRoleNotGrantedError, DEFAULT_RETRY, WorkspaceError, classify } from './directoryClient.js';
+import { describe, expect, it } from 'vitest';
+import {
+  AdminRoleNotGrantedError,
+  DEFAULT_RETRY,
+  DirectoryClient,
+  WorkspaceError,
+  classify,
+} from './directoryClient.js';
 
 /**
  * TC-REQ-013-3, TC-REQ-013-4 and TC-REQ-013-6.
@@ -85,6 +91,117 @@ describe('retry policy shape', () => {
     expect(DEFAULT_RETRY.maxAttempts).toBeGreaterThan(1);
     expect(DEFAULT_RETRY.maxAttempts).toBeLessThanOrEqual(8);
     expect(DEFAULT_RETRY.maxDelayMs).toBeGreaterThan(DEFAULT_RETRY.baseDelayMs);
+  });
+});
+
+/**
+ * The membership listing, against a fake Directory API.
+ *
+ * This call has been written wrong twice, in opposite directions, and each
+ * version failed only in production. These tests pin the third version to the
+ * two facts the live failures established: customer and userKey are mutually
+ * exclusive on groups.list, and a 404 from the userKey-only shape must fall
+ * back to per-group checks rather than escape, because role resolution and
+ * the offboarding phase both walk through here.
+ */
+describe('listMemberships', () => {
+  interface FakeCalls {
+    groupsList: Record<string, unknown>[];
+    hasMember: { groupKey: string; memberKey: string }[];
+  }
+
+  function build(handlers: {
+    byMember: (params: Record<string, unknown>) => { email: string }[];
+    tenantGroups?: { email: string }[];
+    memberOf?: string[];
+  }) {
+    const calls: FakeCalls = { groupsList: [], hasMember: [] };
+
+    const api = {
+      groups: {
+        list: (params: Record<string, unknown>) => {
+          calls.groupsList.push(params);
+          // The fake enforces what the real API enforces: the two scopes are
+          // mutually exclusive, and a fake that accepted both would let the
+          // deployed-and-reverted bug pass its own test.
+          if ('userKey' in params && 'customer' in params) {
+            return Promise.reject(Object.assign(new Error('Bad Request'), { code: 400 }));
+          }
+          if ('userKey' in params) {
+            return Promise.resolve({ data: { groups: handlers.byMember(params) } });
+          }
+          return Promise.resolve({ data: { groups: handlers.tenantGroups ?? [] } });
+        },
+      },
+      members: {
+        hasMember: (params: { groupKey: string; memberKey: string }) => {
+          calls.hasMember.push(params);
+          return Promise.resolve({ data: { isMember: (handlers.memberOf ?? []).includes(params.groupKey) } });
+        },
+      },
+    } as never;
+
+    const client = new DirectoryClient({
+      customerId: 'C01ab2cd3',
+      api,
+      transferApi: {} as never,
+      retry: { maxAttempts: 2, baseDelayMs: 1, maxDelayMs: 1 },
+      sleep: async () => {},
+    });
+
+    return { client, calls };
+  }
+
+  it('sends userKey alone, never combined with customer', async () => {
+    const { client, calls } = build({
+      byMember: () => [{ email: 'engineering@company.com' }, { email: 'platform@company.com' }],
+    });
+
+    const groups = await client.listMemberships('ada@company.com');
+
+    expect(groups).toEqual(['engineering@company.com', 'platform@company.com']);
+    expect(calls.groupsList).toHaveLength(1);
+    expect(calls.groupsList[0]).toMatchObject({ userKey: 'ada@company.com' });
+    expect(calls.groupsList[0]).not.toHaveProperty('customer');
+  });
+
+  it('falls back to per-group membership checks when byMember answers 404', async () => {
+    // The live shape of the delegated-service-account refusal: 404 "Domain
+    // not found" from the userKey-only listing.
+    const { client, calls } = build({
+      byMember: () => {
+        throw Object.assign(new Error('Domain not found.'), { code: 404 });
+      },
+      tenantGroups: [
+        { email: 'engineering@company.com' },
+        { email: 'platform@company.com' },
+        { email: 'social@company.com' },
+      ],
+      memberOf: ['engineering@company.com', 'social@company.com'],
+    });
+
+    const groups = await client.listMemberships('ada@company.com');
+
+    expect(groups).toEqual(['engineering@company.com', 'social@company.com']);
+    // The fallback listing is tenant-scoped, which is the shape that works.
+    expect(calls.groupsList.at(-1)).toMatchObject({ customer: 'C01ab2cd3' });
+    // And every group was asked about exactly once.
+    expect(calls.hasMember.map((c) => c.groupKey)).toEqual([
+      'engineering@company.com',
+      'platform@company.com',
+      'social@company.com',
+    ]);
+    expect(calls.hasMember.every((c) => c.memberKey === 'ada@company.com')).toBe(true);
+  });
+
+  it('propagates a failure that is not the known 404, rather than guessing', async () => {
+    const { client } = build({
+      byMember: () => {
+        throw Object.assign(new Error('Backend Error'), { code: 503 });
+      },
+    });
+
+    await expect(client.listMemberships('ada@company.com')).rejects.toBeInstanceOf(WorkspaceError);
   });
 });
 

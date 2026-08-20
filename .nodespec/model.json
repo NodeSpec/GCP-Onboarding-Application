@@ -1,7 +1,7 @@
 {
   "modelVersion": 1,
   "generatedBy": "nodespec",
-  "modelHash": "5f3f06657c07ab71dd0f9fd90fe45a0eed82a7c4d6979d5848da7ea51c7c2022",
+  "modelHash": "da53b3df233b0f0bdfac6c9984d028f502bb3d5bb872af224999179124256867",
   "nodes": [
     {
       "id": "1c81cf63-c51e-4b0e-b6ad-7d318332d2fe",
@@ -623,7 +623,8 @@
       "id": "0760517b-c1c4-4ca0-9815-01cd9b0446b8",
       "nodeId": "db8e5409-dc6f-4052-887a-7ba1dd5fb717",
       "path": "services/worker/src/workspace/directoryClient.test.ts",
-      "kind": "test-plan"
+      "kind": "test-plan",
+      "contentHash": "000000003567700b"
     },
     {
       "id": "08477a37-c62d-4cf1-bd6e-c528e0da1556",
@@ -1506,7 +1507,7 @@
       "nodeId": "db8e5409-dc6f-4052-887a-7ba1dd5fb717",
       "path": "services/worker/src/workspace/directoryClient.ts",
       "kind": "source",
-      "contentHash": "0000000027d98eb6"
+      "contentHash": "0000000051d0b8b2"
     },
     {
       "id": "ceeaf1e6-c9fc-478a-8720-e9169693274c",

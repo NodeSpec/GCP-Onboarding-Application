@@ -353,24 +353,45 @@ export class DirectoryClient {
   }
 
   async listMemberships(memberEmail: string): Promise<string[]> {
-    // BOTH parameters, and the history is worth keeping because the obvious
-    // reading of each failure was wrong twice.
+    // userKey ALONE. Third reading of this call, and unlike the first two it
+    // is backed by a live failure on each side rather than a theory:
     //
-    // customer scopes the search to a tenant; userKey narrows it to one
-    // member's groups. With customer set to the `my_customer` alias this
-    // returned a bare 400, which looked like the two parameters conflicting.
-    // Dropping customer replaced it with 404 "Domain not found": a service
-    // account's own domain is *.iam.gserviceaccount.com, so with nothing to
-    // scope by, the API has no tenant to search. Both errors were the same
-    // cause wearing different clothes, which is that the alias cannot resolve
-    // for an identity that belongs to no customer.
+    // - customer + userKey together is refused outright. The API treats the
+    //   two as mutually exclusive scopes and answers a bare 400 Bad Request,
+    //   with the real customer id exactly as with the `my_customer` alias.
+    //   That shape shipped once and broke every sign-in, because role
+    //   resolution walks through here.
+    // - userKey alone is the documented shape, but a service account acting
+    //   as itself has been seen to get 404 "Domain not found" from it: the
+    //   caller's own domain is *.iam.gserviceaccount.com, and when the API
+    //   tries to infer a tenant from the caller it finds nothing. Handled
+    //   below rather than allowed to escape.
     //
-    // A real customer id makes this shape correct, which is why
-    // workspace_customer_id is validated at plan time (infra/variables.tf).
-    const res = await this.call('groups.list.byMember', (api) =>
-      api.groups.list({ customer: this.customerId, userKey: memberEmail, maxResults: 200 }),
-    );
-    return (res.data.groups ?? []).map((group) => group.email ?? '').filter(Boolean);
+    // On that 404 the sweep falls back to asking every group in the tenant
+    // directly through members.hasMember, which is known to work under this
+    // identity because the create phase depends on it. One call per group and
+    // deliberately sequential, so a large tenant leans on the queue's rate
+    // budget instead of bursting the Directory quota; the path only runs when
+    // the direct listing is refused, and the API service caches the result.
+    try {
+      const res = await this.call('groups.list.byMember', (api) =>
+        api.groups.list({ userKey: memberEmail, maxResults: 200 }),
+      );
+      return (res.data.groups ?? []).map((group) => group.email ?? '').filter(Boolean);
+    } catch (err) {
+      if (!(err instanceof WorkspaceError) || err.errorClass !== 'not_found') throw err;
+
+      logger.warn(
+        { operation: 'groups.list.byMember' },
+        'byMember listing refused with 404; falling back to per-group membership checks',
+      );
+
+      const memberships: string[] = [];
+      for (const group of await this.listGroups(200)) {
+        if (await this.hasMember(group.email, memberEmail)) memberships.push(group.email);
+      }
+      return memberships;
+    }
   }
 
   async listGroups(limit = 200): Promise<{ email: string; name: string; description: string }[]> {
