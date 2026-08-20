@@ -130,6 +130,21 @@ resource "google_cloud_run_v2_service" "api" {
     }
   }
 
+  # Cloud Run reports a SERVICE-level scaling block on every service, populated
+  # with zeros, whether or not one was ever declared. Terraform reads it into
+  # state, finds nothing matching in the configuration, and plans to remove it.
+  # The removal does not take, so the identical "0 to add, 2 to change" comes
+  # back on the next plan, and the one after that, permanently. Every apply then
+  # carries two updates that change nothing, which is the noise a real change
+  # hides in once nobody reads the plan closely any more.
+  #
+  # Service-level scaling is Cloud Run's manual-instance knob and this
+  # deployment does not use it. The scaling this deployment DOES manage is the
+  # template block above, and it is unaffected by this.
+  lifecycle {
+    ignore_changes = [scaling]
+  }
+
   # The NAT is in this list because of an ordering failure that happened, not
   # one that might. Without it, Terraform updates this service as soon as the
   # subnet exists, a new instance comes up with ALL_TRAFFIC egress and no
@@ -242,6 +257,12 @@ resource "google_cloud_run_v2_service" "worker" {
         }
       }
     }
+  }
+
+  # The same permanent no-op diff as the API service; the reasoning is in the
+  # comment there.
+  lifecycle {
+    ignore_changes = [scaling]
   }
 
   depends_on = [google_project_service.required]
