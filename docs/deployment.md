@@ -183,6 +183,11 @@ docker build -f services/worker/Dockerfile -t "$REGISTRY/worker:build" .
 docker push "$REGISTRY/worker:build"
 ```
 
+If Cloud Shell runs out of disk or the session dies during this step, it is not
+recoverable by retrying: both images together do not fit. Build on a machine
+with Docker and roughly 10 GB free, or set up `docs/cicd.md` and let the deploy
+workflow build them on a GitHub runner.
+
 Capture the digests. These go into the Terraform variables:
 
 ```bash
@@ -587,12 +592,48 @@ that is not in the tenant, or was created seconds ago and has not propagated.
 Create it, wait a few minutes, apply again.
 
 **`connection refused`, `cannot assign requested address`, or a failure reading
-a resource that plainly exists.** Cloud Shell network flakiness under
-Terraform's default concurrency. Use `-parallelism=3`, and `-refresh=false` if
-the same read keeps dying.
+a resource that plainly exists.** Cloud Shell drops outbound connections under
+Terraform's default concurrency of ten. The failure lands on whichever resource
+happened to be reading at the time, which is why it looks like a different
+problem each run and never the same one twice.
+
+Nothing in the configuration causes it and nothing in the configuration can fix
+it. Lower the concurrency and retry the whole command rather than watching it:
+
+```bash
+for attempt in 1 2 3 4 5; do
+  terraform apply -parallelism=3 -input=false && break
+  echo "attempt $attempt failed; retrying in $((attempt * 10))s"
+  sleep $((attempt * 10))
+done
+```
+
+Add `-refresh=false` if the same read keeps dying and you know the state is
+current. The durable fix is not to apply from Cloud Shell at all: the deploy
+workflow runs on a GitHub runner, which does not have this problem, and
+`docs/cicd.md` is that setup.
 
 **`docker push` fails partway with `connection refused`.** The same flakiness.
 Run the push again; it resumes.
+
+**Docker builds exhaust Cloud Shell, or the session dies mid-build.** Cloud
+Shell has a 5 GB home directory and a small VM, and each image installs the
+whole workspace before compiling it. Two of them back to back will not fit.
+Build somewhere else: a machine with Docker and roughly 10 GB free, or the
+deploy workflow, which builds both images on a GitHub runner.
+
+**Every plan reports `0 to add, 2 to change` on the two Cloud Run services, and
+applying does not clear it.** Cloud Run reports a service-level `scaling` block
+on every service whether or not one was declared, so Terraform proposes removing
+something that cannot be removed, forever. Both services now carry
+`lifecycle { ignore_changes = [scaling] }`, which ends it; seeing this means the
+checkout predates that change, so pull. The scaling that this deployment does
+manage is inside `template` and is untouched by the ignore.
+
+**`Warning: Deprecated Resource` on `google_iap_brand`.** Expected, and not a
+failure. The IAP OAuth Admin API is deprecated, so the provider warns on every
+plan. An existing brand keeps working and the resource keeps managing it; there
+is no replacement resource to move to yet. Ignore it.
 
 **`"/package-lock.json": not found` during a docker build.** The Dockerfiles in
 the current `main` install with `npm install` and need no lockfile, so this
@@ -638,12 +679,12 @@ the latest `main` and apply. This one is worth recognising on sight, because a
 404 looks like a missing route and sends you reading application code that is
 fine.
 
-**Every directory lookup fails with `400 Bad Request` or `404 Domain not
-found`, with the admin role correctly assigned.** The worker is calling the
-Directory API with a `workspace_customer_id` that does not name your tenant:
-unset, the `my_customer` alias, or a mistyped id. Step 5 explains why and how to
-set the real customer id without typing it. Current checkouts refuse the alias
-at plan time, so the mistyped-but-well-shaped id is the case to check here.
+**Every directory lookup fails with `400 Bad Request`, with the admin role
+correctly assigned.** The worker is calling the Directory API with
+`workspace_customer_id` unset or set to `my_customer`, which a service account
+cannot use. Step 5 explains why and how to set the real customer id. Current
+checkouts refuse the alias at plan time, so this only reaches runtime on a
+checkout that predates the validation.
 
 **A create request fails at `create-user` with a quota error.** The tenant has no
 free Workspace licence. See "Workspace licences".
