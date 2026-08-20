@@ -169,7 +169,7 @@ export function App() {
           </svg>
         </button>
         <BrandMark />
-        <span className="brand-name">Lifecycle Console</span>
+        <span className="brand-name">The Pack</span>
         <button type="button" aria-label="switch theme" onClick={toggleTheme}>
           <ThemeIcon theme={theme} />
         </button>
@@ -181,8 +181,8 @@ export function App() {
         <div className="brand">
           <BrandMark />
           <div>
-            <h1>Lifecycle Console</h1>
-            <p className="brand-sub">Google Workspace</p>
+            <h1>The Pack</h1>
+            <p className="brand-sub">GCP Onboarding Console</p>
           </div>
         </div>
 
@@ -237,6 +237,20 @@ export function App() {
               </p>
             </div>
           </div>
+          <button
+            type="button"
+            className="signout"
+            onClick={() => {
+              // IAP's own sign-out: clearing its session cookie sends the next
+              // request back through Google sign-in, which is where an operator
+              // switches accounts. The console holds no auth state of its own
+              // to clear, and the Google account session itself is Google's to
+              // end, not this application's.
+              window.location.href = '/?gcp-iap-mode=CLEAR_LOGIN_COOKIE';
+            }}
+          >
+            Sign out
+          </button>
         </div>
       </aside>
 

@@ -152,13 +152,18 @@ export function OrgUnitPicker({
       <label htmlFor="org-unit">Org unit</label>
       {error && <p role="alert">{error}</p>}
       <select id="org-unit" value={value} onChange={(e) => onChange(e.target.value)}>
-        <option value="">(domain root)</option>
+        <option value="">/ (domain root, the default)</option>
         {units.map((u) => (
           <option key={u.orgUnitPath} value={u.orgUnitPath}>
             {u.orgUnitPath}
           </option>
         ))}
       </select>
+      <p className="hint">
+        The organizational unit decides which Workspace policies and settings apply to the
+        account. The list shows the units your tenant actually has; leave the domain root
+        selected unless your organization files people into units.
+      </p>
     </div>
   );
 }
