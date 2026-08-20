@@ -537,6 +537,20 @@ describe('REQ-025 and REQ-026: the Cloud Run services', () => {
     );
     expect(schedulerGrants).toEqual([]);
   });
+
+  it('leaves service-level scaling alone on both, so a plan can reach empty', () => {
+    // Cloud Run reports a service-level scaling block on every service whether
+    // or not one is declared. Without this, every plan proposes removing it,
+    // the removal never takes, and the deployment reads "2 to change" forever.
+    // A plan that is never empty cannot distinguish a real change from none,
+    // which is the only reason to run one before an apply.
+    for (const service of [api(), worker()]) {
+      const lifecycle = nested(service.body, 'lifecycle');
+
+      expect(lifecycle, 'no lifecycle block on a Cloud Run service').toHaveLength(1);
+      expect(lifecycle[0]!.body).toContain('ignore_changes = [scaling]');
+    }
+  });
 });
 
 // ====================================================== REQ-009 AC-7 / AC-8
