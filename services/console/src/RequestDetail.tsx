@@ -19,7 +19,9 @@ import { Can, useIdentity } from './identity.tsx';
  *
  * This is the view REQ-032's approval notice links to, so it has to stand on
  * its own for someone arriving cold from an email: what was asked for, what has
- * happened, what is waiting, and what they can do about it.
+ * happened, what is waiting, and what they can do about it. The timeline and
+ * the diff carry the record on the left; every act an operator can take sits
+ * in cards on the right, and the two columns collapse to one on a phone.
  */
 
 function stamp(t: { _seconds?: number } | null): string {
@@ -165,6 +167,16 @@ function ApprovalControls({
 }
 
 /**
+ * AC-10: resend, with the two decisions the operator actually has.
+ *
+ * The address is editable because the commonest reason to resend is that the
+ * first one was wrong. Regeneration is a separate, explicit choice that
+ * defaults to off, because resetting a real person's password is something an
+ * operator asks for, never a fallback (REQ-030 AC-4). A CredentialUnavailable
+ * refusal is surfaced as itself rather than as a generic failure, since the
+ * remedy — tick regenerate — is a different action.
+ */
+/**
  * REQ-017: the one-time password, surfaced to the person it belongs with.
  *
  * The server enforces everything that matters: requester-only, read-once, the
@@ -308,16 +320,6 @@ function AdminControls({
   );
 }
 
-/**
- * AC-10: resend, with the two decisions the operator actually has.
- *
- * The address is editable because the commonest reason to resend is that the
- * first one was wrong. Regeneration is a separate, explicit choice that
- * defaults to off, because resetting a real person's password is something an
- * operator asks for, never a fallback (REQ-030 AC-4). A CredentialUnavailable
- * refusal is surfaced as itself rather than as a generic failure, since the
- * remedy — tick regenerate — is a different action.
- */
 function ResendControls({ detail }: { detail: Detail }) {
   const payload = (detail.request.payload ?? {}) as Record<string, string>;
   const [address, setAddress] = useState('');
@@ -405,38 +407,47 @@ export function RequestDetailView({ requestId }: { requestId: string }) {
 
   return (
     <article aria-label={`request ${requestId}`}>
-      <h2>
-        {detail.request.phase} · {detail.request.targetUser}
-      </h2>
-      <p>
-        Status: <strong>{detail.request.status}</strong> · requested by{' '}
-        {detail.request.requestedBy}
-      </p>
+      <div className="page-head">
+        <h2>
+          <span className="tag" data-phase={detail.request.phase}>{detail.request.phase}</span>{' '}
+          <span className="mono">{detail.request.targetUser}</span>{' '}
+          <span className="pill" data-status={detail.request.status}>{detail.request.status}</span>
+        </h2>
+        <p>
+          Status: <strong>{detail.request.status}</strong> · requested by{' '}
+          {detail.request.requestedBy}
+        </p>
+      </div>
 
-      {detail.request.computedDiff && <DiffView diff={detail.request.computedDiff} />}
+      <div className="detail-grid">
+        <div>
+          <Timeline steps={detail.steps} />
+          {detail.request.computedDiff && <DiffView diff={detail.request.computedDiff} />}
+        </div>
 
-      <Timeline steps={detail.steps} />
+        <div>
+          {awaiting && (
+            <Can role="approver">
+              <ApprovalControls requestId={requestId} step={awaiting} onDone={load} />
+            </Can>
+          )}
 
-      {awaiting && (
-        <Can role="approver">
-          <ApprovalControls requestId={requestId} step={awaiting} onDone={load} />
-        </Can>
-      )}
+          {isCompletedOnboarding && (
+            <Can role="requester">
+              {isOwn && <CredentialControls requestId={requestId} />}
+              <ResendControls detail={detail} />
+            </Can>
+          )}
 
-      {isCompletedOnboarding && (
-        <Can role="requester">
-          {isOwn && <CredentialControls requestId={requestId} />}
-          <ResendControls detail={detail} />
-        </Can>
-      )}
+          <Can role="requester">
+            <CancelControl requestId={requestId} onDone={load} />
+          </Can>
 
-      <Can role="requester">
-        <CancelControl requestId={requestId} onDone={load} />
-      </Can>
-
-      <Can role="admin">
-        <AdminControls requestId={requestId} status={detail.request.status} onDone={load} />
-      </Can>
+          <Can role="admin">
+            <AdminControls requestId={requestId} status={detail.request.status} onDone={load} />
+          </Can>
+        </div>
+      </div>
     </article>
   );
 }

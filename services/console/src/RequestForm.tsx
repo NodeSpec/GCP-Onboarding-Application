@@ -13,10 +13,8 @@ import { GroupPicker, OrgUnitPicker, UserPicker } from './pickers.tsx';
  * same payloads because they are running the same code, not because two
  * implementations were kept in agreement.
  *
- * The pickers replace free text for the things that must exist in the domain:
- * the groups, the org unit, and — on the phases that act on an existing
- * account — the target user (AC-2, AC-3). The create phase's target is the one
- * value that must NOT exist, so it alone is typed.
+ * The pickers replace free text for the three things that must exist in the
+ * domain: the target user, the groups, the org unit (AC-2, AC-3).
  *
  * Client validation is a courtesy, never a gate. The submission goes to the
  * server regardless of what this thinks, and a server 400 is rendered as the
@@ -138,7 +136,13 @@ export function RequestForm({ onSubmitted }: { onSubmitted?: (requestId: string)
   const issueFor = (name: string) => issues.find((i) => i.path === name)?.message;
 
   return (
-    <form onSubmit={submit} aria-label="new request">
+    <>
+      <div className="page-head">
+        <h2>New request</h2>
+        <p>Pick a phase, then choose targets from the live directory. Every field is validated again on submit.</p>
+      </div>
+
+      <form onSubmit={submit} aria-label="new request">
       <label htmlFor="phase">Phase</label>
       <select id="phase" value={phase} onChange={(e) => setPhase(e.target.value as Phase)}>
         {PHASES.map((p) => (
@@ -264,6 +268,7 @@ export function RequestForm({ onSubmitted }: { onSubmitted?: (requestId: string)
       <button type="submit" disabled={submitting}>
         {submitting ? 'Submitting…' : 'Submit request'}
       </button>
-    </form>
+      </form>
+    </>
   );
 }
