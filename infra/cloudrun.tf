@@ -176,6 +176,21 @@ resource "google_cloud_run_v2_service" "worker" {
 
     max_instance_request_concurrency = var.worker_max_concurrency
 
+    # Egress through the VPC so outbound SMTP leaves through the NAT's reserved
+    # address (infra/network.tf) instead of the shared Cloud Run pool. The
+    # Workspace relay judges connections by source IP and tarpits strangers
+    # with 421 at EHLO, before authentication is ever offered; a registrable
+    # fixed address is the only durable fix, and it is REQ-028's recorded
+    # hardening path. Google API calls still take Private Google Access rather
+    # than the NAT.
+    vpc_access {
+      network_interfaces {
+        network    = google_compute_network.lifecycle.id
+        subnetwork = google_compute_subnetwork.lifecycle.id
+      }
+      egress = "ALL_TRAFFIC"
+    }
+
     # AC-5: one step plus its retry window. A timeout shorter than the window
     # turns a step that would have recovered into a task failure.
     timeout = "${var.worker_request_timeout_seconds}s"
@@ -265,7 +280,10 @@ resource "google_cloud_run_v2_service" "worker" {
     ignore_changes = [scaling]
   }
 
-  depends_on = [google_project_service.required]
+  # The NAT for the same ordering reason as the API service: with ALL_TRAFFIC
+  # egress and no NAT yet, an instance comes up with no path to the SMTP relay
+  # and the first letters fail until the NAT finishes creating behind it.
+  depends_on = [google_project_service.required, google_compute_router_nat.lifecycle]
 }
 
 # ----------------------------------------------------------------- Invokers

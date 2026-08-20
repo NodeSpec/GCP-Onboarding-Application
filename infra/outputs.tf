@@ -80,3 +80,8 @@ output "credential_key_secret" {
   description = "Secret Manager name for the credential encryption key. Created empty; populate out of band."
   value       = google_secret_manager_secret.credential_key.id
 }
+
+output "smtp_egress_ip" {
+  description = "The reserved address all outbound traffic leaves through. Register it in the Workspace SMTP relay's allowed IP list; the relay stops tarpitting the worker's connections once the source is known."
+  value       = google_compute_address.smtp_egress.address
+}

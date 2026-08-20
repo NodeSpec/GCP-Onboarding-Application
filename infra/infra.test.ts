@@ -583,14 +583,14 @@ describe('REQ-009: the API service can actually reach the worker', () => {
   });
 
   it('AC-8: keeps a route to the public internet, because sign-in depends on one', () => {
-    // With ALL_TRAFFIC the API loses its default internet route, and it has one
-    // destination out there that is not a Google API: the IAP JWKS at
+    // With ALL_TRAFFIC each service loses its default internet route. The API
+    // has one destination out there that is not a Google API: the IAP JWKS at
     // www.gstatic.com, fetched on a cold start and on an unfamiliar key id.
-    // Private Google Access does not cover gstatic.com. Removing this NAT does
-    // not degrade the pickers, it stops anyone signing in at all, and nothing
-    // about that failure would point back here.
+    // The worker has one too: the Workspace SMTP relay. Private Google Access
+    // covers neither. Removing this NAT does not degrade the pickers, it stops
+    // anyone signing in at all, and nothing about that failure would point
+    // back here.
     const nat = named('google_compute_router_nat', 'lifecycle');
-    expect(attr(nat.body, 'nat_ip_allocate_option')).toBe('"AUTO_ONLY"');
     expect(nested(nat.body, 'subnetwork')[0]!.body).toContain(
       'google_compute_subnetwork.lifecycle',
     );
@@ -600,12 +600,42 @@ describe('REQ-009: the API service can actually reach the worker', () => {
     expect(attr(subnet.body, 'private_ip_google_access')).toBe('true');
   });
 
-  it('does not attach the worker to the VPC, which needs no egress interface', () => {
-    // The worker reaches Google APIs and the Workspace SMTP relay and has no
-    // reason to call a Cloud Run service. An interface it does not need is a
-    // dependency that can fail.
+  it('translates through one reserved address, registered with the SMTP relay', () => {
+    // The relay judges connections by source IP and tarpits strangers with 421
+    // at EHLO, before authentication is ever offered — observed live for over
+    // a day of automatic retries from the shared Cloud Run egress pool, while
+    // the same EHLO from a fixed address got 250. The NAT therefore uses one
+    // reserved address, which the operator registers in the relay's allowed
+    // list. Auto-allocation would rotate the address under that registration
+    // and reintroduce the 421s. This is REQ-028's recorded hardening path.
+    const nat = named('google_compute_router_nat', 'lifecycle');
+    expect(attr(nat.body, 'nat_ip_allocate_option')).toBe('"MANUAL_ONLY"');
+    expect(attr(nat.body, 'nat_ips')).toContain('google_compute_address.smtp_egress');
+
+    const address = named('google_compute_address', 'smtp_egress');
+    expect(address, 'no reserved egress address').toBeDefined();
+
+    // The address is only useful if the operator can find it to register it.
+    const output = BLOCKS.find(
+      (b) => b.type === 'output' && b.labels[0] === 'smtp_egress_ip',
+    );
+    expect(output, 'no smtp_egress_ip output to register in the relay').toBeDefined();
+  });
+
+  it('routes the worker egress through the VPC, so SMTP leaves from that address', () => {
+    // The worker originally had no VPC attachment: it reaches Google APIs and
+    // the relay and calls no other Cloud Run service. That posture did not
+    // survive contact with the relay's per-IP treatment of shared egress; see
+    // the test above. The attachment exists so outbound SMTP presents the
+    // reserved NAT address rather than a different borrowed one per attempt.
     const worker = named('google_cloud_run_v2_service', 'worker');
-    expect(nested(nested(worker.body, 'template')[0]!.body, 'vpc_access')).toEqual([]);
+    const vpc = nested(nested(worker.body, 'template')[0]!.body, 'vpc_access')[0];
+    expect(vpc, 'the worker has no vpc_access block').toBeDefined();
+    expect(attr(vpc!.body, 'egress')).toBe('"ALL_TRAFFIC"');
+
+    const nic = nested(vpc!.body, 'network_interfaces')[0];
+    expect(nic, 'the worker has no network interface').toBeDefined();
+    expect(nic!.body).toContain('google_compute_subnetwork.lifecycle');
   });
 });
 
