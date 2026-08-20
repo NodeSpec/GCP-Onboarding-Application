@@ -26,6 +26,7 @@ import {
 } from '@lifecycle/schemas';
 import { Router } from 'express';
 import { requireRole, type AuthzOptions, type RoleResolver } from '../authz.js';
+import { guarded } from '../middleware/asyncGuard.js';
 import { logger } from '../logging.js';
 import { ProtectedAccountError, type ProtectedAccounts } from '../protectedAccounts.js';
 import { requireIdentity } from '../middleware/iapAuth.js';
@@ -72,7 +73,11 @@ export function requestRoutes(deps: RequestRouteDeps): Router {
     ...(deps.onDenied === undefined ? {} : { onDenied: deps.onDenied }),
   };
 
-  router.post('/', requireRole('requester', authz), async (req, res) => {
+  // Every handler is guarded: they all await the store or the dispatcher, and
+  // an unguarded rejection from an async handler kills the process rather than
+  // answering 500 (see middleware/asyncGuard.ts). The try/catch blocks below
+  // still handle the errors they name; guarded() catches what they rethrow.
+  router.post('/', requireRole('requester', authz), guarded(async (req, res) => {
     const identity = requireIdentity(req);
 
     const envelope = submitRequestSchema.safeParse(req.body);
@@ -203,7 +208,7 @@ export function requestRoutes(deps: RequestRouteDeps): Router {
       steps: documents.steps.map((s) => ({ stepId: s.stepId, name: s.name, status: s.status })),
       dispatch,
     });
-  });
+  }));
 
   /**
    * Approve or reject a halted step (REQ-002 AC-1 to AC-5).
@@ -219,7 +224,7 @@ export function requestRoutes(deps: RequestRouteDeps): Router {
   for (const decision of ['approved', 'rejected'] as const) {
     const path = decision === 'approved' ? 'approve' : 'reject';
 
-    router.post(`/:requestId/steps/:stepId/${path}`, requireRole('approver', authz), async (req, res) => {
+    router.post(`/:requestId/steps/:stepId/${path}`, requireRole('approver', authz), guarded(async (req, res) => {
       const identity = requireIdentity(req);
 
       const parsed = decisionSchema.safeParse(req.body);
@@ -288,7 +293,7 @@ export function requestRoutes(deps: RequestRouteDeps): Router {
         }
         throw err;
       }
-    });
+    }));
   }
 
   /**
@@ -313,7 +318,7 @@ export function requestRoutes(deps: RequestRouteDeps): Router {
    * it would not be a compensation, it would be an unrelated change made on the
    * way past.
    */
-  router.post('/:requestId/cancel', requireRole('requester', authz), async (req, res) => {
+  router.post('/:requestId/cancel', requireRole('requester', authz), guarded(async (req, res) => {
     const identity = requireIdentity(req);
     const requestId = req.params.requestId!;
 
@@ -394,7 +399,7 @@ export function requestRoutes(deps: RequestRouteDeps): Router {
       appended: compensation.appended,
       dispatch,
     });
-  });
+  }));
 
   /**
    * Hands the one-time password to the operator who asked for the account, once
@@ -410,7 +415,7 @@ export function requestRoutes(deps: RequestRouteDeps): Router {
   if (deps.credentials) {
     const credentials = deps.credentials;
 
-    router.get('/:requestId/credential', requireRole('requester', authz), async (req, res) => {
+    router.get('/:requestId/credential', requireRole('requester', authz), guarded(async (req, res) => {
       const identity = requireIdentity(req);
       const requestId = req.params.requestId!;
 
@@ -474,7 +479,7 @@ export function requestRoutes(deps: RequestRouteDeps): Router {
         primaryEmail: claimed.primaryEmail,
         oneTimePassword: claimed.password,
       });
-    });
+    }));
   }
 
   /**
@@ -504,7 +509,7 @@ export function requestRoutes(deps: RequestRouteDeps): Router {
    * server-side on the approve route, against the persisted requester and the
    * verified identity (REQ-012 AC-8).
    */
-  router.get('/inbox/approvals', requireRole('approver', authz), async (req, res) => {
+  router.get('/inbox/approvals', requireRole('approver', authz), guarded(async (req, res) => {
     const identity = requireIdentity(req);
     const roles = req.roles ?? [];
     const operator = identity.email.toLowerCase();
@@ -535,7 +540,7 @@ export function requestRoutes(deps: RequestRouteDeps): Router {
         haltedAt: request.updatedAt,
       })),
     });
-  });
+  }));
 
   /**
    * The operator request list (REQ-011 AC-4).
@@ -547,7 +552,7 @@ export function requestRoutes(deps: RequestRouteDeps): Router {
    * length of the demo and fall over on a tenant with real history, and it
    * would put every request's payload on the wire to render twenty rows.
    */
-  router.get('/', requireRole('requester', authz), async (req, res) => {
+  router.get('/', requireRole('requester', authz), guarded(async (req, res) => {
     const phase = typeof req.query.phase === 'string' ? req.query.phase : undefined;
     const status = typeof req.query.status === 'string' ? req.query.status : undefined;
 
@@ -611,14 +616,14 @@ export function requestRoutes(deps: RequestRouteDeps): Router {
           ? null
           : Buffer.from(JSON.stringify(nextCursor), 'utf8').toString('base64url'),
     });
-  });
+  }));
 
   /**
    * The full step history in one call (REQ-001 AC-5). Request, steps in
    * execution order, and the audit trail together, so an operator inspecting a
    * stuck request does not have to correlate three separate fetches.
    */
-  router.get('/:requestId', requireRole('requester', authz), async (req, res) => {
+  router.get('/:requestId', requireRole('requester', authz), guarded(async (req, res) => {
     const requestId = req.params.requestId!;
     const request = await deps.store.getRequest(requestId);
 
@@ -644,7 +649,7 @@ export function requestRoutes(deps: RequestRouteDeps): Router {
         timestamp: e.timestamp,
       })),
     });
-  });
+  }));
 
   return router;
 }

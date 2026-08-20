@@ -1,7 +1,7 @@
 {
   "modelVersion": 1,
   "generatedBy": "nodespec",
-  "modelHash": "0b431275952eefe6fe46f3438bb06bbcf9cdf2443bcea4cb7634670007183ff3",
+  "modelHash": "5f3f06657c07ab71dd0f9fd90fe45a0eed82a7c4d6979d5848da7ea51c7c2022",
   "nodes": [
     {
       "id": "1c81cf63-c51e-4b0e-b6ad-7d318332d2fe",
@@ -759,13 +759,15 @@
       "id": "23e52777-960d-46b8-bd79-93d151596279",
       "nodeId": "c424e85a-6584-4bb7-a48e-2175ebc6a41b",
       "path": "services/api/src/index.ts",
-      "kind": "source"
+      "kind": "source",
+      "contentHash": "00000000264bcf34"
     },
     {
       "id": "2b3c8d05-4e69-4f72-8183-6a0d9e2f5b41",
       "nodeId": "c424e85a-6584-4bb7-a48e-2175ebc6a41b",
       "path": "services/api/src/authz.ts",
-      "kind": "source"
+      "kind": "source",
+      "contentHash": "00000000432f6192"
     },
     {
       "id": "2b58a0d7-9c14-4e36-a870-63f1d95e2b04",
@@ -837,7 +839,8 @@
       "id": "3c4d9e16-5f70-4a83-9294-7b1e0f306c52",
       "nodeId": "c424e85a-6584-4bb7-a48e-2175ebc6a41b",
       "path": "services/api/src/routes/requests.ts",
-      "kind": "source"
+      "kind": "source",
+      "contentHash": "0000000055caefb0"
     },
     {
       "id": "3d5c8a12-7b64-4e09-a2f1-9c07b4e6d385",
@@ -1069,7 +1072,8 @@
       "id": "73ef538f-595b-46ec-b343-890a39a6a018",
       "nodeId": "c424e85a-6584-4bb7-a48e-2175ebc6a41b",
       "path": "services/api/src/routes/roleBindings.ts",
-      "kind": "source"
+      "kind": "source",
+      "contentHash": "000000002ee42f0a"
     },
     {
       "id": "79639b0c-1cff-4a7f-8e1c-728d07ce9cbc",
@@ -1232,6 +1236,12 @@
       "kind": "test-plan"
     },
     {
+      "id": "a11ce5a9-4f2b-4c8d-9e13-58f7b2a6d0c4",
+      "nodeId": "c424e85a-6584-4bb7-a48e-2175ebc6a41b",
+      "path": "services/api/src/middleware/asyncGuard.ts",
+      "kind": "source"
+    },
+    {
       "id": "a1b2c3d4-5e6f-7a8b-9c0d-e1f2a3b4c5d6",
       "nodeId": "db8e5409-dc6f-4052-887a-7ba1dd5fb717",
       "path": "services/worker/src/phases/update.test.ts",
@@ -1311,6 +1321,12 @@
       "nodeId": "db8e5409-dc6f-4052-887a-7ba1dd5fb717",
       "path": "services/worker/src/workspace/noDelegation.test.ts",
       "kind": "test-plan"
+    },
+    {
+      "id": "b22df6ba-5a3c-4d9e-8f24-69a8c3b7e1d5",
+      "nodeId": "c424e85a-6584-4bb7-a48e-2175ebc6a41b",
+      "path": "services/api/src/middleware/asyncGuard.test.ts",
+      "kind": "source"
     },
     {
       "id": "b2c847f0-91d3-4e56-a80b-6f4e21597c3d",
@@ -1421,7 +1437,7 @@
       "nodeId": "c424e85a-6584-4bb7-a48e-2175ebc6a41b",
       "path": "services/api/src/routes/admin.ts",
       "kind": "source",
-      "contentHash": "0000000005078338"
+      "contentHash": "000000006a6379db"
     },
     {
       "id": "c507b8e9-3f61-4a24-b0d7-4e8926a15f30",
@@ -1711,7 +1727,8 @@
       "id": "f3a4b5c6-d7e8-4f9a-0b1c-2d3e4f5a6b7c",
       "nodeId": "c424e85a-6584-4bb7-a48e-2175ebc6a41b",
       "path": "services/api/src/routes/lookup.ts",
-      "kind": "source"
+      "kind": "source",
+      "contentHash": "00000000183859c9"
     },
     {
       "id": "f4e91b26-73a5-4c08-9d2f-8b0716ea3c95",

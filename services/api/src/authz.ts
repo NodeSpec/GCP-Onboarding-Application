@@ -1,5 +1,6 @@
 import type { OperatorRole } from '@lifecycle/shared';
 import type { NextFunction, Request, RequestHandler, Response } from 'express';
+import { guarded } from './middleware/asyncGuard.js';
 import { requireIdentity, type OperatorIdentity } from './middleware/iapAuth.js';
 
 /**
@@ -67,7 +68,13 @@ export interface AuthzOptions {
 export function requireRole(required: OperatorRole, options: AuthzOptions = {}): RequestHandler {
   const resolver = options.resolver ?? denyAllResolver;
 
-  return async function authz(req: Request, res: Response, next: NextFunction): Promise<void> {
+  // guarded, because this middleware AWAITS the resolver, and the resolver
+  // reaches Firestore and, through group memberships, the worker. Every
+  // authorized route runs through here, so an unguarded rejection during a
+  // worker cold start did not fail one request: it killed the process under
+  // every route at once. A failed resolution is now a 500 from the error
+  // middleware, which is a retryable answer rather than an outage.
+  return guarded(async function authz(req: Request, res: Response, next: NextFunction): Promise<void> {
     const identity = requireIdentity(req);
     const roles = await resolver.rolesFor(identity);
     req.roles = roles;
@@ -86,5 +93,5 @@ export function requireRole(required: OperatorRole, options: AuthzOptions = {}):
     }
 
     next();
-  };
+  });
 }

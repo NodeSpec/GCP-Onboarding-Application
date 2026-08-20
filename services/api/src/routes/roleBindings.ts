@@ -2,6 +2,7 @@ import type { LifecycleStore, OperatorRole } from '@lifecycle/shared';
 import { Router } from 'express';
 import { z } from 'zod';
 import { requireRole, type RoleResolver } from '../authz.js';
+import { guarded } from '../middleware/asyncGuard.js';
 import { requireIdentity } from '../middleware/iapAuth.js';
 
 /**
@@ -44,11 +45,14 @@ export function roleBindingRoutes(deps: RoleBindingRouteDeps): Router {
   const router = Router();
   const authz = { ...(deps.resolver === undefined ? {} : { resolver: deps.resolver }) };
 
-  router.get('/', requireRole('admin', authz), async (_req, res) => {
+  // Every handler below is guarded: they all await the store, and an unguarded
+  // rejection from an async handler kills the process rather than answering
+  // 500 (see middleware/asyncGuard.ts).
+  router.get('/', requireRole('admin', authz), guarded(async (_req, res) => {
     res.status(200).json({ bindings: await deps.store.listRoleBindings() });
-  });
+  }));
 
-  router.put('/:subject', requireRole('admin', authz), async (req, res) => {
+  router.put('/:subject', requireRole('admin', authz), guarded(async (req, res) => {
     const subject = subjectSchema.safeParse(req.params.subject);
     if (!subject.success) {
       res.status(400).json({ error: 'invalid_subject', message: 'subject must be an email address' });
@@ -85,9 +89,9 @@ export function roleBindingRoutes(deps: RoleBindingRouteDeps): Router {
       roles: outcome.after,
       previousRoles: outcome.before,
     });
-  });
+  }));
 
-  router.delete('/:subject', requireRole('admin', authz), async (req, res) => {
+  router.delete('/:subject', requireRole('admin', authz), guarded(async (req, res) => {
     const subject = subjectSchema.safeParse(req.params.subject);
     if (!subject.success) {
       res.status(400).json({ error: 'invalid_subject', message: 'subject must be an email address' });
@@ -108,7 +112,7 @@ export function roleBindingRoutes(deps: RoleBindingRouteDeps): Router {
     }
 
     res.status(200).json({ subject: subject.data, previousRoles: outcome.before });
-  });
+  }));
 
   return router;
 }

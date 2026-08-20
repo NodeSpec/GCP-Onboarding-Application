@@ -13,6 +13,7 @@ import express from 'express';
 import pinoHttp from 'pino-http';
 import { config } from './config.js';
 import { logger } from './logging.js';
+import { guarded } from './middleware/asyncGuard.js';
 import { createIapAuth } from './middleware/iapAuth.js';
 import { adminRoutes } from './routes/admin.js';
 import { ProtectedAccounts } from './protectedAccounts.js';
@@ -189,18 +190,26 @@ app.use('/api/admin', adminRoutes({ store, dispatcher, resolver }));
 // only Workspace credential (REQ-029).
 app.use('/api/lookup', lookupRoutes({ resolver }));
 
-app.get('/api/me', async (req, res) => {
-  // The console reads who it is, and what it may do, from the server. It must
-  // never infer either from a client-held token, and hiding a control based on
-  // this response is presentation only: every action is authorized again
-  // server-side (REQ-012 AC-8).
-  const identity = req.identity!;
-  res.status(200).json({
-    email: identity.email,
-    subject: identity.subject,
-    roles: await resolver.rolesFor(identity),
-  });
-});
+app.get(
+  '/api/me',
+  // guarded, because rolesFor reaches the worker for group membership, and
+  // this is the first call the console makes after sign-in. Unguarded, a
+  // worker cold start during a deploy killed the process here and every
+  // sign-in read "Service Unavailable". Now it is a 500 the console can
+  // report, and a reload works the moment the worker is warm.
+  guarded(async (req, res) => {
+    // The console reads who it is, and what it may do, from the server. It must
+    // never infer either from a client-held token, and hiding a control based on
+    // this response is presentation only: every action is authorized again
+    // server-side (REQ-012 AC-8).
+    const identity = req.identity!;
+    res.status(200).json({
+      email: identity.email,
+      subject: identity.subject,
+      roles: await resolver.rolesFor(identity),
+    });
+  }),
+);
 
 /**
  * The operator console itself (REQ-011).
@@ -241,6 +250,20 @@ app.use((err: unknown, req: express.Request, res: express.Response, _next: expre
   const correlationId = req.id ?? undefined;
   logger.error({ err, correlationId }, 'unhandled error');
   res.status(500).json({ error: 'internal_error', correlationId });
+});
+
+// Backstop, not the mechanism. Every async handler is registered through
+// guarded(), so no route SHOULD be able to reject past the error middleware;
+// this exists for the one somebody adds bare next year. Node's default answer
+// to an unhandled rejection is to kill the process, which turns one broken
+// request into an outage for every request in flight. Logging it loudly and
+// keeping the process up costs the offending caller a hung request and nobody
+// else anything.
+process.on('unhandledRejection', (reason) => {
+  logger.error(
+    { err: reason },
+    'unhandled promise rejection reached the process; a handler is missing guarded()',
+  );
 });
 
 const server = app.listen(config.PORT, () => {

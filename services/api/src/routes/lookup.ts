@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { requireRole, type RoleResolver } from '../authz.js';
+import { guarded } from '../middleware/asyncGuard.js';
 import { LookupUnavailable, WorkerLookupClient } from '../lookup/workerClient.js';
 
 /**
@@ -48,7 +49,11 @@ export function lookupRoutes(deps: LookupRouteDeps = {}): Router {
     res.status(502).json({ error: 'lookup_unavailable' });
   }
 
-  router.get('/users', requireRole('requester', authz), async (req, res) => {
+  // Guarded like every other async handler in this service, even though each
+  // one's try/catch already relays every failure: uniformity is what keeps the
+  // next handler from being the one that crashes the process
+  // (see middleware/asyncGuard.ts).
+  router.get('/users', requireRole('requester', authz), guarded(async (req, res) => {
     const q = String(req.query.q ?? '').trim();
     if (q.length === 0) {
       res.status(400).json({ error: 'q is required' });
@@ -66,9 +71,9 @@ export function lookupRoutes(deps: LookupRouteDeps = {}): Router {
     } catch (err) {
       relay(err, res);
     }
-  });
+  }));
 
-  router.get('/users/:primaryEmail', requireRole('requester', authz), async (req, res) => {
+  router.get('/users/:primaryEmail', requireRole('requester', authz), guarded(async (req, res) => {
     try {
       res
         .status(200)
@@ -76,9 +81,9 @@ export function lookupRoutes(deps: LookupRouteDeps = {}): Router {
     } catch (err) {
       relay(err, res);
     }
-  });
+  }));
 
-  router.get('/groups', requireRole('requester', authz), async (req, res) => {
+  router.get('/groups', requireRole('requester', authz), guarded(async (req, res) => {
     try {
       res.status(200).json(
         await client.get('/groups', {
@@ -88,15 +93,15 @@ export function lookupRoutes(deps: LookupRouteDeps = {}): Router {
     } catch (err) {
       relay(err, res);
     }
-  });
+  }));
 
-  router.get('/org-units', requireRole('requester', authz), async (_req, res) => {
+  router.get('/org-units', requireRole('requester', authz), guarded(async (_req, res) => {
     try {
       res.status(200).json(await client.get('/org-units'));
     } catch (err) {
       relay(err, res);
     }
-  });
+  }));
 
   return router;
 }

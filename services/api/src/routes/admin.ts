@@ -9,6 +9,7 @@ import { Router } from 'express';
 import { z } from 'zod';
 import { requireRole, type RoleResolver } from '../authz.js';
 import { logger } from '../logging.js';
+import { guarded } from '../middleware/asyncGuard.js';
 import { requireIdentity } from '../middleware/iapAuth.js';
 
 /**
@@ -95,11 +96,16 @@ export function adminRoutes(deps: AdminRouteDeps): Router {
   const authz = { ...(deps.resolver === undefined ? {} : { resolver: deps.resolver }) };
   const admin = () => requireRole('admin', authz);
 
-  router.get('/approval-policy', admin(), async (_req, res) => {
+  // Every handler is guarded: they all await the store, and an unguarded
+  // rejection from an async handler kills the process rather than answering
+  // 500 (see middleware/asyncGuard.ts). The try/catch blocks below still
+  // handle the errors they name; guarded() is what catches everything they
+  // rethrow.
+  router.get('/approval-policy', admin(), guarded(async (_req, res) => {
     res.status(200).json({ policy: await deps.store.getApprovalPolicy() });
-  });
+  }));
 
-  router.put('/approval-policy', admin(), async (req, res) => {
+  router.put('/approval-policy', admin(), guarded(async (req, res) => {
     const parsed = policySchema.safeParse(req.body);
     if (!parsed.success) {
       res.status(400).json({
@@ -128,9 +134,9 @@ export function adminRoutes(deps: AdminRouteDeps): Router {
       previousPolicy: outcome.before,
       appliesTo: 'requests created from now on; in-flight requests keep their snapshot',
     });
-  });
+  }));
 
-  router.post('/requests/:requestId/cancel', admin(), async (req, res) => {
+  router.post('/requests/:requestId/cancel', admin(), guarded(async (req, res) => {
     const parsed = reasonSchema.safeParse(req.body);
     if (!parsed.success) {
       res.status(400).json({
@@ -169,9 +175,9 @@ export function adminRoutes(deps: AdminRouteDeps): Router {
       }
       throw err;
     }
-  });
+  }));
 
-  router.post('/requests/:requestId/resume', admin(), async (req, res) => {
+  router.post('/requests/:requestId/resume', admin(), guarded(async (req, res) => {
     const identity = requireIdentity(req);
 
     const outcome = await deps.store.resumeRequest({
@@ -211,9 +217,9 @@ export function adminRoutes(deps: AdminRouteDeps): Router {
       resumedStep: outcome.step.stepId,
       dispatch,
     });
-  });
+  }));
 
-  router.get('/audit', admin(), async (req, res) => {
+  router.get('/audit', admin(), guarded(async (req, res) => {
     const parsed = auditQuerySchema.safeParse(req.query);
     if (!parsed.success) {
       res.status(400).json({ error: 'invalid_query' });
@@ -236,7 +242,7 @@ export function adminRoutes(deps: AdminRouteDeps): Router {
       // paging is by timestamp.
       nextBefore: events.at(-1)?.timestamp.toMillis() ?? null,
     });
-  });
+  }));
 
   return router;
 }
