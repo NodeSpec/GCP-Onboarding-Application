@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="docs/assets/logo.svg" width="112" alt="The Pack wolf mark" />
+</p>
+
 # The Pack: GCP Onboarding Console
 
 A console for creating, updating and removing Google Workspace accounts, with an approval step and a full record of who did what.
@@ -182,17 +186,19 @@ Order matters, because the application needs values that only exist after the in
 
 3. **Write `infra/terraform.tfvars`.** Your deployment values, ignored by git and never tracked. Five of them are specific to your organisation. Note `audit_bucket_locked`: locking the audit retention policy is **IRREVERSIBLE**, so set it false for a scratch project you intend to delete.
 
-4. **Run `terraform apply`.** About 70 resources. On Cloud Shell use `-parallelism=3`, because the default concurrency provokes transient network failures against Google's APIs.
+4. **Run `terraform apply`, twice.** About 70 resources. The worker needs its own URL, which exists only after the first apply, so a second short apply feeds it back in. On Cloud Shell use `-parallelism=3`, because the default concurrency provokes transient network failures against Google's APIs.
 
 5. **Point DNS at the load balancer.** The managed certificate cannot issue until the record resolves, and the console is unreachable until it does. Fifteen minutes to an hour is normal.
 
-6. **Do the Workspace side.** A custom admin role carrying only what the four phases need, assigned to the worker service account and to nothing else, with Domain-Wide Delegation confirmed absent. Terraform cannot do any of this, because Workspace admin roles are not GCP resources.
+6. **Do the Workspace side.** A custom admin role carrying only what the four phases need, assigned to the worker service account and to nothing else, with Domain-Wide Delegation confirmed absent. The SMTP relay is configured here too: it requires authentication and TLS, and its allowed IP list carries the deployment's one reserved egress address, read from a Terraform output. Without that registration the relay refuses every letter before authentication is even offered. Terraform cannot do any of this, because Workspace admin roles and Gmail settings are not GCP resources.
 
 7. **Populate the secrets.** Both are created empty on purpose: a value passed through a Terraform variable is written to state in plaintext. Neither needs a redeploy, now or on any future rotation.
 
 8. **Grant operator access.** Add people to the operator group. Membership gets someone past IAP; a role binding decides what they may do once there. Someone in the group with no binding is authenticated and authorized for nothing, which is the right state for a person who should be able to look but not act.
 
-9. **Set up the pipeline.** One-time: a state bucket, a deployer service account, Workload Identity Federation, and a set of repository variables, all in `docs/cicd.md`. Every deployment after this one is a merge.
+9. **Set the approval policy.** The system runs without one, on a default that gates the destructive steps. Configure it deliberately through the console as a bootstrap admin; `docs/approval-policy.md` documents every knob. Deleting an account always requires a second approver and cannot be configured otherwise.
+
+10. **Set up the pipeline.** One-time: a state bucket, a deployer service account, Workload Identity Federation, and a set of repository variables, all in `docs/cicd.md`. Every deployment after this one is a merge.
 
 ### Three things that catch people out
 
