@@ -55,6 +55,12 @@ For the full component list, connection topology and per component task document
 
 **Every route sits behind Identity-Aware Proxy.** Google's Identity-Aware Proxy authenticates every person before their request reaches the application. The application does not trust that on its own: it independently verifies the signed token IAP attaches to each request, and rejects anything that fails, before any handler runs. There are no unauthenticated routes anywhere in the system.
 
+## Architecture Overview
+
+<img width="3752" height="919" alt="image" src="https://github.com/user-attachments/assets/b0b10a2a-70b0-4b8d-8fb6-304b0cfcbf28" />
+
+NodeSpec.io Architecture Output and description in Architecture.md and Spec.json
+
 ## Repository layout
 
 ```
