@@ -1,7 +1,7 @@
 {
   "modelVersion": 1,
   "generatedBy": "nodespec",
-  "modelHash": "a955980faebdca10f9ff88ac8aee01638dd0f809ee83918128a47ac1b8772317",
+  "modelHash": "b9629ecd867267dc64483eac1cd7773c874c04bbf0c7aa18bd7dc4a3ca754d18",
   "nodes": [
     {
       "id": "1c81cf63-c51e-4b0e-b6ad-7d318332d2fe",
@@ -1459,7 +1459,7 @@
       "nodeId": "1c81cf63-c51e-4b0e-b6ad-7d318332d2fe",
       "path": "docs/workspace-admin-setup.md",
       "kind": "doc",
-      "contentHash": "00000000392c14c6"
+      "contentHash": "0000000067b97020"
     },
     {
       "id": "c52ea038-7d14-4b69-a023-9f16b8d4e7c2",
@@ -1664,6 +1664,12 @@
       "nodeId": "c424e85a-6584-4bb7-a48e-2175ebc6a41b",
       "path": "packages/shared/src/stepPlans.ts",
       "kind": "source"
+    },
+    {
+      "id": "e7b4d9f2-1a63-4c85-b0e7-52f8a1c6d943",
+      "nodeId": "9af301aa-2191-4532-9871-82179a5500c1",
+      "path": "docs/assets/logo.svg",
+      "kind": "design"
     },
     {
       "id": "e8f9a0b1-c2d3-4e4f-5a6b-7c8d9e0f1a2b",

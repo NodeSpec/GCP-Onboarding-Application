@@ -82,14 +82,35 @@ onboarding for everyone else.
 This account is on the protected-account list by default, so the system refuses
 lifecycle requests against it. See `docs/runbook.md`.
 
+Create the Return-Path group at the same time: **Directory > Groups**, named to
+match the `smtp_return_path` value in your Terraform variables, for example
+`lifecycle-bounces@yourdomain.com`. Asynchronous bounces land there, and a
+person has to be reading it; the runbook has a line for naming who. It is on
+the protected-account list by default, like the sender.
+
 ## Step 3: Configure the SMTP relay
 
 1. **Apps > Google Workspace > Gmail > Routing > SMTP relay service**
 2. Add a relay setting:
    - **Allowed senders**: only addresses in my domains
    - **Authentication**: require SMTP authentication, and accept the no-reply
-     account
+     account. Also enable **Only accept mail from the specified IP addresses**
+     and add the deployment's reserved egress address:
+
+     ```bash
+     cd infra && terraform output -raw smtp_egress_ip
+     ```
+
    - **Encryption**: require TLS encryption
+
+The IP registration is not optional hardening. The relay judges connections by
+source address, and it tarpits sources it does not recognise with a 421 at
+EHLO, before authentication is ever offered, so a correct password cannot save
+an unregistered sender. The worker routes all outbound mail through one
+reserved Cloud NAT address (`infra/network.tf`) so there is exactly one address
+to register, and it never changes. Relay setting changes can take a few hours
+to propagate; the queue's automatic retries carry a pending letter across that
+window.
 
 The welcome letter goes to a **personal address outside the domain**, so the
 relay must permit any recipient. That is the default for the relay service, but
@@ -247,6 +268,13 @@ an older version of this guide instructed. Add that single privilege to the
 role and resume the failed request; the role edit takes a few minutes to
 propagate. The rest of the Security section stays unselected.
 
+**Every letter fails with SMTP 421 at EHLO, and retries do not clear it.**
+The relay does not trust the source address. Confirm the reserved egress
+address (`terraform output -raw smtp_egress_ip`) is in the relay setting's
+allowed IP list, exactly as step 3 describes, and allow a few hours for a
+recent settings change to propagate. Because the refusal happens before
+authentication, no credential or sender setting can be the cause.
+
 **The Drive transfer step fails.**
 Data Transfer privilege was not selected, or the Data Transfer API is not
 enabled. If you do not use Drive transfer, remove `transferDriveTo` from delete
@@ -268,6 +296,7 @@ gcloud services list --enabled --project "$PROJECT_ID" | grep admin.googleapis.c
 
 | What | Where | Value |
 | --- | --- | --- |
+| SMTP relay allowed IP | Gmail > Routing > SMTP relay service | The reserved egress address from `terraform output -raw smtp_egress_ip`, with authentication and TLS still required |
 | Custom admin role | Account > Admin roles | Users read/create/update/delete; Groups read/update; Org Units read; Security user security management; Data Transfer manage |
 | Assigned to | Assign service accounts | The worker runtime service account, by email |
 | Assigned to anything else | | Nothing |
