@@ -305,7 +305,7 @@ Anything registered through these inherits the properties the rest of the system
 
 ### What would break the security model
 
-Each of these is enforced by a deliberate test. If a change requires deleting one of these assertions, the change is the problem.
+Each of these is enforced by a test, and that is deliberate. If a change requires deleting one of these assertions, the change is the problem.
 
 * **Do not give the API service Workspace credentials.** The separation between the operator facing surface and the only identity that can mutate the directory is the primary control. New Workspace capability belongs in the worker, reached as a step or as a read only lookup.
 * **Do not configure Domain-Wide Delegation, for any feature.** It lets the application act as any user in the domain, including super admins. A feature that appears to need it needs a design conversation instead. A repository wide scan fails the build if it appears in code or in infrastructure.

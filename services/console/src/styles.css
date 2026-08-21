@@ -248,14 +248,10 @@ a:hover {
 }
 
 .brand-mark {
-  align-items: center;
-  background: var(--accent);
-  border-radius: 9px;
-  color: var(--accent-contrast);
-  display: flex;
+  display: block;
   flex: 0 0 auto;
   height: 30px;
-  justify-content: center;
+  object-fit: contain;
   width: 30px;
 }
 

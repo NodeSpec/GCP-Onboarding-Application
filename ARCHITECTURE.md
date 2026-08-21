@@ -8,8 +8,8 @@ component inventory, connection topology, and links to per-component task docume
 | Component | Role | Technology | Parent | Task Document | Test Plan |
 |-----------|------|------------|--------|---------------|-----------|
 | Google Workspace (Admin SDK Directory) | external-service | --- | --- | [`.nodespec/tasks/google-workspace-admin-sdk-directory-1c81cf63.task.md`](./.nodespec/tasks/google-workspace-admin-sdk-directory-1c81cf63.task.md) | --- |
-| Firestore: lifecycle state and audit | database | gcp-firestore | Company GCP Project | --- | --- |
-| Identity-Aware Proxy | auth-provider | gcp-identity-aware-proxy | Company GCP Project | --- | --- |
+| Firestore: lifecycle state and audit | database | gcp-firestore | Company GCP Project | [`.nodespec/tasks/firestore-lifecycle-state-and-audit-268a782a.task.md`](./.nodespec/tasks/firestore-lifecycle-state-and-audit-268a782a.task.md) | --- |
+| Identity-Aware Proxy | auth-provider | gcp-identity-aware-proxy | Company GCP Project | [`.nodespec/tasks/identity-aware-proxy-4f626e62.task.md`](./.nodespec/tasks/identity-aware-proxy-4f626e62.task.md) | --- |
 | Cloud NAT: lifecycle egress | vpc | gcp-cloud-nat | Company GCP Project | --- | --- |
 | Cloud Logging: audit sink | logging | gcp-cloud-logging | Company GCP Project | --- | --- |
 | Cloud Tasks: lifecycle-steps | queue | gcp-cloud-tasks | Company GCP Project | --- | --- |
@@ -71,8 +71,12 @@ Each component has a task document containing the full implementation context:
 requirements, contracts, technology guidance, and connected components.
 Use these as the primary brief when implementing or modifying a component.
 
+- **Firestore: lifecycle state and audit**: [`.nodespec/tasks/firestore-lifecycle-state-and-audit-268a782a.task.md`](./.nodespec/tasks/firestore-lifecycle-state-and-audit-268a782a.task.md)
 - **Cloud Run: lifecycle-worker**: [`.nodespec/tasks/cloud-run-lifecycle-worker-e730eb23.task.md`](./.nodespec/tasks/cloud-run-lifecycle-worker-e730eb23.task.md)
+- **Identity-Aware Proxy**: [`.nodespec/tasks/identity-aware-proxy-4f626e62.task.md`](./.nodespec/tasks/identity-aware-proxy-4f626e62.task.md)
 - **Google Workspace (Admin SDK Directory)**: [`.nodespec/tasks/google-workspace-admin-sdk-directory-1c81cf63.task.md`](./.nodespec/tasks/google-workspace-admin-sdk-directory-1c81cf63.task.md)
+- **Company GCP Project**: [`.nodespec/tasks/company-gcp-project-565b92bd.task.md`](./.nodespec/tasks/company-gcp-project-565b92bd.task.md)
+- **Cloud Run: lifecycle-api**: [`.nodespec/tasks/cloud-run-lifecycle-api-a7ee091d.task.md`](./.nodespec/tasks/cloud-run-lifecycle-api-a7ee091d.task.md)
 
 ## Test Plans
 
@@ -83,6 +87,7 @@ recommended test types, framework suggestions, and test scenarios.
 - **Lifecycle API Service**: [`packages/shared/src/dispatcher.test.ts`](./packages/shared/src/dispatcher.test.ts)
 - **Lifecycle API Service**: [`.nodespec/tests/req-001.tests.md`](./.nodespec/tests/req-001.tests.md)
 - **Lifecycle API Service**: [`services/api/src/routes/admin.emulator.test.ts`](./services/api/src/routes/admin.emulator.test.ts)
+- **Company GCP Project**: [`infra/hcl.test.ts`](./infra/hcl.test.ts)
 - **Operator Console UI**: [`services/console/src/console.test.tsx`](./services/console/src/console.test.tsx)
 - **Lifecycle Step Executor**: [`services/worker/src/workspace/noDelegation.test.ts`](./services/worker/src/workspace/noDelegation.test.ts)
 - **Lifecycle Step Executor**: [`services/worker/src/phases/create.test.ts`](./services/worker/src/phases/create.test.ts)

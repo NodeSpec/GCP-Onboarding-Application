@@ -1,7 +1,7 @@
 {
   "modelVersion": 1,
   "generatedBy": "nodespec",
-  "modelHash": "f26e130a85b5215b38675ef5e374b14499755a97057b23dc0ffa432faaddd05e",
+  "modelHash": "6c456e88e811e01d3db71c18c9c012a34c542018b360ec805d8c3c8accbdefcc",
   "nodes": [
     {
       "id": "1c81cf63-c51e-4b0e-b6ad-7d318332d2fe",
@@ -729,7 +729,8 @@
       "id": "1c91b278-14fc-4343-aa3c-49c182dc3a6f",
       "nodeId": "268a782a-d132-4d5e-8f24-c4a969ad7f17",
       "path": ".nodespec/tasks/firestore-lifecycle-state-and-audit-268a782a.task.md",
-      "kind": "task"
+      "kind": "task",
+      "contentHash": "0000000078c20be8"
     },
     {
       "id": "1c9d4a77-58b6-4e30-9c1f-2b8a0d6f4e91",
@@ -960,7 +961,8 @@
       "id": "5b1e3c90-4d86-4f27-b03a-9c4e7b2d3f85",
       "nodeId": "565b92bd-2c2c-4a82-be62-b691decdbadf",
       "path": ".dockerignore",
-      "kind": "config"
+      "kind": "config",
+      "contentHash": "00000000661bf53d"
     },
     {
       "id": "5c1a8e42-9f03-4b6d-8a71-2e94c0d5f6b3",
@@ -1061,7 +1063,7 @@
       "nodeId": "9af301aa-2191-4532-9871-82179a5500c1",
       "path": "services/console/src/App.tsx",
       "kind": "source",
-      "contentHash": "0000000036d40777"
+      "contentHash": "000000000581dd72"
     },
     {
       "id": "6f8b204d-c317-4a95-8e70-1d94e6a37b58",
@@ -1123,7 +1125,8 @@
       "id": "7c7eeedf-75e9-4ca5-8428-e9d724a1b94a",
       "nodeId": "4f626e62-3cc8-445a-9fbd-cb36407ad91e",
       "path": ".nodespec/tasks/identity-aware-proxy-4f626e62.task.md",
-      "kind": "task"
+      "kind": "task",
+      "contentHash": "000000003ebf273f"
     },
     {
       "id": "7e3b0c95-4d18-4a27-b9f6-c281a45e0d73",
@@ -1279,7 +1282,14 @@
       "id": "a3f5619c-8e27-4b40-9d61-05c8a7e2f4b8",
       "nodeId": "565b92bd-2c2c-4a82-be62-b691decdbadf",
       "path": "infra/hcl.test.ts",
-      "kind": "test-plan"
+      "kind": "test-plan",
+      "contentHash": "0000000078fce6b8"
+    },
+    {
+      "id": "a3f8c2d1-5e47-4b09-8c6a-91d2e4f7b350",
+      "nodeId": "9af301aa-2191-4532-9871-82179a5500c1",
+      "path": "services/console/src/logo.ts",
+      "kind": "source"
     },
     {
       "id": "a4b5c6d7-e8f9-4a0b-1c2d-3e4f5a6b7c8d",
@@ -1355,7 +1365,7 @@
       "nodeId": "9af301aa-2191-4532-9871-82179a5500c1",
       "path": "services/console/index.html",
       "kind": "source",
-      "contentHash": "0000000067726821"
+      "contentHash": "000000003d78897d"
     },
     {
       "id": "b7c41e93-5a2d-4f18-9e60-3d8a1c72f4b5",
@@ -1561,7 +1571,7 @@
       "nodeId": "9af301aa-2191-4532-9871-82179a5500c1",
       "path": "services/console/src/styles.css",
       "kind": "source",
-      "contentHash": "000000003159a2c2"
+      "contentHash": "00000000106790c1"
     },
     {
       "id": "d63fb149-8e25-4c7a-b134-0a27c95df8e3",
@@ -1665,7 +1675,8 @@
       "id": "e9153a25-3a71-4ecd-a3fe-77950e450ea4",
       "nodeId": "565b92bd-2c2c-4a82-be62-b691decdbadf",
       "path": ".nodespec/tasks/company-gcp-project-565b92bd.task.md",
-      "kind": "task"
+      "kind": "task",
+      "contentHash": "000000000b59a26b"
     },
     {
       "id": "e94a6c27-5138-4b70-a2d6-73819fc0e451",
@@ -1684,7 +1695,8 @@
       "id": "edbc5de9-85f2-456f-a35c-fbfd3d3cf1db",
       "nodeId": "a7ee091d-3d58-4624-96ed-8292a596f6d1",
       "path": ".nodespec/tasks/cloud-run-lifecycle-api-a7ee091d.task.md",
-      "kind": "task"
+      "kind": "task",
+      "contentHash": "000000004cf84489"
     },
     {
       "id": "edcbb588-8e46-425b-8a45-c50c30e59fbb",
