@@ -273,6 +273,10 @@ tenant. IAP validates it at apply time and refuses a group it cannot find.
 Create it in the Admin console under Directory > Groups before you apply, and
 add yourself to it.
 
+`smtp_return_path` names a second group that has to exist: bounced letters land
+in it, and somebody has to read it. Creating it is part of the Workspace side
+(`docs/workspace-admin-setup.md`, step 2).
+
 `audit_bucket_locked` defaults to true and **locking is irreversible**. Once
 applied, the audit log bucket's retention cannot be shortened and the bucket
 cannot be deleted until every entry has aged out, by anyone, including a project
@@ -407,6 +411,11 @@ Check the saved record reads exactly `lifecycle.example.com`. Some DNS providers
 append the domain to whatever you type, which turns a full name into
 `lifecycle.example.com.example.com` and prevents the certificate from ever
 issuing.
+
+If your DNS provider can proxy records, create this one **DNS only**. A proxied
+record answers with the provider's own addresses, which puts the provider in
+front of IAP and stops Google's managed certificate from ever seeing the record
+resolve to the load balancer.
 
 Verify from a shell rather than from the provider's interface:
 
@@ -657,7 +666,7 @@ pass its path.
 
 **The certificate never leaves `PROVISIONING`, or shows `FAILED_NOT_VISIBLE`.**
 DNS does not resolve to `console_ip`. Check for a doubled domain suffix in the
-record. Step 7.
+record, and check the record is not proxied. Step 7.
 
 **The console loads but the pickers are empty.** Two different causes, and the
 worker's logs tell you which in one query:
